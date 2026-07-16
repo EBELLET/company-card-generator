@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: tdconnect-app
+    restart: always
+    ports:
+      - "3000:3000" # Expose local port 3000 to access the app on http://localhost:3000
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=RemplissezAvecUneCleSecreteAleatoireEtLongue
+    volumes:
+      - ./database.sqlite:/app/database.sqlite
