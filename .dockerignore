@@ -1,0 +1,10 @@
+node_modules
+dist
+database.sqlite
+.git
+.gitignore
+Dockerfile
+.dockerignore
+*.log
+.system_generated
+brain
