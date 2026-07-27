@@ -1,7 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const db = require('./database.cjs');
 const seed = require('./seed.cjs');
+const mailer = require('./mailer.cjs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -53,20 +55,74 @@ const path = require('path');
 const distPath = path.resolve(__dirname, '../dist');
 app.use(express.static(distPath));
 
+app.get(['/contact', '/contact.html'], (req, res) => {
+  const fs = require('fs');
+  const contactDist = path.resolve(__dirname, '../dist/contact.html');
+  const contactRoot = path.resolve(__dirname, '../contact.html');
+  if (fs.existsSync(contactDist)) {
+    return res.sendFile(contactDist);
+  }
+  res.sendFile(contactRoot);
+});
+
+function checkCardStatus(collab, company) {
+  let isExpired = false;
+  let isInactive = false;
+  let messageTitle = '';
+  let messageSubtitle = '';
+
+  if (company && company.subscription_end_date) {
+    const subDateStr = String(company.subscription_end_date).split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (subDateStr < todayStr) {
+      isExpired = true;
+      messageTitle = 'Abonnement échu';
+      messageSubtitle = "L'abonnement de cette entreprise a expiré. Veuillez contacter l'administrateur.";
+    }
+  }
+
+  if (collab && (collab.isActive === 0 || collab.is_active === 0 || collab.isActive === false || collab.is_active === false || collab.isActive === '0')) {
+    isInactive = true;
+    if (!isExpired) {
+      messageTitle = 'Collaborateur inactif';
+      messageSubtitle = 'Cette carte de visite est actuellement désactivée.';
+    }
+  }
+
+  return {
+    isBlurred: isExpired || isInactive,
+    isExpired,
+    isInactive,
+    messageTitle,
+    messageSubtitle
+  };
+}
+
 // --- HTML Template for Virtual Business Card ---
 function generateVirtualCardHTML(collab, company, isStandalone = false) {
+  const cardStatus = checkCardStatus(collab, company);
   const accentColor = company.accent_color || '#6366f1';
   const theme = company.theme || 'theme-glass';
   const fontClass = company.font || 'font-outfit';
   const companyName = company.name || '';
   const avatarSize = company.avatar_size != null ? company.avatar_size : 100;
+  const logoX = company.logo_x != null ? parseInt(company.logo_x, 10) : 0;
   
   const cleanFirst = collab.firstName.trim().replace(/[^a-zA-Z0-9-]/g, '_');
   const cleanLast = collab.lastName.trim().toUpperCase().replace(/[^a-zA-Z0-9-]/g, '_');
   const vcfFilename = `${cleanFirst}_${cleanLast}.vcf`;
   
   const showCustomMsg = company.show_tdconnect_message !== 0;
-  const customMsgHTML = (showCustomMsg && company.tdconnect_message) ? `<div class="tdconnect-custom-message" style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.8; margin-top: 0.35rem; font-weight: 500; text-align: center; width: 100%;">${company.tdconnect_message}</div>` : '';
+  const customMsgText = company.tdconnect_message || '';
+  const customMsgUrl = (company.tdconnect_url || company.tdconnectUrl || '').trim();
+
+  let customMsgContentHTML = customMsgText;
+  if (customMsgUrl && !cardStatus.isBlurred) {
+    const targetUrl = customMsgUrl.startsWith('http') ? customMsgUrl : 'https://' + customMsgUrl;
+    customMsgContentHTML = `<a href="${targetUrl}" target="_blank" style="color: inherit; text-decoration: underline; cursor: pointer;">${customMsgText}</a>`;
+  }
+
+  const customMsgHTML = (showCustomMsg && customMsgText) ? `<div class="tdconnect-custom-message" style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.8; margin-top: 0.35rem; font-weight: 500; text-align: center; width: 100%;">${customMsgContentHTML}</div>` : '';
   
   // Resolve profile picture with alignment properties
   let avatarHTML = '';
@@ -74,9 +130,6 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     const zoom = collab.photoZoom != null ? parseFloat(collab.photoZoom) : 1.0;
     const x = collab.photoX != null ? parseFloat(collab.photoX) : 50;
     const y = collab.photoY != null ? parseFloat(collab.photoY) : 50;
-    
-    const transX = zoom > 1 ? (50 - x) * (1 - 1 / zoom) : 0;
-    const transY = zoom > 1 ? (50 - y) * (1 - 1 / zoom) : 0;
     
     let photoSrc = collab.photoUrl;
     if (isStandalone) {
@@ -88,26 +141,26 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       photoSrc = `./photo.${photoExt}`;
     }
     
-    avatarHTML = `<img src="${photoSrc}" style="transform: scale(${zoom}) translate(${transX}%, ${transY}%); object-position: 50% 50%;" alt="${collab.firstName} ${collab.lastName}" />`;
+    avatarHTML = `<img src="${photoSrc}" style="transform: scale(${zoom}); transform-origin: ${x}% ${y}%; object-fit: cover; width: 100%; height: 100%;" alt="${collab.firstName} ${collab.lastName}" />`;
   } else {
     const initials = (collab.firstName[0] + (collab.lastName[0] || '')).toUpperCase();
     avatarHTML = `<div class="initials-avatar">${initials}</div>`;
   }
 
-  // Wrap avatarHTML in a link if custom click Url is set
-  const clickUrlVal = collab.photoClickUrl || '';
+  // Wrap avatarHTML in a link if custom click Url is set and card is not blurred
+  const clickUrlVal = cardStatus.isBlurred ? '' : (collab.photoClickUrl || '');
   if (clickUrlVal) {
     const targetUrl = clickUrlVal.startsWith('http') ? clickUrlVal : 'https://' + clickUrlVal;
     avatarHTML = `<a href="${targetUrl}" target="_blank" style="display: contents; cursor: pointer;">${avatarHTML}</a>`;
   }
 
   // Resolve logo redirection target url
-  const companyUrlVal = company.domain || '';
-  const logoTargetUrl = companyUrlVal ? (companyUrlVal.startsWith('http') ? companyUrlVal : 'https://' + companyUrlVal) : '#';
+  const companyUrlVal = cardStatus.isBlurred ? '' : (company.domain || '');
+  const logoTargetUrl = companyUrlVal ? (companyUrlVal.startsWith('http') ? companyUrlVal : 'https://' + companyUrlVal) : 'javascript:void(0)';
 
   // Resolve logo
   let logoHTML = '';
-  let logoSrc = company.logo_custom_url || (company.domain ? `https://logo.clearbit.com/${company.domain}?size=128` : '');
+  let logoSrc = company.logo_custom_url || '';
   if (isStandalone && logoSrc) {
     let logoExt = 'png';
     if (logoSrc.startsWith('data:image/')) {
@@ -165,20 +218,26 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     activePhoneLabel = 'Mobile';
   }
 
+  const phoneHref = cardStatus.isBlurred ? 'javascript:void(0)' : `tel:${activePhone}`;
+  const emailHref = cardStatus.isBlurred ? 'javascript:void(0)' : `mailto:${collab.email}`;
+  const vcfHref = cardStatus.isBlurred ? 'javascript:void(0)' : (isStandalone ? `./${vcfFilename}` : `/api/collaborators/${collab.id}/vcf`);
+
   const buttonStyle = company.button_style || 'rectangle';
   let buttonsHTML = '';
   if (buttonStyle === 'round') {
     buttonsHTML = `
     <div class="actions-list-round">
-      <a href="tel:${activePhone}" class="action-row-btn" title="${activePhoneLabel} : ${activePhone}">
+      ${activePhone ? `
+      <a href="${phoneHref}" class="action-row-btn" title="${activePhoneLabel} : ${activePhone}">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-      </a>
+      </a>` : ''}
 
-      <a href="mailto:${collab.email}" class="action-row-btn" title="Email : ${collab.email}">
+      ${collab.email ? `
+      <a href="${emailHref}" class="action-row-btn" title="Email : ${collab.email}">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-      </a>
+      </a>` : ''}
 
-      <a href="${isStandalone ? `./${vcfFilename}` : `/api/collaborators/${collab.id}/vcf`}" class="action-row-btn" title="vCard">
+      <a href="${vcfHref}" class="action-row-btn" title="vCard">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
       </a>
     </div>
@@ -186,15 +245,17 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   } else {
     buttonsHTML = `
     <div class="actions-list-stacked">
-      <a href="tel:${activePhone}" class="action-row-btn">
+      ${activePhone ? `
+      <a href="${phoneHref}" class="action-row-btn">
         <span>${activePhoneLabel} : ${activePhone}</span>
-      </a>
+      </a>` : ''}
 
-      <a href="mailto:${collab.email}" class="action-row-btn">
+      ${collab.email ? `
+      <a href="${emailHref}" class="action-row-btn">
         <span>Email : ${collab.email}</span>
-      </a>
+      </a>` : ''}
 
-      <a href="${isStandalone ? `./${vcfFilename}` : `/api/collaborators/${collab.id}/vcf`}" class="action-row-btn">
+      <a href="${vcfHref}" class="action-row-btn">
         <span>Téléchargez ma vCard</span>
       </a>
     </div>
@@ -265,13 +326,8 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       position: relative;
     }
 
-    @media (max-width: 480px) {
-      body {
-        padding: 1.5rem 1rem;
-      }
-      .card-container {
-        padding: 1.75rem 1.25rem;
-      }
+    * {
+      box-sizing: border-box;
     }
 
     /* Main Card Frame */
@@ -314,6 +370,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       justify-content: center;
       align-items: center;
       margin-bottom: 0.5rem;
+      transform: translateX(${logoX}px);
     }
 
     .company-logo {
@@ -482,10 +539,118 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     body.theme-aurora .card-footer {
       color: rgba(255, 255, 255, 0.7);
     }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0;
+        align-items: stretch;
+      }
+      .card-container {
+        max-width: 100%;
+        min-height: 100vh;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 3rem 2rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+      .logo-container {
+        transform: translateX(${logoX}px) scale(1.15) !important;
+        margin-bottom: 1.75rem !important;
+      }
+      .company-address {
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+      }
+      .avatar-wrapper {
+        width: 130px !important;
+        height: 130px !important;
+        margin-bottom: 1.5rem !important;
+      }
+      .initials-avatar {
+        font-size: 45px !important;
+      }
+      .collab-name {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+      }
+      .collab-role {
+        font-size: 1.1rem;
+        margin-bottom: 2.25rem;
+      }
+      .action-row-btn {
+        font-size: 1.05rem;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+      }
+      .actions-list-round .action-row-btn {
+        width: 60px !important;
+        height: 60px !important;
+        padding: 0;
+        border-radius: 50%;
+      }
+      .actions-list-round .action-row-btn svg {
+        width: 24px;
+        height: 24px;
+      }
+      .card-footer {
+        margin-top: 2.5rem;
+        font-size: 0.9rem;
+      }
+    }
+    .card-container.is-blurred {
+      filter: blur(10px) opacity(0.5);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .card-blur-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      border-radius: 20px;
+      text-align: center;
+      color: #ffffff;
+    }
+
+    .blur-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .blur-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .blur-subtitle {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      line-height: 1.5;
+      max-width: 280px;
+    }
   </style>
 </head>
 <body class="${theme}">
-  <div class="card-container">
+  <div style="position: relative; width: 100%; max-width: 400px; margin: 0 auto;">
+    <div class="card-container ${cardStatus.isBlurred ? 'is-blurred' : ''}">
     <div class="logo-container">
       ${logoHTML}
     </div>
@@ -498,8 +663,8 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       ${avatarHTML}
     </div>
 
-    <h1 class="collab-name">${collab.firstName} ${collab.lastName}</h1>
-    <p class="collab-role">${collab.role || 'Collaborateur'}</p>
+    <h1 class="collab-name">${collab.lastName ? collab.lastName.toUpperCase() : ''} ${collab.firstName || ''}</h1>
+    ${collab.role ? `<p class="collab-role">${collab.role}</p>` : ''}
 
     ${buttonsHTML}
 
@@ -508,6 +673,13 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       ${customMsgHTML}
     </div>
   </div>
+  ${cardStatus.isBlurred ? `
+  <div class="card-blur-overlay">
+    <div class="blur-icon">🔒</div>
+    <div class="blur-title">${cardStatus.messageTitle}</div>
+    <div class="blur-subtitle">${cardStatus.messageSubtitle}</div>
+  </div>` : ''}
+</div>
 </body>
 </html>`;
 }
@@ -522,8 +694,8 @@ app.get('/api/companies', authenticateToken, async (req, res) => {
     }
     const users = await db.getUsers();
     const currUser = users.find(u => u.id === req.user.id);
-    const allowedIds = currUser ? currUser.managedCompanies : [];
-    const filtered = list.filter(c => allowedIds.includes(c.id));
+    const allowedIds = currUser ? currUser.managedCompanies.map(id => Number(id)) : [];
+    const filtered = list.filter(c => allowedIds.includes(Number(c.id)));
     res.json(filtered);
   } catch (err) {
     console.error('Erreur GET /api/companies:', err.message);
@@ -537,8 +709,8 @@ app.get('/api/companies/:id', authenticateToken, async (req, res) => {
     if (req.user.role !== 'superadmin') {
       const users = await db.getUsers();
       const currUser = users.find(u => u.id === req.user.id);
-      const allowedIds = currUser ? currUser.managedCompanies : [];
-      if (!allowedIds.includes(companyId)) {
+      const allowedIds = currUser ? (currUser.managedCompanies || []).map(id => Number(id)) : [];
+      if (!allowedIds.includes(Number(companyId))) {
         return res.status(403).json({ error: "Vous n'avez pas l'autorisation d'accéder à cette entreprise." });
       }
     }
@@ -566,13 +738,23 @@ app.post('/api/companies', authenticateToken, async (req, res) => {
 
 app.put('/api/companies/:id', authenticateToken, async (req, res) => {
   const companyId = parseInt(req.params.id);
+  const existingComp = await db.getCompanyById(companyId);
+  if (!existingComp) {
+    return res.status(404).json({ error: "Entreprise non trouvée." });
+  }
+
   if (req.user.role !== 'superadmin') {
     const users = await db.getUsers();
     const currUser = users.find(u => u.id === req.user.id);
-    const allowedIds = currUser ? currUser.managedCompanies : [];
-    if (!allowedIds.includes(companyId)) {
+    const allowedIds = currUser ? (currUser.managedCompanies || []).map(id => Number(id)) : [];
+    if (!allowedIds.includes(Number(companyId))) {
       return res.status(403).json({ error: "Vous n'avez pas l'autorisation de modifier cette entreprise." });
     }
+    // Prevent non-superadmin users from modifying subscription_end_date and is_subscription_active
+    req.body.subscription_end_date = existingComp.subscription_end_date;
+    req.body.subscriptionEndDate = existingComp.subscription_end_date;
+    req.body.is_subscription_active = existingComp.is_subscription_active;
+    req.body.isSubscriptionActive = existingComp.is_subscription_active;
   }
   try {
     const updated = await db.updateCompany(companyId, req.body);
@@ -603,8 +785,8 @@ app.get('/api/companies/:companyId/collaborators', authenticateToken, async (req
   if (req.user.role !== 'superadmin') {
     const users = await db.getUsers();
     const currUser = users.find(u => u.id === req.user.id);
-    const allowedIds = currUser ? currUser.managedCompanies : [];
-    if (!allowedIds.includes(companyId)) {
+    const allowedIds = currUser ? (currUser.managedCompanies || []).map(id => Number(id)) : [];
+    if (!allowedIds.includes(Number(companyId))) {
       return res.status(403).json({ error: "Accès refusé pour cette entreprise." });
     }
   }
@@ -622,8 +804,8 @@ app.post('/api/companies/:companyId/collaborators', authenticateToken, async (re
   if (req.user.role !== 'superadmin') {
     const users = await db.getUsers();
     const currUser = users.find(u => u.id === req.user.id);
-    const allowedIds = currUser ? currUser.managedCompanies : [];
-    if (!allowedIds.includes(companyId)) {
+    const allowedIds = currUser ? (currUser.managedCompanies || []).map(id => Number(id)) : [];
+    if (!allowedIds.includes(Number(companyId))) {
       return res.status(403).json({ error: "Vous n'avez pas l'autorisation d'ajouter des collaborateurs pour cette entreprise." });
     }
   }
@@ -645,10 +827,13 @@ app.put('/api/collaborators/:id', authenticateToken, async (req, res) => {
     if (req.user.role !== 'superadmin') {
       const users = await db.getUsers();
       const currUser = users.find(u => u.id === req.user.id);
-      const allowedIds = currUser ? currUser.managedCompanies : [];
-      if (!allowedIds.includes(collab.companyId)) {
+      const allowedIds = currUser ? (currUser.managedCompanies || []).map(id => Number(id)) : [];
+      if (!allowedIds.includes(Number(collab.companyId))) {
         return res.status(403).json({ error: "Vous n'avez pas l'autorisation de modifier ce collaborateur." });
       }
+      // Non-superadmin cannot alter connection count
+      req.body.connectionCount = collab.connectionCount;
+      req.body.connection_count = collab.connectionCount;
     }
     const collabData = { ...req.body, id: req.params.id };
     const updated = await db.updateCollaborator(collabData);
@@ -667,8 +852,8 @@ app.delete('/api/collaborators/:id', authenticateToken, async (req, res) => {
     if (req.user.role !== 'superadmin') {
       const users = await db.getUsers();
       const currUser = users.find(u => u.id === req.user.id);
-      const allowedIds = currUser ? currUser.managedCompanies : [];
-      if (!allowedIds.includes(collab.companyId)) {
+      const allowedIds = currUser ? (currUser.managedCompanies || []).map(id => Number(id)) : [];
+      if (!allowedIds.includes(Number(collab.companyId))) {
         return res.status(403).json({ error: "Vous n'avez pas l'autorisation de supprimer ce collaborateur." });
       }
     }
@@ -703,6 +888,25 @@ app.get('/api/collaborators/check-slug/:slug', async (req, res) => {
   } catch (err) {
     console.error(`Erreur GET check-slug pour ${req.params.slug}:`, err.message);
     res.status(500).json({ error: 'Erreur lors de la vérification du lien public.' });
+  }
+});
+
+app.get('/api/network-ip', (req, res) => {
+  try {
+    const os = require('os');
+    const interfaces = os.networkInterfaces();
+    let preferredIP = 'localhost';
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          preferredIP = iface.address;
+          break;
+        }
+      }
+    }
+    res.json({ ip: preferredIP });
+  } catch (err) {
+    res.json({ ip: 'localhost' });
   }
 });
 
@@ -752,7 +956,8 @@ app.post('/api/auth/login', async (req, res) => {
         firstName: user.first_name,
         lastName: user.last_name,
         email: user.email,
-        managedCompanies
+        managedCompanies,
+        isTempPassword: user.is_temp_password === 1
       }
     });
   } catch (err) {
@@ -762,7 +967,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.post('/api/auth/register', async (req, res) => {
-  const { companyName, companyDomain, userId, firstName, lastName, email, password } = req.body;
+  const { companyName, companyDomain, userId, firstName, lastName, email } = req.body;
 
   if (!userId || userId.trim().length !== 8) {
     return res.status(400).json({ error: "L'identifiant doit comporter exactement 8 caractères." });
@@ -770,13 +975,11 @@ app.post('/api/auth/register', async (req, res) => {
   if (!firstName || !firstName.trim() || !lastName || !lastName.trim() || !email || !email.trim()) {
     return res.status(400).json({ error: "Veuillez remplir tous les champs obligatoires de l'administrateur." });
   }
-  if (!password || password.trim().length < 4) {
-    return res.status(400).json({ error: "Le mot de passe doit contenir au moins 4 caractères." });
-  }
 
   try {
-    // Hash password
-    const passwordHash = await db.hashPassword(password);
+    // Generate temporary password (8 characters)
+    const tempPassword = crypto.randomBytes(4).toString('hex');
+    const passwordHash = await db.hashPassword(tempPassword);
     
     // Register
     const { companyId } = await db.registerUserWithCompany({
@@ -784,11 +987,21 @@ app.post('/api/auth/register', async (req, res) => {
       passwordHash,
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      email: email.trim()
+      email: email.trim(),
+      isTempPassword: 1
     }, {
       name: companyName ? companyName.trim() : '',
       domain: companyDomain ? companyDomain.trim() : ''
     });
+
+    // Send welcome email with temporary password asynchronously
+    mailer.sendWelcomeEmail({
+      to: email.trim(),
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      userId: userId.trim(),
+      password: tempPassword
+    }).catch(err => console.error('[Mail] Erreur envoi email bienvenue inscription:', err.message));
 
     // Generate token
     const token = generateToken({
@@ -801,18 +1014,115 @@ app.post('/api/auth/register', async (req, res) => {
 
     res.status(201).json({
       token,
+      tempPassword,
       user: {
         id: userId.trim(),
         role: 'admin',
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
-        managedCompanies: companyId ? [companyId] : []
+        managedCompanies: companyId ? [companyId] : [],
+        isTempPassword: true
       }
     });
   } catch (err) {
     console.error("Erreur lors de l'inscription:", err.message);
     res.status(400).json({ error: err.message || "Une erreur est survenue lors de l'inscription." });
+  }
+});
+
+// Verify password reset token and return account info
+app.get('/api/auth/verify-reset-token/:token', async (req, res) => {
+  try {
+    const record = await db.getPasswordResetToken(req.params.token);
+    if (!record) {
+      return res.status(400).json({ valid: false, error: "Ce lien de réinitialisation est invalide ou a expiré." });
+    }
+    const user = await db.getUserById(record.user_id);
+    if (!user) {
+      return res.status(404).json({ valid: false, error: "Compte utilisateur non trouvé." });
+    }
+    res.json({
+      valid: true,
+      userId: user.id,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      email: user.email
+    });
+  } catch (err) {
+    console.error("Erreur verify-reset-token:", err.message);
+    res.status(500).json({ valid: false, error: "Erreur de vérification du lien." });
+  }
+});
+
+// Forgot password — sends reset link by email (handles multiple accounts per email)
+app.post('/api/auth/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.trim()) {
+    return res.status(400).json({ error: "L'adresse email est requise." });
+  }
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    console.log(`[Mail] Demande de réinitialisation reçue pour : "${cleanEmail}"`);
+    
+    // Find all users matching this email address
+    const users = await db.getUsers();
+    const matchingUsers = users.filter(u => u.email && u.email.trim().toLowerCase() === cleanEmail);
+
+    if (matchingUsers.length === 0) {
+      console.warn(`[Mail] ⚠️ Aucune correspondance d'utilisateur trouvée pour l'email "${cleanEmail}". Email non envoyé.`);
+      return res.json({ success: true, message: "Si l'adresse existe, un e-mail a été envoyé." });
+    }
+
+    const reqOrigin = req.headers.origin || req.headers.referer || process.env.APP_URL;
+
+    // Send a distinct email for each user account associated with this email
+    for (const matchUser of matchingUsers) {
+      const token = await db.createPasswordResetToken(matchUser.id);
+      await mailer.sendPasswordResetEmail({
+        to: matchUser.email,
+        firstName: matchUser.firstName,
+        lastName: matchUser.lastName,
+        userId: matchUser.id,
+        resetToken: token,
+        origin: reqOrigin
+      });
+      console.log(`[Mail] ✅ Email de réinitialisation envoyé pour le compte ${matchUser.id} à ${matchUser.email}`);
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Erreur forgot-password:", err.message);
+    res.status(500).json({ error: "Erreur lors de l'envoi de l'email de réinitialisation." });
+  }
+});
+
+// Reset password — validates token and sets new password
+app.post('/api/auth/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password || password.length < 6) {
+    return res.status(400).json({ error: "Token et mot de passe (6 caractères min.) requis." });
+  }
+  try {
+    const record = await db.getPasswordResetToken(token);
+    if (!record) {
+      return res.status(400).json({ error: "Ce lien de réinitialisation est invalide ou a expiré." });
+    }
+
+    await db.updateUser(record.user_id, {
+      password,
+      // Preserve existing user data
+      ...(await (async () => {
+        const u = await db.getUserById(record.user_id);
+        return { firstName: u.first_name, lastName: u.last_name, email: u.email, role: u.role };
+      })())
+    });
+
+    await db.deletePasswordResetToken(token);
+    res.json({ success: true, message: "Mot de passe réinitialisé avec succès." });
+  } catch (err) {
+    console.error("Erreur reset-password:", err.message);
+    res.status(500).json({ error: "Erreur lors de la réinitialisation du mot de passe." });
   }
 });
 
@@ -854,6 +1164,9 @@ app.put('/api/auth/me', authenticateToken, async (req, res) => {
       email: email.trim()
     });
 
+    // Retrieve user row to get current is_temp_password status
+    const userRow = await db.getUserById(userId);
+
     res.json({
       success: true,
       token,
@@ -863,7 +1176,8 @@ app.put('/api/auth/me', authenticateToken, async (req, res) => {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
-        managedCompanies
+        managedCompanies,
+        isTempPassword: userRow ? userRow.is_temp_password === 1 : false
       }
     });
   } catch (err) {
@@ -916,6 +1230,15 @@ app.post('/api/admin/users', authenticateToken, async (req, res) => {
     if (role === 'admin' && Array.isArray(managedCompanies)) {
       await db.assignCompaniesToUser(newUser.id, managedCompanies);
     }
+
+    // Send welcome email (non-blocking)
+    mailer.sendWelcomeEmail({
+      to: email,
+      firstName,
+      lastName,
+      userId: id.trim(),
+      password
+    }).catch(err => console.error('[Mail] Erreur envoi email bienvenue:', err.message));
     
     res.status(201).json(newUser);
   } catch (err) {
@@ -988,6 +1311,9 @@ app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
 // --- Public Virtual Card web page serving ---
 
 app.get('/card/:id', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   try {
     let collab = await db.getCollaboratorById(req.params.id);
     if (!collab) {
@@ -996,66 +1322,15 @@ app.get('/card/:id', async (req, res) => {
     if (!collab) {
       return res.status(404).send('<h1 style="color:#f43f5e;font-family:sans-serif;text-align:center;margin-top:5rem;">Collaborateur non trouvé</h1>');
     }
-    if (collab.isActive === 0) {
-      return res.status(403).send(`
-        <!DOCTYPE html>
-        <html lang="fr">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Profil Inactif</title>
-          <style>
-            body {
-              background: radial-gradient(circle at 50% 50%, #0e172a 0%, #020617 100%);
-              color: #f8fafc;
-              font-family: sans-serif;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              min-height: 100vh;
-              margin: 0;
-              padding: 1.5rem;
-              text-align: center;
-            }
-            .panel {
-              background: rgba(15, 23, 42, 0.65);
-              border: 1px solid rgba(255, 255, 255, 0.08);
-              border-radius: 24px;
-              padding: 3rem 2rem;
-              max-width: 400px;
-              box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
-              backdrop-filter: blur(16px);
-            }
-            h1 {
-              font-size: 1.5rem;
-              font-weight: 800;
-              margin-bottom: 1rem;
-              background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
-            }
-            p {
-              color: #94a3b8;
-              line-height: 1.6;
-              font-size: 0.95rem;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="panel">
-            <h1>Profil Inactif</h1>
-            <p>Cette carte de visite virtuelle est actuellement désactivée par son administrateur.</p>
-          </div>
-        </body>
-        </html>
-      `);
-    }
+
+    // Incrémenter le compteur de connexions
+    db.incrementCollaboratorConnectionCount(collab.id);
+
     const company = await db.getCompanyById(collab.companyId);
     if (!company) {
       return res.status(404).send('<h1 style="color:#f43f5e;font-family:sans-serif;text-align:center;margin-top:5rem;">Entreprise non trouvée</h1>');
     }
     const htmlContent = generateVirtualCardHTML(collab, company);
-    
     res.send(htmlContent);
   } catch (err) {
     console.error(`Erreur GET /card/${req.params.id}:`, err.message);
@@ -1072,9 +1347,13 @@ app.get('/api/collaborators/:id/vcf', async (req, res) => {
       collab = await db.getCollaboratorBySlug(req.params.id);
     }
     if (!collab) return res.status(404).send('Collaborateur non trouvé');
-    if (collab.isActive === 0) return res.status(403).send('Ce collaborateur est inactif');
     const company = await db.getCompanyById(collab.companyId);
     if (!company) return res.status(404).send('Entreprise non trouvée');
+    
+    const cardStatus = checkCardStatus(collab, company);
+    if (cardStatus.isBlurred) {
+      return res.status(403).send(`${cardStatus.messageTitle} : ${cardStatus.messageSubtitle}`);
+    }
     
     const companyName = company.name || '';
     const companyUrl = company.domain || '';
@@ -1292,6 +1571,22 @@ app.get('/api/collaborators/:id/export', async (req, res) => {
   }
 });
 
+// Fallback for API routes to guarantee JSON error response (never HTML)
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `Endpoint API non trouvé : ${req.method} ${req.originalUrl}` });
+});
+
+// Fallback SPA routing for production client
+app.use((req, res) => {
+  const fs = require('fs');
+  const indexPath = path.join(distPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('Page non trouvée.');
+  }
+});
+
 // Run Express API Server and trigger Seed Seeding
 app.listen(PORT, async () => {
   const os = require('os');
@@ -1305,7 +1600,7 @@ app.listen(PORT, async () => {
     }
   }
 
-  console.log(`Serveur API SQLite démarré sur http://localhost:${PORT}`);
+  console.log(`Serveur API MySQL démarré sur http://localhost:${PORT}`);
   localIPs.forEach(ip => {
     console.log(`Disponible sur le réseau local : http://${ip}:${PORT}`);
   });
@@ -1314,4 +1609,7 @@ app.listen(PORT, async () => {
   await db.dbReady;
   // Run seed check
   await seed();
+  // Verify SMTP configuration
+  await mailer.verifyMailConfig();
 });
+

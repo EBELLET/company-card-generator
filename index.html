@@ -47,10 +47,6 @@
           <h1 class="logo-text-hero"><span>TD</span>Connect</h1>
           <p class="baseline-hero">Touchez Diffusez Connectez</p>
           <p class="subtitle-hero">Créez des cartes de visite virtuelles et des pages contact mobiles pour votre équipe</p>
-          <button type="button" class="btn-cta" id="btn-cta-start">
-            <span>Commencer l'aventure</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-          </button>
         </header>
 
         <!-- Product Presentation / Features Grid -->
@@ -82,12 +78,20 @@
               <p>Diffusez votre profil grâce à des QR Codes générés automatiquement ou via le téléchargement de votre vCard en un clic.</p>
             </div>
 
-            <div class="feature-card">
-              <div class="feature-icon-wrapper color-pink">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <div class="feature-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div class="feature-icon-wrapper color-pink">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                </div>
+                <h4>Cartes Physiques & Virtuelles</h4>
+                <p>Créer votre compte de test, créez votre entreprise et vos collaborateurs pour créer leur carte de visite virtuelle. Demander la création des cartes métaliques (ou bois) NFC et QRcode pour avec laquelle ils échangerons leur contacts.</p>
               </div>
-              <h4>Export ZIP Autonome</h4>
-              <p>Téléchargez un pack de fichiers autonome prêt à être hébergé n'importe où (cPanel, FTP, Vercel) de manière indépendante.</p>
+              <div style="margin-top: 1.25rem; width: 100%; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-cta" id="btn-cta-start" style="font-size: 0.9rem; padding: 0.65rem 1.25rem;">
+                  <span>Commencez l'aventure</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+              </div>
             </div>
 
           </div>
@@ -109,14 +113,14 @@
               <div class="form-group col-6" style="flex: 1; display: flex; flex-direction: column; gap: 0.25rem;">
                 <label for="reg-company-name">Nom de l'entreprise (facultatif)</label>
                 <div class="input-wrapper">
-                  <input type="text" id="reg-company-name" placeholder="Ex: Estimancy" />
+                  <input type="text" id="reg-company-name" placeholder="Ex: Nom de l'entreprise" />
                   <span class="focus-border"></span>
                 </div>
               </div>
               <div class="form-group col-6" style="flex: 1; display: flex; flex-direction: column; gap: 0.25rem;">
                 <label for="reg-company-domain">Site Internet / Domaine (facultatif)</label>
                 <div class="input-wrapper">
-                  <input type="text" id="reg-company-domain" placeholder="Ex: estimancy.com" />
+                  <input type="text" id="reg-company-domain" placeholder="Ex: exemple.com" />
                   <span class="focus-border"></span>
                 </div>
               </div>
@@ -127,14 +131,14 @@
               <div class="form-group col-6" style="flex: 1; display: flex; flex-direction: column; gap: 0.25rem;">
                 <label for="reg-admin-id">Identifiant (8 caractères)</label>
                 <div class="input-wrapper">
-                  <input type="text" id="reg-admin-id" maxlength="8" placeholder="Ex: adminusr" required />
+                  <input type="text" id="reg-admin-id" maxlength="8" placeholder="Ex: identifiant" required />
                   <span class="focus-border"></span>
                 </div>
               </div>
               <div class="form-group col-6" style="flex: 1; display: flex; flex-direction: column; gap: 0.25rem;">
                 <label for="reg-admin-email">Adresse e-mail</label>
                 <div class="input-wrapper">
-                  <input type="email" id="reg-admin-email" placeholder="Ex: admin@entreprise.com" required />
+                  <input type="email" id="reg-admin-email" placeholder="Ex: admin@exemple.com" required />
                   <span class="focus-border"></span>
                 </div>
               </div>
@@ -144,26 +148,20 @@
               <div class="form-group col-6" style="flex: 1; display: flex; flex-direction: column; gap: 0.25rem;">
                 <label for="reg-admin-firstname">Prénom</label>
                 <div class="input-wrapper">
-                  <input type="text" id="reg-admin-firstname" placeholder="Ex: Jean" required />
+                  <input type="text" id="reg-admin-firstname" placeholder="Ex: Prénom" required />
                   <span class="focus-border"></span>
                 </div>
               </div>
               <div class="form-group col-6" style="flex: 1; display: flex; flex-direction: column; gap: 0.25rem;">
                 <label for="reg-admin-lastname">Nom</label>
                 <div class="input-wrapper">
-                  <input type="text" id="reg-admin-lastname" placeholder="Ex: Dupont" required />
+                  <input type="text" id="reg-admin-lastname" placeholder="Ex: Nom" required />
                   <span class="focus-border"></span>
                 </div>
               </div>
             </div>
 
-            <div class="form-group" style="display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1.5rem; text-align: left;">
-              <label for="reg-admin-password">Mot de passe (min. 4 caractères)</label>
-              <div class="input-wrapper">
-                <input type="password" id="reg-admin-password" placeholder="••••••••" required />
-                <span class="focus-border"></span>
-              </div>
-            </div>
+
 
             <div id="register-error" class="error-msg-box hidden" style="margin: 1rem 0;">
               Une erreur est survenue.
@@ -228,14 +226,21 @@
                 <div class="form-group">
                   <label for="new-company-name">Nom de l'entreprise</label>
                   <div class="input-wrapper">
-                    <input type="text" id="new-company-name" placeholder="Ex: Estimancy" required />
+                    <input type="text" id="new-company-name" placeholder="Ex: Nom de l'entreprise" required />
                     <span class="focus-border"></span>
                   </div>
                 </div>
                 <div class="form-group">
                   <label for="new-company-domain">Site Internet / Domaine</label>
                   <div class="input-wrapper">
-                    <input type="text" id="new-company-domain" placeholder="Ex: estimancy.com" />
+                    <input type="text" id="new-company-domain" placeholder="Ex: exemple.com" />
+                    <span class="focus-border"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="new-company-subscription-end">Date de fin d'abonnement</label>
+                  <div class="input-wrapper">
+                    <input type="date" id="new-company-subscription-end" />
                     <span class="focus-border"></span>
                   </div>
                 </div>
@@ -284,18 +289,19 @@
                   <div class="form-group col-6">
                     <label for="admin-id">Identifiant (8 caractères)</label>
                     <div class="input-wrapper">
-                      <input type="text" id="admin-id" maxlength="8" placeholder="Ex: adminusr" required />
+                      <input type="text" id="admin-id" maxlength="8" placeholder="Ex: identifiant" required />
                       <span class="focus-border"></span>
                     </div>
                   </div>
-                  <div class="form-group col-6">
-                    <label for="admin-role">Rôle</label>
-                    <div class="input-wrapper">
-                      <select id="admin-role" style="width: 100%; padding: 0.65rem; border-radius: 8px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); color: var(--text-primary); outline: none; margin-top: 0.25rem;">
-                        <option value="admin">Administrateur standard</option>
-                        <option value="superadmin">Super Administrateur</option>
-                      </select>
-                    </div>
+                  <div class="form-group col-6" style="display: flex; align-items: flex-end; padding-bottom: 0.2rem;">
+                    <label class="switch-label" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); padding: 0.6rem 0.85rem; border-radius: 8px; width: 100%;">
+                      <input type="checkbox" id="admin-is-superadmin" style="width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer;" />
+                      <span style="font-weight: 600; font-size: 0.88rem; color: var(--text-primary);">Super Administrateur</span>
+                    </label>
+                    <select id="admin-role" class="hidden">
+                      <option value="admin">Administrateur standard</option>
+                      <option value="superadmin">Super Administrateur</option>
+                    </select>
                   </div>
                 </div>
 
@@ -303,14 +309,14 @@
                   <div class="form-group col-6">
                     <label for="admin-firstname">Prénom</label>
                     <div class="input-wrapper">
-                      <input type="text" id="admin-firstname" placeholder="Ex: Paul" required />
+                      <input type="text" id="admin-firstname" placeholder="Ex: Prénom" required />
                       <span class="focus-border"></span>
                     </div>
                   </div>
                   <div class="form-group col-6">
                     <label for="admin-lastname">Nom</label>
                     <div class="input-wrapper">
-                      <input type="text" id="admin-lastname" placeholder="Ex: Martin" required />
+                      <input type="text" id="admin-lastname" placeholder="Ex: Nom" required />
                       <span class="focus-border"></span>
                     </div>
                   </div>
@@ -319,7 +325,7 @@
                 <div class="form-group">
                   <label for="admin-email">Adresse e-mail</label>
                   <div class="input-wrapper">
-                    <input type="email" id="admin-email" placeholder="Ex: paul.martin@entreprise.com" required />
+                    <input type="email" id="admin-email" placeholder="Ex: admin@exemple.com" required />
                     <span class="focus-border"></span>
                   </div>
                 </div>
@@ -359,6 +365,12 @@
               <h2 id="active-company-title">Nom de l'entreprise</h2>
             </div>
 
+            <!-- Test Subscription Banner -->
+            <div id="company-test-banner" class="info-alert-banner hidden" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; display: flex; align-items: center; gap: 0.75rem; color: #a5b4fc; font-size: 0.9rem; font-weight: 500;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <span id="company-test-banner-text">Cette entreprise a été créée dans le cadre d'un test. L'abonnement est offert jusqu'au </span>
+            </div>
+
             <!-- Tab Headers -->
             <div class="tabs-header">
               <button type="button" class="tab-btn active" data-tab="tab-company">
@@ -380,7 +392,7 @@
                     <div style="flex-grow: 1;">
                       <label for="company-name">Nom de l'entreprise</label>
                       <div class="input-wrapper">
-                        <input type="text" id="company-name" placeholder="Ex: Estimancy" required />
+                        <input type="text" id="company-name" placeholder="Ex: Nom de l'entreprise" required />
                         <span class="focus-border"></span>
                       </div>
                     </div>
@@ -399,7 +411,7 @@
                       <span class="tooltip" title="Utilisé pour récupérer automatiquement le logo de l'entreprise">🛈</span>
                     </label>
                     <div class="input-wrapper">
-                      <input type="text" id="company-domain" placeholder="Ex: estimancy.com" />
+                      <input type="text" id="company-domain" placeholder="Ex: exemple.com" />
                       <button type="button" id="btn-fetch-logo" class="btn-secondary-icon" title="Récupérer le logo">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                       </button>
@@ -411,7 +423,7 @@
                   <div class="form-group">
                     <label for="company-address">Adresse (Rue)</label>
                     <div class="input-wrapper">
-                      <input type="text" id="company-address" placeholder="Ex: 5 Avenue Carnot" />
+                      <input type="text" id="company-address" placeholder="Ex: 1 Rue Exemple" />
                       <span class="focus-border"></span>
                     </div>
                   </div>
@@ -421,14 +433,14 @@
                     <div class="form-group col-5">
                       <label for="company-zip">Code Postal</label>
                       <div class="input-wrapper">
-                        <input type="text" id="company-zip" placeholder="Ex: 91300" />
+                        <input type="text" id="company-zip" placeholder="Ex: 75000" />
                         <span class="focus-border"></span>
                       </div>
                     </div>
                     <div class="form-group col-7">
                       <label for="company-city">Ville</label>
                       <div class="input-wrapper">
-                        <input type="text" id="company-city" placeholder="Ex: Massy" />
+                        <input type="text" id="company-city" placeholder="Ex: Ville" />
                         <span class="focus-border"></span>
                       </div>
                     </div>
@@ -449,6 +461,15 @@
                     <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.25rem;">
                       <input type="range" id="company-logo-size" min="30" max="160" step="2" value="72" style="flex-grow: 1; cursor: pointer;" />
                       <span id="company-logo-size-val" style="font-family: monospace; font-size: 0.85rem; min-width: 2.5rem; color: var(--text-secondary);">72px</span>
+                    </div>
+                  </div>
+
+                  <!-- Logo X Position Option -->
+                  <div class="form-group">
+                    <label for="company-logo-x">Position horizontale du logo (Gauche / Droite)</label>
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.25rem;">
+                      <input type="range" id="company-logo-x" min="-120" max="120" step="2" value="0" style="flex-grow: 1; cursor: pointer;" />
+                      <span id="company-logo-x-val" style="font-family: monospace; font-size: 0.85rem; min-width: 2.5rem; color: var(--text-secondary);">0px</span>
                     </div>
                   </div>
 
@@ -565,16 +586,48 @@
                     </div>
                   </div>
 
-                  <!-- TDConnect Message Option -->
+                  <!-- Message en bas de carte Option -->
                   <div class="form-group" style="margin-top: 1rem;">
                     <label class="switch-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.82rem; font-weight: 600; user-select: none; color: var(--text-secondary);">
                       <input type="checkbox" id="company-show-message" style="width: 16px; height: 16px; cursor: pointer;" />
-                      Message TDConnect
+                      Message en bas de carte
                     </label>
                     <div id="company-message-container" class="hidden" style="margin-top: 0.5rem;">
-                      <div class="input-wrapper">
-                        <input type="text" id="company-message-text" placeholder="Ex: TDConnect est une marque de TDC Création" />
+                      <div class="input-wrapper" style="margin-bottom: 0.5rem;">
+                        <input type="text" id="company-message-text" placeholder="Ex: Votre message personnalisé" />
                         <span class="focus-border"></span>
+                      </div>
+                      <div class="input-wrapper">
+                        <label for="company-message-url" style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">URL de redirection au clic (facultative)</label>
+                        <input type="url" id="company-message-url" placeholder="Ex: https://www.exemple.com" style="width: 100%; padding: 0.65rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-color);" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Subscription Box (Encart Abonnement en bas de page) -->
+                  <div class="subscription-box-panel" style="margin-top: 2rem; margin-bottom: 1.5rem; padding: 1.25rem; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 16px;">
+                    <h4 style="margin-top: 0; margin-bottom: 1rem; color: #818cf8; font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      <span>Abonnement de l'entreprise <span style="font-size: 0.78rem; font-weight: 500; color: #a5b4fc; margin-left: 0.25rem;">(modifications réservées à l'administrateur TDConnect)</span></span>
+                    </h4>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                      <!-- Subscription End Date -->
+                      <div class="form-group" style="margin-bottom: 0;">
+                        <label for="company-subscription-end" style="font-size: 0.85rem; font-weight: 600;">Date de fin d'abonnement <span id="sub-end-superadmin-badge" style="font-size: 0.72rem; color: #818cf8; font-weight: 500; margin-left: 0.35rem;">(Réservé au Super Admin)</span></label>
+                        <div class="input-wrapper" style="margin-top: 0.35rem;">
+                          <input type="date" id="company-subscription-end" />
+                          <span class="focus-border"></span>
+                        </div>
+                      </div>
+
+                      <!-- Subscription Active Toggle -->
+                      <div class="form-group" style="margin-bottom: 0;">
+                        <label class="switch-label" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.85rem; font-weight: 600; user-select: none; color: var(--text-secondary);">
+                          <input type="checkbox" id="company-is-subscription-active" style="width: 18px; height: 18px; cursor: pointer;" />
+                          <span>Abonnement actif :</span>
+                          <span id="sub-active-superadmin-badge" style="font-size: 0.72rem; color: #818cf8; font-weight: 500;">(Réservé au Super Admin)</span>
+                        </label>
                       </div>
                     </div>
                   </div>
@@ -634,14 +687,14 @@
                       <div class="form-group col-4">
                         <label for="collab-firstname">Prénom</label>
                         <div class="input-wrapper">
-                          <input type="text" id="collab-firstname" placeholder="Ex: Jean" required />
+                          <input type="text" id="collab-firstname" placeholder="Ex: Prénom" required />
                           <span class="focus-border"></span>
                         </div>
                       </div>
                       <div class="form-group col-4">
                         <label for="collab-lastname">Nom</label>
                         <div class="input-wrapper">
-                          <input type="text" id="collab-lastname" placeholder="Ex: Dupont" required />
+                          <input type="text" id="collab-lastname" placeholder="Ex: Nom" required />
                           <span class="focus-border"></span>
                         </div>
                       </div>
@@ -668,7 +721,7 @@
                       <div class="form-group col-6">
                         <label for="collab-role">Fonction / Poste</label>
                         <div class="input-wrapper">
-                          <input type="text" id="collab-role" placeholder="Ex: Directeur Commercial" required />
+                          <input type="text" id="collab-role" placeholder="Ex: Intitulé du poste" />
                           <span class="focus-border"></span>
                         </div>
                       </div>
@@ -681,7 +734,7 @@
                     <div class="form-group">
                       <label for="collab-phone-mobile">Téléphone portable</label>
                       <div class="input-wrapper">
-                        <input type="text" id="collab-phone-mobile" placeholder="Ex: +33 6 12 34 56 78" />
+                        <input type="text" id="collab-phone-mobile" placeholder="Ex: +33 6 00 00 00 00" />
                         <span class="focus-border"></span>
                       </div>
                     </div>
@@ -691,14 +744,14 @@
                       <div class="form-group col-6">
                         <label for="collab-phone-work">Téléphone fixe (bureau)</label>
                         <div class="input-wrapper">
-                          <input type="text" id="collab-phone-work" placeholder="Ex: +33 1 23 45 67 89" />
+                          <input type="text" id="collab-phone-work" placeholder="Ex: +33 1 00 00 00 00" />
                           <span class="focus-border"></span>
                         </div>
                       </div>
                       <div class="form-group col-6">
                         <label for="collab-phone-fax">Fax</label>
                         <div class="input-wrapper">
-                          <input type="text" id="collab-phone-fax" placeholder="Ex: +33 1 23 45 67 90" />
+                          <input type="text" id="collab-phone-fax" placeholder="Ex: +33 1 00 00 00 00" />
                           <span class="focus-border"></span>
                         </div>
                       </div>
@@ -719,7 +772,7 @@
                     <div class="form-group">
                       <label for="collab-email">Adresse e-mail</label>
                       <div class="input-wrapper">
-                        <input type="email" id="collab-email" placeholder="Ex: jean.dupont@entreprise.com" required />
+                        <input type="email" id="collab-email" placeholder="Ex: collaborateur@exemple.com" />
                         <span class="focus-border"></span>
                       </div>
                     </div>
@@ -751,7 +804,7 @@
                       <div style="margin-top: 0.75rem;">
                         <label for="collab-photo-click-url" style="font-size: 0.8rem; margin-bottom: 0.35rem;">Lien au clic sur la photo (ex: LinkedIn, Site Web)</label>
                         <div class="input-wrapper">
-                          <input type="url" id="collab-photo-click-url" placeholder="Ex: https://www.linkedin.com/in/nom" />
+                          <input type="url" id="collab-photo-click-url" placeholder="Ex: https://www.exemple.com" />
                           <span class="focus-border"></span>
                         </div>
                       </div>
@@ -760,7 +813,7 @@
                         <label for="collab-custom-slug" style="font-size: 0.8rem; margin-bottom: 0.35rem;">Lien web public personnalisé (facultatif)</label>
                         <div class="input-wrapper" style="display: flex; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;">
                           <span style="font-size: 0.82rem; color: var(--text-muted); padding-left: 0.75rem; user-select: none;">tdconnect.fr/card/</span>
-                          <input type="text" id="collab-custom-slug" placeholder="jean-dupont" style="flex-grow: 1; border: none; background: transparent; padding: 0.55rem 0.5rem 0.55rem 0.25rem; font-size: 0.9rem; color: var(--text-primary); outline: none;" />
+                          <input type="text" id="collab-custom-slug" placeholder="prenom-nom" style="flex-grow: 1; border: none; background: transparent; padding: 0.55rem 0.5rem 0.55rem 0.25rem; font-size: 0.9rem; color: var(--text-primary); outline: none;" />
                           <span class="focus-border"></span>
                         </div>
                         <span id="collab-slug-warning" style="font-size: 0.75rem; color: #f43f5e; margin-top: 0.35rem; display: none; font-weight: 500;">Attention : Ce lien public est déjà attribué à un autre collaborateur !</span>
@@ -773,7 +826,7 @@
                       <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
                           <span style="font-size: 0.78rem; color: var(--text-secondary); width: 30%;">Zoom</span>
-                          <input type="range" id="collab-photo-zoom" min="1" max="2.5" step="0.02" value="1" style="flex-grow: 1; cursor: pointer;" />
+                          <input type="range" id="collab-photo-zoom" min="1" max="4" step="0.02" value="1" style="flex-grow: 1; cursor: pointer;" />
                         </div>
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
                           <span style="font-size: 0.78rem; color: var(--text-secondary); width: 30%;">Position H (X)</span>
@@ -787,6 +840,15 @@
                     </div>
 
 
+
+                    <div id="collab-connection-count-group" class="form-group superadmin-only-field hidden" style="margin-top: 1.25rem; padding: 1rem; background: rgba(99, 102, 241, 0.06); border: 1px dashed rgba(99, 102, 241, 0.3); border-radius: 12px;">
+                      <label for="collab-connection-count" style="font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        Compteur de connexions (Super Admin)
+                      </label>
+                      <input type="number" id="collab-connection-count" min="0" value="0" style="width: 100%; padding: 0.65rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-color); font-weight: 700; font-size: 1rem;" />
+                      <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">Nombre total de connexions enregistrées sur la carte de ce collaborateur.</span>
+                    </div>
 
                     <div class="form-actions-row">
                       <button type="button" id="btn-save-collab" class="btn-success-small">Enregistrer</button>
@@ -831,32 +893,32 @@
                     </a>
 
                     <!-- Company Address -->
-                    <p id="prev-collab-address" class="preview-company-address">5 Avenue Carnot, 91300 Massy</p>
+                    <p id="prev-collab-address" class="preview-company-address">1 Rue Exemple, 75000 Ville</p>
 
                     <!-- Avatar Wrapper -->
                     <a id="prev-avatar-link" href="#" target="_blank" style="text-decoration: none; display: contents;">
                       <div id="prev-avatar-wrapper" class="preview-avatar-wrapper">
-                        <div id="prev-avatar-initials" class="prev-avatar-initials">JD</div>
+                        <div id="prev-avatar-initials" class="prev-avatar-initials">PN</div>
                         <img id="prev-avatar-img" class="hidden" src="" alt="Avatar" />
                       </div>
                     </a>
 
                     <!-- Details -->
-                    <h2 id="prev-collab-name" class="prev-collab-name">Jean Dupont</h2>
-                    <p id="prev-collab-role" class="prev-collab-role">Directeur Commercial</p>
+                    <h2 id="prev-collab-name" class="prev-collab-name">Prénom Nom</h2>
+                    <p id="prev-collab-role" class="prev-collab-role">Fonction</p>
 
                     <!-- Tactical Mobile Action Buttons (Stacked Wide like Estimancy) -->
                     <div id="prev-actions-container" class="preview-actions-list-stacked">
                       <!-- Telephone Call -->
                       <a id="prev-action-phone" href="#" class="preview-action-row-btn" title="Téléphone">
                         <svg class="preview-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                        <span id="prev-btn-phone-text">Mobile : +33 6 12 34 56 78</span>
+                        <span id="prev-btn-phone-text">Mobile : +33 6 00 00 00 00</span>
                       </a>
                       
                       <!-- Email Mailto -->
                       <a id="prev-action-email" href="#" class="preview-action-row-btn" title="E-mail">
                         <svg class="preview-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                        <span id="prev-btn-email-text">Email : jean.dupont@entreprise.com</span>
+                        <span id="prev-btn-email-text">Email : collaborateur@exemple.com</span>
                       </a>
                       
                       <!-- Download vCard (VCF link) -->
@@ -869,6 +931,13 @@
                     <div class="preview-card-footer">
                       <div>Carte de visite virtuelle</div>
                       <div id="prev-company-message-under-footer" class="hidden" style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.8; margin-top: 0.35rem; font-weight: 500; text-align: center; width: 100%;"></div>
+                    </div>
+
+                    <!-- Live Blur Overlay for Expired Subscription or Inactive Collaborator -->
+                    <div id="prev-card-blur-overlay" class="hidden" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; border-radius: 20px; text-align: center; color: #ffffff;">
+                      <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🔒</div>
+                      <div id="prev-blur-title" style="font-size: 1.2rem; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem;">Abonnement échu</div>
+                      <div id="prev-blur-subtitle" style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4; max-width: 240px;">L'abonnement de cette entreprise a expiré.</div>
                     </div>
                   </div>
                 </div>
@@ -894,7 +963,7 @@
                 </div>
                 <p class="link-subtext">Ce lien permet à quiconque de visualiser la carte mobile, d'appeler, d'envoyer un mail ou de télécharger le fichier VCF.</p>
                 
-                <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <div id="collab-export-zip-wrapper" class="superadmin-only-field hidden" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
                   <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary);">Exporter pour hébergement externe</label>
                   <a id="btn-export-zip" href="#" class="btn-copy" style="text-align: center; text-decoration: none; background: var(--success-color); display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -902,15 +971,74 @@
                   </a>
                   <p class="link-subtext" style="margin-top: 0.25rem;">Génère un dossier zippé autonome (HTML + images localisées + vCard) prêt à être hébergé ailleurs (FTP, cPanel, Vercel...).</p>
                 </div>
+
+                <div id="collab-connection-counter-display" class="superadmin-only-field hidden" style="margin-top: 1rem; border-top: 1px dashed var(--border-color); padding-top: 0.85rem; display: flex; align-items: center; justify-content: space-between;">
+                  <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    Connexions à cette carte :
+                  </span>
+                  <span id="collab-connection-count-badge" class="badge-conn-count" style="font-weight: 800; font-size: 0.85rem; background: rgba(99, 102, 241, 0.12); color: var(--accent); padding: 0.2rem 0.65rem; border-radius: 20px;">0 visite(s)</span>
+                </div>
               </div>
             </div>
           </div>
         </section>
       </main>
-      </div>
 
       <footer class="app-footer">
         <p>&copy; 2026 TDConnect. Conçu avec soin pour une esthétique web d'exception. TDConnect est une marque de TDC Création</p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+          Pour tout contact avec TDConnect, suivez ce <a href="javascript:void(0);" id="link-tdconnect-contact" class="link-tdconnect-contact" onclick="window.toggleContactEncart && window.toggleContactEncart(); return false;" style="color: #818cf8; text-decoration: underline; font-weight: 600; cursor: pointer; display: inline-block; padding: 2px 4px;">lien</a>
+        </p>
+
+        <!-- Inline Contact Encart (Card box appearing directly on the page) -->
+        <div id="footer-contact-encart" class="hidden" style="max-width: 460px; margin: 1.25rem auto 0; padding: 1.5rem; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 20px; backdrop-filter: blur(12px); box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center;">
+          
+          <!-- Step 1: Verification -->
+          <div id="encart-step-verify">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem; color: #818cf8; font-weight: 700; font-size: 1rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <span>Vérification de sécurité</span>
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4;">
+              Veuillez confirmer que vous n'êtes pas un robot pour afficher l'adresse email de contact.
+            </p>
+
+            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+              <label style="display: flex; align-items: center; gap: 0.65rem; cursor: pointer; user-select: none;">
+                <input type="checkbox" id="chk-encart-human" style="width: 20px; height: 20px; cursor: pointer; accent-color: #6366f1;" />
+                <span style="font-size: 0.9rem; font-weight: 600; color: #f8fafc;">Je ne suis pas un robot</span>
+              </label>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+
+            <div id="encart-error-msg" class="hidden" style="color: #f43f5e; font-size: 0.8rem; margin-bottom: 0.75rem; background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3); padding: 0.5rem; border-radius: 8px;">
+              Veuillez cocher la case pour valider.
+            </div>
+
+            <button type="button" onclick="window.submitEncartCaptcha && window.submitEncartCaptcha();" class="btn-submit-full" style="width: 100%; padding: 0.75rem; font-size: 0.9rem;">
+              Valider et afficher l'adresse email
+            </button>
+          </div>
+
+          <!-- Step 2: Result (Contact Email) -->
+          <div id="encart-step-result" class="hidden">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem; color: #10b981; font-weight: 700; font-size: 1rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <span>Vérification réussie</span>
+            </div>
+
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 1rem; margin-bottom: 1rem;">
+              <p style="font-size: 0.85rem; color: #e2e8f0; margin-bottom: 0.35rem;">Envoyez un mail à :</p>
+              <a href="mailto:contact@tdconnect.fr" style="color: #38bdf8; font-size: 1.1rem; font-weight: 700; text-decoration: underline;">contact@tdconnect.fr</a>
+            </div>
+
+            <button type="button" onclick="window.toggleContactEncart && window.toggleContactEncart();" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #ffffff; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.82rem; cursor: pointer;">
+              Fermer l'encart
+            </button>
+          </div>
+
+        </div>
       </footer>
     </div>
 
@@ -926,7 +1054,7 @@
           <div class="form-group">
             <label for="login-username">Identifiant (8 caractères)</label>
             <div class="input-wrapper">
-              <input type="text" id="login-username" maxlength="8" placeholder="Ex: superadm" required />
+              <input type="text" id="login-username" maxlength="8" placeholder="Ex: identifiant" required />
               <span class="focus-border"></span>
             </div>
           </div>
@@ -943,9 +1071,70 @@
           <button type="submit" id="btn-submit-login" class="btn-submit-full">
             Se connecter
           </button>
-          <p style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
+          <div style="margin-top: 0.75rem; text-align: center;">
+            <button type="button" id="btn-forgot-password" style="background: none; border: none; color: #818cf8; font-size: 0.82rem; cursor: pointer; text-decoration: underline; padding: 0;">Mot de passe oublié ?</button>
+          </div>
+          <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
             Pas encore de compte ? <a href="#" id="link-goto-register" style="color: #818cf8; text-decoration: none; font-weight: 600;">S'inscrire</a>
           </p>
+        </form>
+      </div>
+    </div>
+
+    <!-- FORGOT PASSWORD MODAL -->
+    <div id="forgot-password-modal" class="modal-overlay hidden">
+      <div class="modal-card glass-panel">
+        <button type="button" class="btn-close-modal" id="btn-close-forgot">&times;</button>
+        <div class="modal-header">
+          <h3>Mot de passe oublié</h3>
+          <p>Entrez votre adresse email pour recevoir un lien de réinitialisation</p>
+        </div>
+        <form id="forgot-password-form" autocomplete="off" onsubmit="event.preventDefault();">
+          <div class="form-group">
+            <label for="forgot-email">Adresse email</label>
+            <div class="input-wrapper">
+              <input type="email" id="forgot-email" placeholder="Ex: email@exemple.com" required />
+              <span class="focus-border"></span>
+            </div>
+          </div>
+          <div id="forgot-msg" class="form-msg"></div>
+          <button type="submit" class="btn-submit-full">Envoyer le lien</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- RESET PASSWORD MODAL -->
+    <div id="reset-password-modal" class="modal-overlay hidden">
+      <div class="modal-card glass-panel">
+        <button type="button" class="btn-close-modal" id="btn-close-reset">&times;</button>
+        <div class="modal-header">
+          <h3>Nouveau mot de passe</h3>
+          <p>Choisissez un nouveau mot de passe pour votre compte</p>
+        </div>
+        
+        <!-- Target Account Information Box -->
+        <div id="reset-account-info" class="hidden" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; text-align: left;">
+          <div style="font-weight: 700; color: #818cf8; margin-bottom: 0.35rem;">Compte concerné par la modification :</div>
+          <div style="color: var(--text-secondary);">Identifiant : <strong id="reset-info-id" style="font-family: monospace; font-size: 0.95rem; color: #ffffff; background: rgba(255,255,255,0.1); padding: 0.1rem 0.4rem; border-radius: 4px;">-</strong></div>
+          <div style="color: var(--text-secondary); margin-top: 0.25rem;">Titulaire : <span id="reset-info-name" style="font-weight: 600; color: #ffffff;">-</span></div>
+        </div>
+        <form id="reset-password-form" autocomplete="off" onsubmit="event.preventDefault();">
+          <div class="form-group">
+            <label for="reset-password-input">Nouveau mot de passe</label>
+            <div class="input-wrapper">
+              <input type="password" id="reset-password-input" placeholder="6 caractères minimum" required minlength="6" />
+              <span class="focus-border"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="reset-confirm-input">Confirmer le mot de passe</label>
+            <div class="input-wrapper">
+              <input type="password" id="reset-confirm-input" placeholder="Identique au mot de passe" required minlength="6" />
+              <span class="focus-border"></span>
+            </div>
+          </div>
+          <div id="reset-msg" class="form-msg"></div>
+          <button type="submit" class="btn-submit-full">Enregistrer le mot de passe</button>
         </form>
       </div>
     </div>
@@ -976,6 +1165,13 @@
             </div>
           </div>
           <div class="form-group" style="display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1rem; text-align: left;">
+            <label for="my-acc-id">Identifiant (Non modifiable)</label>
+            <div class="input-wrapper">
+              <input type="text" id="my-acc-id" readonly style="opacity: 0.7; cursor: not-allowed; background: rgba(15, 23, 42, 0.4);" />
+              <span class="focus-border"></span>
+            </div>
+          </div>
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1rem; text-align: left;">
             <label for="my-acc-email">Adresse e-mail</label>
             <div class="input-wrapper">
               <input type="email" id="my-acc-email" required />
@@ -983,9 +1179,16 @@
             </div>
           </div>
           <div class="form-group" style="display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1rem; text-align: left;">
-            <label for="my-acc-password">Nouveau mot de passe (laisser vide pour ne pas changer)</label>
+            <label for="my-acc-password" id="my-acc-password-label">Nouveau mot de passe (laisser vide pour ne pas changer)</label>
             <div class="input-wrapper">
               <input type="password" id="my-acc-password" placeholder="••••••••" />
+              <span class="focus-border"></span>
+            </div>
+          </div>
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1rem; text-align: left;">
+            <label for="my-acc-confirm-password">Confirmer le nouveau mot de passe</label>
+            <div class="input-wrapper">
+              <input type="password" id="my-acc-confirm-password" placeholder="••••••••" />
               <span class="focus-border"></span>
             </div>
           </div>
@@ -1000,7 +1203,42 @@
           </button>
         </form>
       </div>
-    </div>
+    <!-- Encart Contact Controller Global Script -->
+    <script>
+      window.toggleContactEncart = function() {
+        var encart = document.getElementById('footer-contact-encart');
+        if (encart) {
+          var isHidden = encart.classList.contains('hidden');
+          if (isHidden) {
+            encart.classList.remove('hidden');
+            var s1 = document.getElementById('encart-step-verify');
+            var s2 = document.getElementById('encart-step-result');
+            var chk = document.getElementById('chk-encart-human');
+            var err = document.getElementById('encart-error-msg');
+            if (s1) s1.classList.remove('hidden');
+            if (s2) s2.classList.add('hidden');
+            if (chk) chk.checked = false;
+            if (err) err.classList.add('hidden');
+          } else {
+            encart.classList.add('hidden');
+          }
+        }
+      };
+
+      window.submitEncartCaptcha = function() {
+        var chk = document.getElementById('chk-encart-human');
+        var err = document.getElementById('encart-error-msg');
+        var s1 = document.getElementById('encart-step-verify');
+        var s2 = document.getElementById('encart-step-result');
+        if (chk && chk.checked) {
+          if (err) err.classList.add('hidden');
+          if (s1) s1.classList.add('hidden');
+          if (s2) s2.classList.remove('hidden');
+        } else {
+          if (err) err.classList.remove('hidden');
+        }
+      };
+    </script>
 
     <!-- Main JS Application script module -->
     <script type="module" src="/src/main.js"></script>

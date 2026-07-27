@@ -23,5 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
-# Database
-database.sqlite*
+# Environment variables (contain secrets)
+.env
+
+# SQLite databases
+*.sqlite*

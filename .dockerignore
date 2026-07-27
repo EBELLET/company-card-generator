@@ -1,6 +1,6 @@
 node_modules
 dist
-database.sqlite
+.env
 .git
 .gitignore
 Dockerfile

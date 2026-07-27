@@ -1,5 +1,5 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+require('dotenv').config();
+const mysql = require('mysql2/promise');
 const crypto = require('crypto');
 
 let resolveDbReady;
@@ -7,135 +7,168 @@ const dbReady = new Promise((resolve) => {
   resolveDbReady = resolve;
 });
 
-const dbPath = path.resolve(__dirname, '../database.sqlite');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Erreur lors de la connexion à SQLite:', err.message);
-  } else {
-    console.log('Connecté à la base de données SQLite à', dbPath);
-    // CRITICAL: Enable foreign key constraints in SQLite for ON DELETE CASCADE to work
-    db.run("PRAGMA foreign_keys = ON;", (pragmaErr) => {
-      if (pragmaErr) console.error("Erreur d'activation des Foreign Keys:", pragmaErr.message);
-      else console.log("Foreign Keys SQLite activées.");
+let pool;
+
+async function connectAndInitialize() {
+  try {
+    const host = process.env.DB_HOST || '127.0.0.1';
+    const port = parseInt(process.env.DB_PORT || '3306', 10);
+    const user = process.env.DB_USER || 'root';
+    const password = process.env.DB_PASSWORD || 'rootpassword';
+    const dbName = process.env.DB_NAME || 'company_card_generator';
+
+    console.log(`Connexion à MySQL (${host}:${port}) pour vérification de la base de données...`);
+    
+    // 1. Create a connection without selecting database to check/create it
+    const tempConn = await mysql.createConnection({
+      host,
+      port,
+      user,
+      password
     });
-    // OPTIMIZATION: Enable WAL mode for concurrent read/write support
-    db.run("PRAGMA journal_mode = WAL;", (pragmaErr) => {
-      if (pragmaErr) console.error("Erreur d'activation du mode WAL:", pragmaErr.message);
-      else console.log("Mode WAL SQLite activé.");
+    
+    await tempConn.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
+    await tempConn.end();
+    console.log(`Base de données MySQL "${dbName}" créée ou déjà existante.`);
+
+    // 2. Initialize connection pool with database selected
+    pool = mysql.createPool({
+      host,
+      port,
+      user,
+      password,
+      database: dbName,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0
     });
-    // OPTIMIZATION: Set busy timeout to prevent SQLITE_BUSY errors
-    db.run("PRAGMA busy_timeout = 5000;", (pragmaErr) => {
-      if (pragmaErr) console.error("Erreur de configuration busy_timeout:", pragmaErr.message);
-      else console.log("SQLite busy_timeout configuré à 5000ms.");
-    });
-    initializeDatabase();
+
+    console.log('Connecté à la base de données MySQL.');
+    
+    // 3. Initialize database tables
+    await initializeDatabase();
+    
+    resolveDbReady();
+  } catch (err) {
+    console.error('Erreur d\'initialisation MySQL :', err.message);
+    console.error('Assurez-vous que votre serveur MySQL est démarré et accessible avec les identifiants fournis dans le fichier .env.');
+    process.exit(1);
   }
-});
-
-function initializeDatabase() {
-  db.serialize(() => {
-    // 1. Create company_info table with Auto-increment ID
-    db.run(`
-      CREATE TABLE IF NOT EXISTS company_info (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        domain TEXT,
-        address TEXT,
-        zip TEXT,
-        city TEXT,
-        country TEXT,
-        logo_custom_url TEXT,
-        theme TEXT DEFAULT 'theme-glass',
-        font TEXT DEFAULT 'font-outfit',
-        accent_color TEXT DEFAULT '#6366f1',
-        logo_size INTEGER DEFAULT 72,
-        button_style TEXT DEFAULT 'rectangle',
-        avatar_size INTEGER DEFAULT 100,
-        show_name_under_logo INTEGER DEFAULT 1,
-        show_tdconnect_message INTEGER DEFAULT 0,
-        tdconnect_message TEXT DEFAULT ''
-      )
-    `);
-
-    // 2. Create collaborators table with relation to company_info and photo alignment options
-    db.run(`
-      CREATE TABLE IF NOT EXISTS collaborators (
-        id TEXT PRIMARY KEY,
-        company_id INTEGER NOT NULL,
-        first_name TEXT NOT NULL,
-        last_name TEXT NOT NULL,
-        civility TEXT,
-        role TEXT NOT NULL,
-        phone TEXT NOT NULL,
-        email TEXT NOT NULL,
-        address TEXT,
-        photo_url TEXT,
-        photo_zoom REAL DEFAULT 1.0,
-        photo_x INTEGER DEFAULT 50,
-        photo_y INTEGER DEFAULT 50,
-        phone_mobile TEXT,
-        phone_work TEXT,
-        phone_fax TEXT,
-        phone_default TEXT DEFAULT 'mobile',
-        photo_click_url TEXT,
-        is_active INTEGER DEFAULT 1,
-        custom_slug TEXT,
-        avatar_size INTEGER DEFAULT 100,
-        FOREIGN KEY(company_id) REFERENCES company_info(id) ON DELETE CASCADE
-      )
-    `, (err) => {
-      if (err) {
-        console.error("Erreur d'initialisation de la table des collaborateurs:", err.message);
-      } else {
-        console.log("Schéma de la base SQLite initialisé avec succès.");
-      }
-      
-      // Perform dynamic migrations if database already existed but didn't have these columns
-      db.run("ALTER TABLE company_info ADD COLUMN logo_size INTEGER DEFAULT 48", () => {});
-      db.run("ALTER TABLE company_info ADD COLUMN button_style TEXT DEFAULT 'rectangle'", () => {});
-      db.run("ALTER TABLE company_info ADD COLUMN avatar_size INTEGER DEFAULT 100", () => {});
-      db.run("ALTER TABLE company_info ADD COLUMN show_name_under_logo INTEGER DEFAULT 1", () => {});
-      db.run("ALTER TABLE company_info ADD COLUMN show_tdconnect_message INTEGER DEFAULT 0", () => {});
-      db.run("ALTER TABLE company_info ADD COLUMN tdconnect_message TEXT DEFAULT ''", () => {});
-      db.run("ALTER TABLE collaborators ADD COLUMN phone_mobile TEXT", () => {});
-      db.run("ALTER TABLE collaborators ADD COLUMN phone_work TEXT", () => {});
-      db.run("ALTER TABLE collaborators ADD COLUMN phone_fax TEXT", () => {});
-      db.run("ALTER TABLE collaborators ADD COLUMN phone_default TEXT DEFAULT 'mobile'", () => {});
-      db.run("ALTER TABLE collaborators ADD COLUMN photo_click_url TEXT", () => {});
-      db.run("ALTER TABLE collaborators ADD COLUMN is_active INTEGER DEFAULT 1", () => {});
-      db.run("ALTER TABLE collaborators ADD COLUMN custom_slug TEXT", () => {});
-      db.run("ALTER TABLE collaborators ADD COLUMN avatar_size INTEGER DEFAULT 100", () => {});
-
-      db.run(`
-        CREATE TABLE IF NOT EXISTS users (
-          id TEXT PRIMARY KEY,
-          password_hash TEXT NOT NULL,
-          first_name TEXT NOT NULL,
-          last_name TEXT NOT NULL,
-          email TEXT NOT NULL,
-          role TEXT CHECK(role IN ('superadmin', 'admin')) DEFAULT 'admin'
-        )
-      `, () => {
-        db.run(`
-          CREATE TABLE IF NOT EXISTS user_companies (
-            user_id TEXT NOT NULL,
-            company_id INTEGER NOT NULL,
-            PRIMARY KEY (user_id, company_id),
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY(company_id) REFERENCES company_info(id) ON DELETE CASCADE
-          )
-        `, async () => {
-          try {
-            await seedSuperAdmin();
-          } catch (seedErr) {
-            console.error("Erreur de seeding du Super Admin:", seedErr.message);
-          }
-          resolveDbReady();
-        });
-      });
-    });
-  });
 }
+
+async function initializeDatabase() {
+  // 1. Create company_info table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS company_info (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      domain VARCHAR(255),
+      address TEXT,
+      zip VARCHAR(20),
+      city VARCHAR(100),
+      country VARCHAR(100),
+      logo_custom_url LONGTEXT,
+      theme VARCHAR(50) DEFAULT 'theme-glass',
+      font VARCHAR(50) DEFAULT 'font-outfit',
+      accent_color VARCHAR(7) DEFAULT '#6366f1',
+      logo_size INT DEFAULT 72,
+      button_style VARCHAR(20) DEFAULT 'rectangle',
+      avatar_size INT DEFAULT 100,
+      show_name_under_logo INT DEFAULT 1,
+      show_tdconnect_message INT DEFAULT 0,
+      tdconnect_message TEXT,
+      tdconnect_url TEXT,
+      logo_x INT DEFAULT 0,
+      subscription_end_date DATE NULL,
+      is_subscription_active INT DEFAULT 0
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  try {
+    await pool.query(`ALTER TABLE company_info ADD COLUMN subscription_end_date DATE NULL`);
+  } catch (e) {}
+
+  try {
+    await pool.query(`ALTER TABLE company_info ADD COLUMN is_subscription_active INT DEFAULT 0`);
+  } catch (e) {}
+
+  try {
+    await pool.query(`ALTER TABLE company_info ADD COLUMN tdconnect_url TEXT`);
+  } catch (e) {}
+
+  // 2. Create collaborators table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS collaborators (
+      id VARCHAR(50) PRIMARY KEY,
+      company_id INT NOT NULL,
+      first_name VARCHAR(100) NOT NULL,
+      last_name VARCHAR(100) NOT NULL,
+      civility VARCHAR(20),
+      role VARCHAR(150) NOT NULL,
+      phone VARCHAR(50) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      address TEXT,
+      photo_url LONGTEXT,
+      photo_zoom DOUBLE DEFAULT 1.0,
+      photo_x INT DEFAULT 50,
+      photo_y INT DEFAULT 50,
+      phone_mobile VARCHAR(50),
+      phone_work VARCHAR(50),
+      phone_fax VARCHAR(50),
+      phone_default VARCHAR(20) DEFAULT 'mobile',
+      photo_click_url TEXT,
+      is_active INT DEFAULT 1,
+      custom_slug VARCHAR(100),
+      avatar_size INT DEFAULT 100,
+      connection_count INT DEFAULT 0,
+      FOREIGN KEY (company_id) REFERENCES company_info(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  try {
+    await pool.query(`ALTER TABLE collaborators ADD COLUMN connection_count INT DEFAULT 0`);
+  } catch (e) {}
+
+  // 3. Create users table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id VARCHAR(50) PRIMARY KEY,
+      password_hash VARCHAR(255) NOT NULL,
+      first_name VARCHAR(100) NOT NULL,
+      last_name VARCHAR(100) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      role VARCHAR(50) DEFAULT 'admin',
+      is_temp_password INT DEFAULT 0
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  // 4. Create user_companies table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_companies (
+      user_id VARCHAR(50) NOT NULL,
+      company_id INT NOT NULL,
+      PRIMARY KEY (user_id, company_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (company_id) REFERENCES company_info(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  // 5. Create password_reset_tokens table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      token VARCHAR(128) PRIMARY KEY,
+      user_id VARCHAR(50) NOT NULL,
+      expires_at DATETIME NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  console.log("Schéma de la base MySQL initialisé avec succès.");
+  await seedSuperAdmin();
+}
+
+// Start MySQL connection and DB initialization loop
+connectAndInitialize();
 
 // --- User Security Helpers ---
 
@@ -164,562 +197,515 @@ const verifyPassword = (password, hash) => {
 // Seed default Super Admin user
 async function seedSuperAdmin() {
   const superAdminId = 'superadm';
-  return new Promise((resolve, reject) => {
-    db.get('SELECT * FROM users WHERE id = ?', [superAdminId], async (err, row) => {
-      if (err) {
-        reject(err);
-      } else if (!row) {
-        try {
-          const passHash = await hashPassword('AdminPass123!');
-          db.run(`
-            INSERT INTO users (id, password_hash, first_name, last_name, email, role)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `, [superAdminId, passHash, 'Super', 'Admin', 'superadmin@example.com', 'superadmin'], (insertErr) => {
-            if (insertErr) {
-              console.error("Erreur de création du Super Admin par défaut:", insertErr.message);
-              reject(insertErr);
-            } else {
-              console.log("Super Admin par défaut ('superadm') créé avec succès.");
-              resolve();
-            }
-          });
-        } catch (hashErr) {
-          reject(hashErr);
-        }
-      } else {
-        resolve();
-      }
-    });
-  });
+  const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [superAdminId]);
+  
+  if (rows.length === 0) {
+    try {
+      const passHash = await hashPassword('AdminPass123!');
+      await pool.query(`
+        INSERT INTO users (id, password_hash, first_name, last_name, email, role)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `, [superAdminId, passHash, 'Super', 'Admin', 'superadmin@example.com', 'superadmin']);
+      console.log("Super Admin par défaut ('superadm') créé avec succès.");
+    } catch (err) {
+      console.error("Erreur lors de la création du Super Admin par défaut:", err.message);
+    }
+  }
+}
+
+// --- Collaborator Mapping Helper ---
+function mapCollaboratorRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    companyId: row.company_id,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    civility: row.civility,
+    role: row.role,
+    phone: row.phone,
+    email: row.email,
+    address: row.address,
+    photoUrl: row.photo_url,
+    photoZoom: row.photo_zoom,
+    photoX: row.photo_x,
+    photoY: row.photo_y,
+    phoneMobile: row.phone_mobile,
+    phoneWork: row.phone_work,
+    phoneFax: row.phone_fax,
+    phoneDefault: row.phone_default,
+    photoClickUrl: row.photo_click_url,
+    isActive: row.is_active,
+    customSlug: row.custom_slug,
+    avatarSize: row.avatar_size,
+    connectionCount: row.connection_count != null ? row.connection_count : 0
+  };
+}
+
+function getOneMonthFromNowDateString() {
+  const d = new Date();
+  d.setMonth(d.getMonth() + 1);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatCompany(row) {
+  if (!row) return null;
+  let subEndDate = null;
+  if (row.subscription_end_date) {
+    if (row.subscription_end_date instanceof Date) {
+      const d = row.subscription_end_date;
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      subEndDate = `${year}-${month}-${day}`;
+    } else {
+      subEndDate = String(row.subscription_end_date).split('T')[0];
+    }
+  }
+  return {
+    ...row,
+    subscription_end_date: subEndDate,
+    subscriptionEndDate: subEndDate,
+    is_subscription_active: row.is_subscription_active != null ? row.is_subscription_active : 0,
+    isSubscriptionActive: row.is_subscription_active != null ? row.is_subscription_active : 0
+  };
 }
 
 // --- Company Info Queries ---
 
-const getCompanies = () => {
-  return new Promise((resolve, reject) => {
-    db.all('SELECT * FROM company_info ORDER BY name ASC', (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
-    });
-  });
+const getCompanies = async () => {
+  const [rows] = await pool.query('SELECT * FROM company_info ORDER BY name ASC');
+  return rows.map(formatCompany);
 };
 
-const getCompanyById = (id) => {
-  return new Promise((resolve, reject) => {
-    db.get('SELECT * FROM company_info WHERE id = ?', [id], (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
+const getCompanyById = async (id) => {
+  const [rows] = await pool.query('SELECT * FROM company_info WHERE id = ?', [id]);
+  return formatCompany(rows[0]) || null;
 };
 
-const addCompany = (c) => {
-  return new Promise((resolve, reject) => {
-    db.run(`
-      INSERT INTO company_info (name, domain, address, zip, city, country, logo_custom_url, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
-      c.name,
-      c.domain || '',
-      c.address || '',
-      c.zip || '',
-      c.city || '',
-      c.country || '',
-      c.logo_custom_url || '',
-      c.theme || 'theme-glass',
-      c.font || 'font-outfit',
-      c.accent_color || '#6366f1',
-      c.logo_size !== undefined ? c.logo_size : 72,
-      c.button_style || 'rectangle',
-      c.avatar_size !== undefined ? c.avatar_size : 100,
-      c.show_name_under_logo !== undefined ? c.show_name_under_logo : 1,
-      c.show_tdconnect_message !== undefined ? c.show_tdconnect_message : 0,
-      c.tdconnect_message || ''
-    ], function(err) {
-      if (err) reject(err);
-      else resolve({ id: this.lastID, ...c });
-    });
-  });
+const addCompany = async (c) => {
+  const trimmedName = c.name.trim();
+  const trimmedDomain = c.domain ? c.domain.trim().toLowerCase() : '';
+  let subEndDate = c.subscription_end_date || c.subscriptionEndDate;
+  if (!subEndDate) {
+    subEndDate = getOneMonthFromNowDateString();
+  }
+
+  let existingRows = [];
+  if (trimmedDomain) {
+    [existingRows] = await pool.query(
+      'SELECT * FROM company_info WHERE LOWER(name) = LOWER(?) OR (domain IS NOT NULL AND domain != "" AND LOWER(domain) = LOWER(?)) LIMIT 1',
+      [trimmedName, trimmedDomain]
+    );
+  } else {
+    [existingRows] = await pool.query(
+      'SELECT * FROM company_info WHERE LOWER(name) = LOWER(?) LIMIT 1',
+      [trimmedName]
+    );
+  }
+
+  if (existingRows.length > 0) {
+    return formatCompany(existingRows[0]);
+  }
+
+  const isSubActiveVal = c.is_subscription_active !== undefined ? (c.is_subscription_active ? 1 : 0) : (c.isSubscriptionActive !== undefined ? (c.isSubscriptionActive ? 1 : 0) : 0);
+
+  const [result] = await pool.query(`
+    INSERT INTO company_info (
+      name, domain, address, zip, city, country, logo_custom_url,
+      theme, font, accent_color, logo_size, button_style,
+      avatar_size, show_name_under_logo, show_tdconnect_message,
+      tdconnect_message, tdconnect_url, logo_x, subscription_end_date, is_subscription_active
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    trimmedName,
+    trimmedDomain,
+    c.address || '',
+    c.zip || '',
+    c.city || '',
+    c.country || '',
+    c.logo_custom_url || '',
+    c.theme || 'theme-glass',
+    c.font || 'font-outfit',
+    c.accent_color || '#6366f1',
+    c.logo_size !== undefined ? c.logo_size : 72,
+    c.button_style || 'rectangle',
+    c.avatar_size !== undefined ? c.avatar_size : 100,
+    c.show_name_under_logo !== undefined ? c.show_name_under_logo : 1,
+    c.show_tdconnect_message !== undefined ? c.show_tdconnect_message : 0,
+    c.tdconnect_message || '',
+    c.tdconnect_url || c.tdconnectUrl || '',
+    c.logo_x !== undefined ? c.logo_x : 0,
+    subEndDate || null,
+    isSubActiveVal
+  ]);
+  return getCompanyById(result.insertId);
 };
 
-const updateCompany = (id, c) => {
-  return new Promise((resolve, reject) => {
-    db.run(`
-      UPDATE company_info SET
-        name = ?,
-        domain = ?,
-        address = ?,
-        zip = ?,
-        city = ?,
-        country = ?,
-        logo_custom_url = ?,
-        theme = ?,
-        font = ?,
-        accent_color = ?,
-        logo_size = ?,
-        button_style = ?,
-        avatar_size = ?,
-        show_name_under_logo = ?,
-        show_tdconnect_message = ?,
-        tdconnect_message = ?
-      WHERE id = ?
-    `, [
-      c.name,
-      c.domain,
-      c.address,
-      c.zip,
-      c.city,
-      c.country,
-      c.logo_custom_url,
-      c.theme,
-      c.font,
-      c.accent_color,
-      c.logo_size !== undefined ? c.logo_size : 72,
-      c.button_style || 'rectangle',
-      c.avatar_size !== undefined ? c.avatar_size : 100,
-      c.show_name_under_logo !== undefined ? c.show_name_under_logo : 1,
-      c.show_tdconnect_message !== undefined ? c.show_tdconnect_message : 0,
-      c.tdconnect_message || '',
-      id
-    ], function(err) {
-      if (err) reject(err);
-      else resolve({ id, ...c });
-    });
-  });
+const updateCompany = async (id, c) => {
+  let subEndDate = null;
+  if (c.subscription_end_date !== undefined) {
+    subEndDate = c.subscription_end_date || null;
+  } else if (c.subscriptionEndDate !== undefined) {
+    subEndDate = c.subscriptionEndDate || null;
+  }
+
+  const isSubActiveVal = c.is_subscription_active !== undefined ? (c.is_subscription_active ? 1 : 0) : (c.isSubscriptionActive !== undefined ? (c.isSubscriptionActive ? 1 : 0) : 0);
+
+  await pool.query(`
+    UPDATE company_info SET
+      name = ?,
+      domain = ?,
+      address = ?,
+      zip = ?,
+      city = ?,
+      country = ?,
+      logo_custom_url = ?,
+      theme = ?,
+      font = ?,
+      accent_color = ?,
+      logo_size = ?,
+      button_style = ?,
+      avatar_size = ?,
+      show_name_under_logo = ?,
+      show_tdconnect_message = ?,
+      tdconnect_message = ?,
+      tdconnect_url = ?,
+      logo_x = ?,
+      subscription_end_date = ?,
+      is_subscription_active = ?
+    WHERE id = ?
+  `, [
+    c.name,
+    c.domain || '',
+    c.address || '',
+    c.zip || '',
+    c.city || '',
+    c.country || '',
+    c.logo_custom_url || '',
+    c.theme || 'theme-glass',
+    c.font || 'font-outfit',
+    c.accent_color || '#6366f1',
+    c.logo_size !== undefined ? c.logo_size : 72,
+    c.button_style || 'rectangle',
+    c.avatar_size !== undefined ? c.avatar_size : 100,
+    c.show_name_under_logo !== undefined ? c.show_name_under_logo : 1,
+    c.show_tdconnect_message !== undefined ? c.show_tdconnect_message : 0,
+    c.tdconnect_message || '',
+    c.tdconnect_url !== undefined ? c.tdconnect_url : (c.tdconnectUrl !== undefined ? c.tdconnectUrl : ''),
+    c.logo_x !== undefined ? c.logo_x : 0,
+    subEndDate || null,
+    isSubActiveVal,
+    id
+  ]);
+  return getCompanyById(id);
 };
 
-const deleteCompany = (id) => {
-  return new Promise((resolve, reject) => {
-    db.run('DELETE FROM company_info WHERE id = ?', [id], function(err) {
-      if (err) reject(err);
-      else resolve({ id });
-    });
-  });
+const deleteCompany = async (id) => {
+  await pool.query('DELETE FROM company_info WHERE id = ?', [id]);
+  return { id };
 };
 
-// --- Collaborators Queries ---
+// --- Collaborator Management Queries ---
 
-const getCollaboratorsForCompany = (companyId) => {
-  return new Promise((resolve, reject) => {
-    db.all('SELECT * FROM collaborators WHERE company_id = ? ORDER BY last_name ASC, first_name ASC', [companyId], (err, rows) => {
-      if (err) reject(err);
-      else {
-        const mapped = rows.map(r => ({
-          id: r.id,
-          companyId: r.company_id,
-          firstName: r.first_name,
-          lastName: r.last_name,
-          civility: r.civility,
-          role: r.role,
-          phone: r.phone,
-          email: r.email,
-          address: r.address,
-          photoUrl: r.photo_url,
-          photoZoom: r.photo_zoom,
-          photoX: r.photo_x,
-          photoY: r.photo_y,
-          phoneMobile: r.phone_mobile,
-          phoneWork: r.phone_work,
-          phoneFax: r.phone_fax,
-          phoneDefault: r.phone_default,
-          photoClickUrl: r.photo_click_url,
-          isActive: r.is_active,
-          customSlug: r.custom_slug,
-          avatarSize: r.avatar_size
-        }));
-        resolve(mapped);
-      }
-    });
-  });
+const getCollaboratorsForCompany = async (companyId) => {
+  const [rows] = await pool.query('SELECT * FROM collaborators WHERE company_id = ? ORDER BY last_name ASC, first_name ASC', [companyId]);
+  return rows.map(mapCollaboratorRow);
 };
 
-const getCollaboratorById = (id) => {
-  return new Promise((resolve, reject) => {
-    db.get('SELECT * FROM collaborators WHERE id = ?', [id], (err, row) => {
-      if (err) reject(err);
-      else if (!row) resolve(null);
-      else {
-        resolve({
-          id: row.id,
-          companyId: row.company_id,
-          firstName: row.first_name,
-          lastName: row.last_name,
-          civility: row.civility,
-          role: row.role,
-          phone: row.phone,
-          email: row.email,
-          address: row.address,
-          photoUrl: row.photo_url,
-          photoZoom: row.photo_zoom,
-          photoX: row.photo_x,
-          photoY: row.photo_y,
-          phoneMobile: row.phone_mobile,
-          phoneWork: row.phone_work,
-          phoneFax: row.phone_fax,
-          phoneDefault: row.phone_default,
-          photoClickUrl: row.photo_click_url,
-          isActive: row.is_active,
-          customSlug: row.custom_slug,
-          avatarSize: row.avatar_size
-        });
-      }
-    });
-  });
+const getCollaboratorById = async (id) => {
+  const [rows] = await pool.query('SELECT * FROM collaborators WHERE id = ?', [id]);
+  return mapCollaboratorRow(rows[0]) || null;
 };
 
-const addCollaborator = (c) => {
-  return new Promise((resolve, reject) => {
-    db.run(`
-      INSERT INTO collaborators (id, company_id, first_name, last_name, civility, role, phone, email, address, photo_url, photo_zoom, photo_x, photo_y, phone_mobile, phone_work, phone_fax, phone_default, photo_click_url, is_active, custom_slug, avatar_size)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
-      c.id, 
-      c.companyId, 
-      c.firstName, 
-      c.lastName, 
-      c.civility || '', 
-      c.role, 
-      c.phone || '', 
-      c.email, 
-      c.address || '', 
-      c.photoUrl || '',
-      c.photoZoom != null ? c.photoZoom : 1.0,
-      c.photoX != null ? c.photoX : 50,
-      c.photoY != null ? c.photoY : 50,
-      c.phoneMobile || '',
-      c.phoneWork || '',
-      c.phoneFax || '',
-      c.phoneDefault || 'mobile',
-      c.photoClickUrl || '',
-      c.isActive !== false ? 1 : 0,
-      c.customSlug || '',
-      c.avatarSize != null ? c.avatarSize : 100
-    ], function(err) {
-      if (err) reject(err);
-      else resolve(c);
-    });
-  });
+const getCollaboratorBySlug = async (slug) => {
+  const [rows] = await pool.query('SELECT * FROM collaborators WHERE custom_slug = ?', [slug]);
+  return mapCollaboratorRow(rows[0]) || null;
 };
 
-const updateCollaborator = (c) => {
-  return new Promise((resolve, reject) => {
-    db.run(`
-      UPDATE collaborators SET
-        company_id = ?,
-        first_name = ?,
-        last_name = ?,
-        civility = ?,
-        role = ?,
-        phone = ?,
-        email = ?,
-        address = ?,
-        photo_url = ?,
-        photo_zoom = ?,
-        photo_x = ?,
-        photo_y = ?,
-        phone_mobile = ?,
-        phone_work = ?,
-        phone_fax = ?,
-        phone_default = ?,
-        photo_click_url = ?,
-        is_active = ?,
-        custom_slug = ?,
-        avatar_size = ?
-      WHERE id = ?
-    `, [
-      c.companyId, 
-      c.firstName, 
-      c.lastName, 
-      c.civility || '', 
-      c.role, 
-      c.phone || '', 
-      c.email, 
-      c.address || '', 
-      c.photoUrl || '',
-      c.photoZoom != null ? c.photoZoom : 1.0,
-      c.photoX != null ? c.photoX : 50,
-      c.photoY != null ? c.photoY : 50,
-      c.phoneMobile || '',
-      c.phoneWork || '',
-      c.phoneFax || '',
-      c.phoneDefault || 'mobile',
-      c.photoClickUrl || '',
-      c.isActive !== false ? 1 : 0,
-      c.customSlug || '',
-      c.avatarSize != null ? c.avatarSize : 100,
-      c.id
-    ], function(err) {
-      if (err) reject(err);
-      else resolve(c);
-    });
-  });
+const addCollaborator = async (c) => {
+  const connectionCountVal = c.connectionCount != null ? parseInt(c.connectionCount, 10) : (c.connection_count != null ? parseInt(c.connection_count, 10) : 0);
+  await pool.query(`
+    INSERT INTO collaborators (
+      id, company_id, first_name, last_name, civility, role, phone, email, address,
+      photo_url, photo_zoom, photo_x, photo_y, phone_mobile, phone_work, phone_fax,
+      phone_default, photo_click_url, is_active, custom_slug, avatar_size, connection_count
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    c.id,
+    c.companyId,
+    c.firstName,
+    c.lastName,
+    c.civility || '',
+    c.role || '',
+    c.phone || '',
+    c.email || '',
+    c.address || '',
+    c.photoUrl || '',
+    c.photoZoom != null ? c.photoZoom : 1.0,
+    c.photoX != null ? c.photoX : 50,
+    c.photoY != null ? c.photoY : 50,
+    c.phoneMobile || '',
+    c.phoneWork || '',
+    c.phoneFax || '',
+    c.phoneDefault || 'mobile',
+    c.photoClickUrl || '',
+    (c.isActive === 0 || c.isActive === false || c.is_active === 0 || c.is_active === false) ? 0 : 1,
+    c.customSlug || '',
+    c.avatarSize != null ? c.avatarSize : 100,
+    connectionCountVal
+  ]);
+  return { ...c, connectionCount: connectionCountVal };
 };
 
-const getCollaboratorBySlug = (slug) => {
-  return new Promise((resolve, reject) => {
-    db.get('SELECT * FROM collaborators WHERE custom_slug = ?', [slug], (err, row) => {
-      if (err) reject(err);
-      else if (!row) resolve(null);
-      else {
-        resolve({
-          id: row.id,
-          companyId: row.company_id,
-          firstName: row.first_name,
-          lastName: row.last_name,
-          civility: row.civility,
-          role: row.role,
-          phone: row.phone,
-          email: row.email,
-          address: row.address,
-          photoUrl: row.photo_url,
-          photoZoom: row.photo_zoom,
-          photoX: row.photo_x,
-          photoY: row.photo_y,
-          phoneMobile: row.phone_mobile,
-          phoneWork: row.phone_work,
-          phoneFax: row.phone_fax,
-          phoneDefault: row.phone_default,
-          photoClickUrl: row.photo_click_url,
-          isActive: row.is_active,
-          customSlug: row.custom_slug,
-          avatarSize: row.avatar_size
-        });
-      }
-    });
-  });
+const updateCollaborator = async (c) => {
+  const connectionCountVal = c.connectionCount != null ? parseInt(c.connectionCount, 10) : (c.connection_count != null ? parseInt(c.connection_count, 10) : 0);
+  await pool.query(`
+    UPDATE collaborators SET
+      company_id = ?,
+      first_name = ?,
+      last_name = ?,
+      civility = ?,
+      role = ?,
+      phone = ?,
+      email = ?,
+      address = ?,
+      photo_url = ?,
+      photo_zoom = ?,
+      photo_x = ?,
+      photo_y = ?,
+      phone_mobile = ?,
+      phone_work = ?,
+      phone_fax = ?,
+      phone_default = ?,
+      photo_click_url = ?,
+      is_active = ?,
+      custom_slug = ?,
+      avatar_size = ?,
+      connection_count = ?
+    WHERE id = ?
+  `, [
+    c.companyId,
+    c.firstName,
+    c.lastName,
+    c.civility || '',
+    c.role || '',
+    c.phone || '',
+    c.email || '',
+    c.address || '',
+    c.photoUrl || '',
+    c.photoZoom != null ? c.photoZoom : 1.0,
+    c.photoX != null ? c.photoX : 50,
+    c.photoY != null ? c.photoY : 50,
+    c.phoneMobile || '',
+    c.phoneWork || '',
+    c.phoneFax || '',
+    c.phoneDefault || 'mobile',
+    c.photoClickUrl || '',
+    (c.isActive === 0 || c.isActive === false || c.is_active === 0 || c.is_active === false) ? 0 : 1,
+    c.customSlug || '',
+    c.avatarSize != null ? c.avatarSize : 100,
+    connectionCountVal,
+    c.id
+  ]);
+  return { ...c, connectionCount: connectionCountVal };
 };
 
-const deleteCollaborator = (id) => {
-  return new Promise((resolve, reject) => {
-    db.run('DELETE FROM collaborators WHERE id = ?', [id], function(err) {
-      if (err) reject(err);
-      else resolve({ id });
-    });
-  });
+const incrementCollaboratorConnectionCount = async (id) => {
+  try {
+    await pool.query('UPDATE collaborators SET connection_count = connection_count + 1 WHERE id = ?', [id]);
+  } catch (err) {
+    console.error('Erreur lors de l\'incrémentation du compteur de connexions:', err.message);
+  }
+};
+
+const deleteCollaborator = async (id) => {
+  await pool.query('DELETE FROM collaborators WHERE id = ?', [id]);
+  return { id };
 };
 
 // --- User Management Queries ---
 
-const getUserById = (id) => {
-  return new Promise((resolve, reject) => {
-    db.get('SELECT * FROM users WHERE id = ?', [id], (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
+const getUserById = async (id) => {
+  const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
+  return rows[0] || null;
 };
 
-const getUsers = () => {
-  return new Promise((resolve, reject) => {
-    db.all(`
-      SELECT id, first_name, last_name, email, role,
-             (SELECT group_concat(company_id) FROM user_companies WHERE user_id = users.id) as managed_companies
-      FROM users
-      ORDER BY last_name ASC, first_name ASC
-    `, (err, rows) => {
-      if (err) reject(err);
-      else {
-        const mapped = rows.map(r => ({
-          id: r.id,
-          firstName: r.first_name,
-          lastName: r.last_name,
-          email: r.email,
-          role: r.role,
-          managedCompanies: r.managed_companies ? r.managed_companies.split(',').map(Number) : []
-        }));
-        resolve(mapped);
-      }
-    });
+const getUsers = async () => {
+  const [users] = await pool.query('SELECT * FROM users ORDER BY last_name ASC, first_name ASC');
+  const [associations] = await pool.query('SELECT * FROM user_companies');
+  
+  return users.map(user => {
+    const managed = associations
+      .filter(a => a.user_id === user.id)
+      .map(a => a.company_id);
+      
+    return {
+      id: user.id,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      email: user.email,
+      role: user.role,
+      managedCompanies: managed
+    };
   });
 };
 
 const addUser = async (u) => {
-  try {
-    const hash = await hashPassword(u.password);
-    return new Promise((resolve, reject) => {
-      db.run(`
-        INSERT INTO users (id, password_hash, first_name, last_name, email, role)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `, [u.id, hash, u.firstName, u.lastName, u.email, u.role || 'admin'], function(err) {
-        if (err) reject(err);
-        else resolve({ id: u.id, firstName: u.firstName, lastName: u.lastName, email: u.email, role: u.role || 'admin' });
-      });
-    });
-  } catch (err) {
-    return Promise.reject(err);
-  }
+  const hash = await hashPassword(u.password);
+  await pool.query(`
+    INSERT INTO users (id, password_hash, first_name, last_name, email, role)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `, [u.id, hash, u.firstName, u.lastName, u.email, u.role || 'admin']);
+  return { id: u.id, firstName: u.firstName, lastName: u.lastName, email: u.email, role: u.role || 'admin' };
 };
 
-const updateUser = (id, u) => {
-  return new Promise(async (resolve, reject) => {
-    let query = `
-      UPDATE users SET
-        first_name = ?,
-        last_name = ?,
-        email = ?,
-        role = ?
-    `;
-    const params = [u.firstName, u.lastName, u.email, u.role || 'admin'];
+const updateUser = async (id, u) => {
+  let query = `
+    UPDATE users SET
+      first_name = ?,
+      last_name = ?,
+      email = ?,
+      role = ?
+  `;
+  const params = [u.firstName, u.lastName, u.email, u.role || 'admin'];
 
-    if (u.password) {
-      try {
-        const hash = await hashPassword(u.password);
-        query += `, password_hash = ?`;
-        params.push(hash);
-      } catch (hashErr) {
-        return reject(hashErr);
+  if (u.password) {
+    const hash = await hashPassword(u.password);
+    query += `, password_hash = ?, is_temp_password = 0`;
+    params.push(hash);
+  }
+
+  query += ` WHERE id = ?`;
+  params.push(id);
+
+  await pool.query(query, params);
+  return { id, firstName: u.firstName, lastName: u.lastName, email: u.email, role: u.role || 'admin' };
+};
+
+const deleteUser = async (id) => {
+  await pool.query('DELETE FROM users WHERE id = ?', [id]);
+  return { id };
+};
+
+const assignCompaniesToUser = async (userId, companyIds) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    await connection.query('DELETE FROM user_companies WHERE user_id = ?', [userId]);
+    
+    if (companyIds && companyIds.length > 0) {
+      for (const companyId of companyIds) {
+        await connection.query('INSERT INTO user_companies (user_id, company_id) VALUES (?, ?)', [userId, companyId]);
       }
     }
-
-    query += ` WHERE id = ?`;
-    params.push(id);
-
-    db.run(query, params, function(err) {
-      if (err) reject(err);
-      else resolve({ id, firstName: u.firstName, lastName: u.lastName, email: u.email, role: u.role || 'admin' });
-    });
-  });
-};
-
-const deleteUser = (id) => {
-  return new Promise((resolve, reject) => {
-    db.run('DELETE FROM users WHERE id = ?', [id], function(err) {
-      if (err) reject(err);
-      else resolve({ id });
-    });
-  });
-};
-
-const assignCompaniesToUser = (userId, companyIds) => {
-  return new Promise((resolve, reject) => {
-    db.serialize(() => {
-      db.run('DELETE FROM user_companies WHERE user_id = ?', [userId], (err) => {
-        if (err) return reject(err);
-        
-        if (!companyIds || companyIds.length === 0) {
-          return resolve();
-        }
-        
-        const stmt = db.prepare('INSERT INTO user_companies (user_id, company_id) VALUES (?, ?)');
-        companyIds.forEach(cid => {
-          stmt.run(userId, cid);
-        });
-        stmt.finalize((finalizeErr) => {
-          if (finalizeErr) reject(finalizeErr);
-          else resolve();
-        });
-      });
-    });
-  });
+    
+    await connection.commit();
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
 };
 
 const registerUserWithCompany = async (userData, companyData) => {
   const hasCompany = companyData && companyData.name && companyData.name.trim();
-
-  if (hasCompany) {
-    // Check if company already exists (case-insensitive checks)
-    const existingCompany = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT * FROM company_info WHERE LOWER(name) = ? OR (domain IS NOT NULL AND domain != "" AND LOWER(domain) = ?)',
-        [companyData.name.toLowerCase().trim(), companyData.domain ? companyData.domain.toLowerCase().trim() : ''],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
-    if (existingCompany) {
-      throw new Error("L'entreprise (nom ou domaine) existe déjà.");
-    }
-  }
-
-  // Check if user already exists
-  const existingUser = await getUserById(userData.id.trim());
-  if (existingUser) {
-    throw new Error("L'identifiant administrateur est déjà utilisé.");
-  }
-
-  return new Promise((resolve, reject) => {
-    db.serialize(() => {
-      db.run('BEGIN TRANSACTION;');
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    
+    let companyId = null;
+    if (hasCompany) {
+      const trimmedName = companyData.name.trim();
+      const trimmedDomain = companyData.domain ? companyData.domain.trim().toLowerCase() : '';
       
-      if (hasCompany) {
-        // 1. Insert company
-        db.run(`
-          INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message)
-          VALUES (?, ?, 'theme-glass', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 0, '')
-        `, [companyData.name.trim(), companyData.domain ? companyData.domain.trim() : ''], function(companyErr) {
-          if (companyErr) {
-            db.run('ROLLBACK;');
-            return reject(companyErr);
-          }
-          
-          const companyId = this.lastID;
-          
-          // 2. Insert user
-          db.run(`
-            INSERT INTO users (id, password_hash, first_name, last_name, email, role)
-            VALUES (?, ?, ?, ?, ?, 'admin')
-          `, [
-            userData.id.trim(),
-            userData.passwordHash,
-            userData.firstName.trim(),
-            userData.lastName.trim(),
-            userData.email.trim()
-          ], function(userErr) {
-            if (userErr) {
-              db.run('ROLLBACK;');
-              return reject(userErr);
-            }
-            
-            // 3. Insert association
-            db.run(`
-              INSERT INTO user_companies (user_id, company_id)
-              VALUES (?, ?)
-            `, [userData.id.trim(), companyId], function(linkErr) {
-              if (linkErr) {
-                db.run('ROLLBACK;');
-                return reject(linkErr);
-              }
-              
-              db.run('COMMIT;', (commitErr) => {
-                if (commitErr) {
-                  db.run('ROLLBACK;');
-                  return reject(commitErr);
-                }
-                resolve({ companyId, userId: userData.id.trim() });
-              });
-            });
-          });
-        });
+      let existingRows = [];
+      if (trimmedDomain) {
+        [existingRows] = await connection.query(
+          'SELECT id FROM company_info WHERE LOWER(name) = LOWER(?) OR (domain IS NOT NULL AND domain != "" AND LOWER(domain) = LOWER(?)) LIMIT 1',
+          [trimmedName, trimmedDomain]
+        );
       } else {
-        // Just insert user
-        db.run(`
-          INSERT INTO users (id, password_hash, first_name, last_name, email, role)
-          VALUES (?, ?, ?, ?, ?, 'admin')
-        `, [
-          userData.id.trim(),
-          userData.passwordHash,
-          userData.firstName.trim(),
-          userData.lastName.trim(),
-          userData.email.trim()
-        ], function(userErr) {
-          if (userErr) {
-            db.run('ROLLBACK;');
-            return reject(userErr);
-          }
-          
-          db.run('COMMIT;', (commitErr) => {
-            if (commitErr) {
-              db.run('ROLLBACK;');
-              return reject(commitErr);
-            }
-            resolve({ companyId: null, userId: userData.id.trim() });
-          });
-        });
+        [existingRows] = await connection.query(
+          'SELECT id FROM company_info WHERE LOWER(name) = LOWER(?) LIMIT 1',
+          [trimmedName]
+        );
       }
-    });
-  });
+
+      if (existingRows.length > 0) {
+        companyId = existingRows[0].id;
+        console.log(`[DB] Entreprise existante "${trimmedName}" trouvée (ID ${companyId}). Rattachement de l'utilisateur ${userData.id}...`);
+      } else {
+        const defaultSubEnd = getOneMonthFromNowDateString();
+        const [companyResult] = await connection.query(`
+          INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, subscription_end_date)
+          VALUES (?, ?, 'theme-glass', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 0, '', ?)
+        `, [trimmedName, trimmedDomain, defaultSubEnd]);
+        
+        companyId = companyResult.insertId;
+        console.log(`[DB] Nouvelle entreprise "${trimmedName}" créée (ID ${companyId}). Date d'abonnement : ${defaultSubEnd}.`);
+      }
+    }
+    
+    await connection.query(`
+      INSERT INTO users (id, password_hash, first_name, last_name, email, role, is_temp_password)
+      VALUES (?, ?, ?, ?, ?, 'admin', ?)
+    `, [
+      userData.id.trim(),
+      userData.passwordHash,
+      userData.firstName.trim(),
+      userData.lastName.trim(),
+      userData.email.trim(),
+      userData.isTempPassword ? 1 : 0
+    ]);
+    
+    if (companyId) {
+      await connection.query(`
+        INSERT INTO user_companies (user_id, company_id)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE company_id = VALUES(company_id)
+      `, [userData.id.trim(), companyId]);
+    }
+    
+    await connection.commit();
+    return { companyId, userId: userData.id.trim() };
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
+};
+
+// --- Password Reset Token Helpers ---
+
+const createPasswordResetToken = async (userId) => {
+  const crypto = require('crypto');
+  const token = crypto.randomBytes(48).toString('hex');
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  // Invalidate any previous token for this user
+  await pool.query('DELETE FROM password_reset_tokens WHERE user_id = ?', [userId]);
+  await pool.query(
+    'INSERT INTO password_reset_tokens (token, user_id, expires_at) VALUES (?, ?, ?)',
+    [token, userId, expiresAt]
+  );
+  return token;
+};
+
+const getPasswordResetToken = async (token) => {
+  const [rows] = await pool.query(
+    'SELECT * FROM password_reset_tokens WHERE token = ? AND expires_at > NOW()',
+    [token]
+  );
+  return rows[0] || null;
+};
+
+const deletePasswordResetToken = async (token) => {
+  await pool.query('DELETE FROM password_reset_tokens WHERE token = ?', [token]);
 };
 
 module.exports = {
@@ -734,6 +720,7 @@ module.exports = {
   getCollaboratorBySlug,
   addCollaborator,
   updateCollaborator,
+  incrementCollaboratorConnectionCount,
   deleteCollaborator,
   hashPassword,
   verifyPassword,
@@ -743,5 +730,8 @@ module.exports = {
   updateUser,
   deleteUser,
   assignCompaniesToUser,
-  registerUserWithCompany
+  registerUserWithCompany,
+  createPasswordResetToken,
+  getPasswordResetToken,
+  deletePasswordResetToken
 };

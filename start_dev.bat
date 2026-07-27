@@ -6,10 +6,13 @@ echo =======================================================
 echo.
 
 :: Se deplacer dans le repertoire du projet
-cd /d "C:\Users\eric\.gemini\antigravity\scratch\company-card-generator"
+cd /d "%~dp0"
 
 echo [1/2] Lancement du serveur API (Backend sur le port 3000)...
 start "TDConnect - Backend" cmd /k "node server/index.cjs"
+
+echo Attente de 2 secondes pour l'initialisation de la base de donnees et du serveur API...
+timeout /t 2 /nobreak >nul
 
 echo [2/2] Lancement du serveur de developpement (Frontend sur le port 5173)...
 start "TDConnect - Frontend" cmd /k "npm run dev"

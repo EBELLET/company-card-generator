@@ -1,15 +1,35 @@
 version: '3.8'
 
 services:
+  db:
+    image: mysql:8.0
+    container_name: tdconnect-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: company_card_generator
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
   app:
     build: .
     container_name: tdconnect-app
     restart: always
     ports:
-      - "3001:3000" # Expose local port 3001 to access the app on http://localhost:3001
+      - "3000:3000"
+    depends_on:
+      - db
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=company_card_generator
       - JWT_SECRET=RemplissezAvecUneCleSecreteAleatoireEtLongue
-    volumes:
-      - ./database.sqlite:/app/database.sqlite
+
+volumes:
+  mysql-data:

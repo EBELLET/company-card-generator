@@ -3,12 +3,8 @@ import { read, utils, writeFile } from 'xlsx';
 
 document.addEventListener('DOMContentLoaded', () => {
   // --- API Configuration ---
-  const hostname = window.location.hostname;
-  const port = window.location.port;
-  const backendPort = (port && port.startsWith('51')) ? '3000' : port;
-  const baseHost = backendPort ? `${hostname}:${backendPort}` : hostname;
-  const API_BASE = `${window.location.protocol}//${baseHost}/api`;
-  const PUBLIC_URL_BASE = `${window.location.protocol}//${baseHost}`;
+  const API_BASE = '/api';
+  const PUBLIC_URL_BASE = window.location.origin;
 
   // --- Authentication State & Fetch Wrapper ---
   let authToken = localStorage.getItem('tdconnect_token') || '';
@@ -22,10 +18,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const res = await fetch(url, options);
     if (res.status === 401 || res.status === 403) {
       logoutUser();
+      showLoginModal();
       throw new Error("Session expirée ou non autorisée. Veuillez vous reconnecter.");
+    }
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error("Le serveur API (port 3000) n'a pas renvoyé une réponse JSON valide. Assurez-vous que le backend est démarré.");
+    }
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || `Erreur serveur (${res.status})`);
     }
     return res;
   }
+
+  // Fetch Server Network IP to construct local network URLs for QR codes
+  let serverLocalIP = '';
+  async function fetchServerNetworkIP() {
+    try {
+      const res = await apiFetch(`${API_BASE}/network-ip`);
+      const data = await res.json();
+      if (data && data.ip) {
+        serverLocalIP = data.ip;
+        console.log("Adresse IP réseau local du serveur résolue :", serverLocalIP);
+      }
+    } catch (err) {
+      console.warn("Impossible de résoudre l'adresse IP réseau du serveur :", err);
+    }
+  }
+  fetchServerNetworkIP();
 
   // --- DOM Element References ---
   
@@ -68,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const companyAddFormContainer = document.getElementById('company-add-form-container');
   const newCompanyNameInput = document.getElementById('new-company-name');
   const newCompanyDomainInput = document.getElementById('new-company-domain');
+  const newCompanySubscriptionEndInput = document.getElementById('new-company-subscription-end');
   const btnSaveNewCompany = document.getElementById('btn-save-new-company');
   const btnCancelNewCompany = document.getElementById('btn-cancel-new-company');
   
@@ -80,11 +102,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const companyZipInput = document.getElementById('company-zip');
   const companyCityInput = document.getElementById('company-city');
   const companyCountryInput = document.getElementById('company-country');
+  const companySubscriptionEndInput = document.getElementById('company-subscription-end');
+  const companyIsSubscriptionActiveInput = document.getElementById('company-is-subscription-active');
   const companyLogoSizeInput = document.getElementById('company-logo-size');
   const companyLogoSizeVal = document.getElementById('company-logo-size-val');
+  const companyLogoXInput = document.getElementById('company-logo-x');
+  const companyLogoXVal = document.getElementById('company-logo-x-val');
   const companyShowNameInput = document.getElementById('company-show-name');
   const companyShowMessageInput = document.getElementById('company-show-message');
   const companyMessageTextInput = document.getElementById('company-message-text');
+  const companyMessageUrlInput = document.getElementById('company-message-url');
   const companyMessageContainer = document.getElementById('company-message-container');
   
   const cardElement = document.getElementById('virtual-card-preview');
@@ -130,6 +157,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const collabActiveLabel = document.getElementById('collab-active-label');
   const collabCustomSlugInput = document.getElementById('collab-custom-slug');
   const collabSlugWarning = document.getElementById('collab-slug-warning');
+  const collabConnectionCountInput = document.getElementById('collab-connection-count');
+  const collabConnectionCountGroup = document.getElementById('collab-connection-count-group');
+  const collabConnectionCounterDisplay = document.getElementById('collab-connection-counter-display');
+  const collabConnectionCountBadge = document.getElementById('collab-connection-count-badge');
 
   // Collaborator Profile Photo Upload
   const collabPhotoZone = document.getElementById('collab-photo-zone');
@@ -173,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const collabPublicUrl = document.getElementById('collab-public-url');
   const btnCopyUrl = document.getElementById('btn-copy-url');
   const btnExportZip = document.getElementById('btn-export-zip');
+  const collabExportZipWrapper = document.getElementById('collab-export-zip-wrapper');
 
   // Login Modal Elements
   const loginModal = document.getElementById('login-modal');
@@ -181,6 +213,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginUsernameInput = document.getElementById('login-username');
   const loginPasswordInput = document.getElementById('login-password');
   const loginErrorMsg = document.getElementById('login-error');
+  const btnForgotPassword = document.getElementById('btn-forgot-password');
+  const forgotModal = document.getElementById('forgot-password-modal');
+  const forgotForm = document.getElementById('forgot-password-form');
+  const forgotEmailInput = document.getElementById('forgot-email');
+  const forgotMsg = document.getElementById('forgot-msg');
+  const btnCloseForgot = document.getElementById('btn-close-forgot');
+  const resetModal = document.getElementById('reset-password-modal');
+  const resetForm = document.getElementById('reset-password-form');
+  const resetPasswordInput = document.getElementById('reset-password-input');
+  const resetConfirmInput = document.getElementById('reset-confirm-input');
+  const resetMsg = document.getElementById('reset-msg');
+  const btnCloseReset = document.getElementById('btn-close-reset');
 
   // Admin View Elements
   const btnBackToCompanies = document.getElementById('btn-back-to-companies');
@@ -192,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminModeInput = document.getElementById('admin-mode');
   const adminIdInput = document.getElementById('admin-id');
   const adminRoleInput = document.getElementById('admin-role');
+  const adminIsSuperadminInput = document.getElementById('admin-is-superadmin');
   const adminFirstnameInput = document.getElementById('admin-firstname');
   const adminLastnameInput = document.getElementById('admin-lastname');
   const adminEmailInput = document.getElementById('admin-email');
@@ -209,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const regAdminEmailInput = document.getElementById('reg-admin-email');
   const regAdminFirstnameInput = document.getElementById('reg-admin-firstname');
   const regAdminLastnameInput = document.getElementById('reg-admin-lastname');
-  const regAdminPasswordInput = document.getElementById('reg-admin-password');
+  const regAdminPasswordInput = null;
   const regErrorMsg = document.getElementById('register-error');
   const btnCancelRegister = document.getElementById('btn-cancel-register');
   const linkGotoLogin = document.getElementById('link-goto-login');
@@ -223,9 +268,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const myAccLastnameInput = document.getElementById('my-acc-lastname');
   const myAccEmailInput = document.getElementById('my-acc-email');
   const myAccPasswordInput = document.getElementById('my-acc-password');
+  const myAccConfirmPasswordInput = document.getElementById('my-acc-confirm-password');
   const myAccErrorMsg = document.getElementById('my-account-error');
   const btnCancelMyAccount = document.getElementById('btn-cancel-my-account');
   const btnCloseMyAccount = document.getElementById('btn-close-my-account');
+
+  // Contact Captcha Modal Elements
+  const linkTdconnectContact = document.getElementById('link-tdconnect-contact');
+  const contactModal = document.getElementById('contact-modal');
+  const btnCloseContact = document.getElementById('btn-close-contact');
+  const btnCloseContactSuccess = document.getElementById('btn-close-contact-success');
+  const btnSubmitCaptcha = document.getElementById('btn-submit-captcha');
+  const chkHumanVerify = document.getElementById('chk-human-verify');
+  const captchaErrorMsg = document.getElementById('captcha-error-msg');
+  const contactCaptchaStep = document.getElementById('contact-captcha-step');
+  const contactInfoStep = document.getElementById('contact-info-step');
 
   // --- State Variables ---
   let allCompanies = [];
@@ -358,6 +415,10 @@ document.addEventListener('DOMContentLoaded', () => {
         hideLoginModal();
         toggleAppView(true);
         loadCompaniesList();
+        
+        if (currentUser && currentUser.isTempPassword) {
+          showMyAccountModal();
+        }
       } catch (err) {
         loginErrorMsg.textContent = err.message;
         loginErrorMsg.classList.remove('hidden');
@@ -365,15 +426,159 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (btnCtaStart) {
-    btnCtaStart.addEventListener('click', () => {
+  // --- Mot de passe oublié ---
+  if (btnForgotPassword) {
+    btnForgotPassword.addEventListener('click', () => {
+      hideLoginModal();
+      if (forgotModal) {
+        forgotModal.classList.remove('hidden');
+        if (forgotMsg) { forgotMsg.textContent = ''; forgotMsg.className = 'form-msg'; }
+        if (forgotForm) forgotForm.reset();
+        if (forgotEmailInput) forgotEmailInput.focus();
+      }
+    });
+  }
+
+  if (btnCloseForgot) btnCloseForgot.addEventListener('click', () => {
+    if (forgotModal) forgotModal.classList.add('hidden');
+  });
+
+  if (forgotForm) {
+    forgotForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = forgotEmailInput ? forgotEmailInput.value.trim() : '';
+      if (!email) return;
+      const btn = forgotForm.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Envoi...';
+      try {
+        const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        if (forgotMsg) {
+          forgotMsg.textContent = 'Si cette adresse est associée à un compte, un email de réinitialisation vient d\'y être envoyé.';
+          forgotMsg.className = 'form-msg success';
+        }
+        if (forgotForm) forgotForm.reset();
+      } catch (err) {
+        if (forgotMsg) {
+          forgotMsg.textContent = 'Erreur lors de l\'envoi. Veuillez réessayer.';
+          forgotMsg.className = 'form-msg error';
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Envoyer le lien';
+      }
+    });
+  }
+
+  // --- Réinitialisation du mot de passe (via lien email) ---
+  const resetAccountInfo = document.getElementById('reset-account-info');
+  const resetInfoId = document.getElementById('reset-info-id');
+  const resetInfoName = document.getElementById('reset-info-name');
+
+  if (btnCloseReset) btnCloseReset.addEventListener('click', () => {
+    if (resetModal) resetModal.classList.add('hidden');
+  });
+
+  async function openResetModal(token) {
+    if (!resetModal) return;
+    resetModal.classList.remove('hidden');
+    resetModal.dataset.resetToken = token;
+    if (resetMsg) { resetMsg.textContent = 'Vérification du lien en cours...'; resetMsg.className = 'form-msg'; }
+    if (resetForm) { resetForm.reset(); resetForm.style.display = 'block'; }
+    if (resetAccountInfo) resetAccountInfo.classList.add('hidden');
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/verify-reset-token/${token}`);
+      const data = await res.json();
+      if (!res.ok || !data.valid) {
+        throw new Error(data.error || "Ce lien de réinitialisation est invalide ou a expiré.");
+      }
+      if (resetMsg) resetMsg.textContent = '';
+      if (resetInfoId) resetInfoId.textContent = data.userId;
+      if (resetInfoName) resetInfoName.textContent = `${data.firstName} ${data.lastName} (${data.email})`;
+      if (resetAccountInfo) resetAccountInfo.classList.remove('hidden');
+    } catch (err) {
+      if (resetMsg) { resetMsg.textContent = err.message; resetMsg.className = 'form-msg error'; }
+      if (resetForm) resetForm.style.display = 'none';
+    }
+  }
+
+  if (resetForm) {
+    resetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = resetModal ? resetModal.dataset.resetToken : '';
+      const password = resetPasswordInput ? resetPasswordInput.value : '';
+      const confirm = resetConfirmInput ? resetConfirmInput.value : '';
+      if (password.length < 6) {
+        if (resetMsg) { resetMsg.textContent = 'Le mot de passe doit contenir au moins 6 caractères.'; resetMsg.className = 'form-msg error'; }
+        return;
+      }
+      if (password !== confirm) {
+        if (resetMsg) { resetMsg.textContent = 'Les mots de passe ne correspondent pas.'; resetMsg.className = 'form-msg error'; }
+        return;
+      }
+      const btn = resetForm.querySelector('button[type="submit"]');
+      btn.disabled = true; btn.textContent = 'Enregistrement...';
+      try {
+        const res = await fetch(`${API_BASE}/auth/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        if (resetMsg) { resetMsg.textContent = 'Mot de passe réinitialisé avec succès ! Vous pouvez maintenant vous connecter.'; resetMsg.className = 'form-msg success'; }
+        if (resetForm) resetForm.reset();
+        if (resetAccountInfo) resetAccountInfo.classList.add('hidden');
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        setTimeout(() => {
+          if (resetModal) resetModal.classList.add('hidden');
+          showLoginModal();
+        }, 2500);
+      } catch (err) {
+        if (resetMsg) { resetMsg.textContent = err.message || 'Erreur lors de la réinitialisation.'; resetMsg.className = 'form-msg error'; }
+      } finally {
+        btn.disabled = false; btn.textContent = 'Enregistrer le mot de passe';
+      }
+    });
+  }
+
+  // Detect public card URL in path: /card/xxx
+  (function detectPublicCardRoute() {
+    const pathname = window.location.pathname;
+    if (pathname.includes('/card/')) {
+      const cardId = pathname.substring(pathname.lastIndexOf('/card/') + 6);
+      if (cardId) {
+        fetch(`/card/${cardId}?ssr=1`)
+          .then(res => res.text())
+          .then(html => {
+            if (html && (html.includes('<!DOCTYPE html>') || html.includes('card-container'))) {
+              document.open();
+              document.write(html);
+              document.close();
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  })();
+
+
+  const ctaButtons = document.querySelectorAll('#btn-cta-start, .btn-cta-start-trigger');
+  ctaButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
       if (authToken) {
         toggleAppView(true);
       } else {
         showRegisterView();
       }
     });
-  }
+  });
 
   // --- Registration View Toggling & Form Submit Handling ---
   function showRegisterView() {
@@ -430,15 +635,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const email = regAdminEmailInput.value.trim();
       const firstName = regAdminFirstnameInput.value.trim();
       const lastName = regAdminLastnameInput.value.trim();
-      const password = regAdminPasswordInput.value;
 
       if (userId.length !== 8) {
         regErrorMsg.textContent = "L'identifiant doit comporter exactement 8 caractères.";
-        regErrorMsg.classList.remove('hidden');
-        return;
-      }
-      if (password.length < 4) {
-        regErrorMsg.textContent = "Le mot de passe doit comporter au moins 4 caractères.";
         regErrorMsg.classList.remove('hidden');
         return;
       }
@@ -453,8 +652,7 @@ document.addEventListener('DOMContentLoaded', () => {
             userId,
             email,
             firstName,
-            lastName,
-            password
+            lastName
           })
         });
 
@@ -464,15 +662,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const data = await res.json();
-        authToken = data.token;
-        currentUser = data.user;
 
-        localStorage.setItem('tdconnect_token', authToken);
-        localStorage.setItem('tdconnect_user', JSON.stringify(currentUser));
-
-        if (viewRegister) viewRegister.classList.add('hidden');
-        toggleAppView(true);
-        loadCompaniesList();
+        // Redirect user: hide registration view and show login modal prefilled with entered identifier
+        hideRegisterView();
+        showLoginModal();
+        if (loginUsernameInput) {
+          loginUsernameInput.value = userId;
+        }
+        if (loginPasswordInput) {
+          loginPasswordInput.value = '';
+          loginPasswordInput.focus();
+        }
+        if (loginErrorMsg) {
+          loginErrorMsg.textContent = `Compte "${userId}" créé avec succès ! Un e-mail avec votre mot de passe a été envoyé à ${email}.`;
+          loginErrorMsg.className = 'form-msg success';
+          loginErrorMsg.classList.remove('hidden');
+        }
       } catch (err) {
         regErrorMsg.textContent = err.message;
         regErrorMsg.classList.remove('hidden');
@@ -483,13 +688,68 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- My Account Modal Actions & Form Submit Handling ---
   function showMyAccountModal() {
     if (myAccountModal && currentUser) {
+      const myAccIdInput = document.getElementById('my-acc-id');
+      if (myAccIdInput) {
+        myAccIdInput.value = currentUser.id || '';
+      }
       myAccFirstnameInput.value = currentUser.firstName || '';
       myAccLastnameInput.value = currentUser.lastName || '';
       myAccEmailInput.value = currentUser.email || '';
       myAccPasswordInput.value = '';
+      if (myAccConfirmPasswordInput) {
+        myAccConfirmPasswordInput.value = '';
+      }
       myAccErrorMsg.classList.add('hidden');
       myAccountModal.classList.remove('hidden');
       myAccFirstnameInput.focus();
+
+      // Enforce temporary password change
+      const isForce = currentUser.isTempPassword;
+      const btnClose = document.getElementById('btn-close-my-account');
+      const btnCancel = document.getElementById('btn-cancel-my-account');
+      
+      if (isForce) {
+        if (btnClose) btnClose.classList.add('hidden');
+        if (btnCancel) btnCancel.classList.add('hidden');
+        
+        const passLabel = document.getElementById('my-acc-password-label');
+        if (passLabel) {
+          passLabel.textContent = "Nouveau mot de passe (Requis)";
+        }
+        
+        // Show warning message
+        let forceMsg = document.getElementById('my-account-force-msg');
+        if (!forceMsg) {
+          forceMsg = document.createElement('div');
+          forceMsg.id = 'my-account-force-msg';
+          forceMsg.className = 'error-msg-box';
+          forceMsg.style.background = 'rgba(245, 158, 11, 0.12)';
+          forceMsg.style.borderColor = 'rgba(245, 158, 11, 0.25)';
+          forceMsg.style.color = '#f59e0b';
+          forceMsg.style.marginBottom = '1rem';
+          forceMsg.textContent = "Veuillez définir votre mot de passe pour finaliser la création de votre compte.";
+          myAccountForm.insertBefore(forceMsg, myAccountForm.firstChild);
+        } else {
+          forceMsg.classList.remove('hidden');
+        }
+        
+        myAccPasswordInput.required = true;
+        if (myAccConfirmPasswordInput) myAccConfirmPasswordInput.required = true;
+      } else {
+        if (btnClose) btnClose.classList.remove('hidden');
+        if (btnCancel) btnCancel.classList.remove('hidden');
+        
+        const passLabel = document.getElementById('my-acc-password-label');
+        if (passLabel) {
+          passLabel.textContent = "Nouveau mot de passe (laisser vide pour ne pas changer)";
+        }
+        
+        const forceMsg = document.getElementById('my-account-force-msg');
+        if (forceMsg) forceMsg.classList.add('hidden');
+        
+        myAccPasswordInput.required = false;
+        if (myAccConfirmPasswordInput) myAccConfirmPasswordInput.required = false;
+      }
     }
   }
 
@@ -511,6 +771,68 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCloseMyAccount.addEventListener('click', hideMyAccountModal);
   }
 
+  // --- Contact Captcha Modal Actions ---
+  function openContactModal() {
+    const modalEl = document.getElementById('contact-modal') || contactModal;
+    const chkVerifyEl = document.getElementById('chk-human-verify') || chkHumanVerify;
+    const captchaErrMsgEl = document.getElementById('captcha-error-msg') || captchaErrorMsg;
+    const captchaStepEl = document.getElementById('contact-captcha-step') || contactCaptchaStep;
+    const infoStepEl = document.getElementById('contact-info-step') || contactInfoStep;
+
+    if (modalEl) {
+      if (chkVerifyEl) chkVerifyEl.checked = false;
+      if (captchaErrMsgEl) captchaErrMsgEl.classList.add('hidden');
+      if (captchaStepEl) captchaStepEl.classList.remove('hidden');
+      if (infoStepEl) infoStepEl.classList.add('hidden');
+      modalEl.classList.remove('hidden');
+    }
+  }
+
+  window.openContactModal = openContactModal;
+
+  function hideContactModal() {
+    const modalEl = document.getElementById('contact-modal') || contactModal;
+    if (modalEl) {
+      modalEl.classList.add('hidden');
+    }
+  }
+
+  // Global event delegation for contact link clicks anywhere in the app
+  document.addEventListener('click', (e) => {
+    const targetLink = e.target ? e.target.closest('#link-tdconnect-contact, .link-tdconnect-contact') : null;
+    if (targetLink) {
+      e.preventDefault();
+      e.stopPropagation();
+      openContactModal();
+    }
+  });
+
+  if (btnCloseContact) btnCloseContact.addEventListener('click', hideContactModal);
+  if (btnCloseContactSuccess) btnCloseContactSuccess.addEventListener('click', hideContactModal);
+
+  if (contactModal) {
+    contactModal.addEventListener('click', (e) => {
+      if (e.target === contactModal) hideContactModal();
+    });
+  }
+
+  if (btnSubmitCaptcha) {
+    btnSubmitCaptcha.addEventListener('click', () => {
+      const chkVerifyEl = document.getElementById('chk-human-verify') || chkHumanVerify;
+      const captchaErrMsgEl = document.getElementById('captcha-error-msg') || captchaErrorMsg;
+      const captchaStepEl = document.getElementById('contact-captcha-step') || contactCaptchaStep;
+      const infoStepEl = document.getElementById('contact-info-step') || contactInfoStep;
+
+      if (chkVerifyEl && chkVerifyEl.checked) {
+        if (captchaErrMsgEl) captchaErrMsgEl.classList.add('hidden');
+        if (captchaStepEl) captchaStepEl.classList.add('hidden');
+        if (infoStepEl) infoStepEl.classList.remove('hidden');
+      } else {
+        if (captchaErrMsgEl) captchaErrMsgEl.classList.remove('hidden');
+      }
+    });
+  }
+
   if (myAccountForm) {
     myAccountForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -519,16 +841,31 @@ document.addEventListener('DOMContentLoaded', () => {
       const lastName = myAccLastnameInput.value.trim();
       const email = myAccEmailInput.value.trim();
       const password = myAccPasswordInput.value;
+      const confirmPassword = myAccConfirmPasswordInput ? myAccConfirmPasswordInput.value : '';
 
       if (!firstName || !lastName || !email) {
         myAccErrorMsg.textContent = "Veuillez remplir tous les champs obligatoires.";
         myAccErrorMsg.classList.remove('hidden');
         return;
       }
-      if (password && password.length < 4) {
-        myAccErrorMsg.textContent = "Le mot de passe doit comporter au moins 4 caractères.";
+      
+      if (currentUser && currentUser.isTempPassword && !password) {
+        myAccErrorMsg.textContent = "Veuillez saisir votre nouveau mot de passe.";
         myAccErrorMsg.classList.remove('hidden');
         return;
+      }
+
+      if (password) {
+        if (password.length < 4) {
+          myAccErrorMsg.textContent = "Le mot de passe doit comporter au moins 4 caractères.";
+          myAccErrorMsg.classList.remove('hidden');
+          return;
+        }
+        if (password !== confirmPassword) {
+          myAccErrorMsg.textContent = "Les deux mots de passe ne correspondent pas.";
+          myAccErrorMsg.classList.remove('hidden');
+          return;
+        }
       }
 
       const payload = { firstName, lastName, email };
@@ -606,10 +943,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   let allAdmins = [];
+  let allCompaniesForAdmin = [];
   async function loadAdminsList() {
     try {
-      const res = await apiFetch(`${API_BASE}/admin/users`);
-      allAdmins = await res.json();
+      const [resAdmins, resCompanies] = await Promise.all([
+        apiFetch(`${API_BASE}/admin/users`),
+        apiFetch(`${API_BASE}/companies`)
+      ]);
+      allAdmins = await resAdmins.json();
+      allCompaniesForAdmin = await resCompanies.json();
       renderAdminsList();
     } catch (err) {
       console.error("Erreur chargement administrateurs:", err);
@@ -633,9 +975,18 @@ document.addEventListener('DOMContentLoaded', () => {
         ? `<span class="admin-badge superadmin">Super Admin</span>`
         : `<span class="admin-badge admin">Admin</span>`;
 
-      const compCount = isSuper 
-        ? `<span class="admin-companies-count">Toutes</span>`
-        : `<span class="admin-companies-count">${admin.managedCompanies ? admin.managedCompanies.length : 0} gérée(s)</span>`;
+      let compBadges;
+      if (isSuper) {
+        compBadges = `<span class="admin-companies-count">Toutes les entreprises</span>`;
+      } else if (admin.managedCompanies && admin.managedCompanies.length > 0) {
+        const names = admin.managedCompanies.map(id => {
+          const found = allCompaniesForAdmin.find(c => c.id === id);
+          return found ? `<span class="admin-company-pill">${found.name}</span>` : '';
+        }).filter(Boolean).join('');
+        compBadges = `<span class="admin-companies-pills">${names}</span>`;
+      } else {
+        compBadges = `<span class="admin-companies-count" style="opacity:0.5;">Aucune entreprise</span>`;
+      }
 
       const canDelete = admin.id !== 'superadm' && (currentUser && admin.id !== currentUser.id);
       const deleteBtnHtml = canDelete 
@@ -643,13 +994,21 @@ document.addEventListener('DOMContentLoaded', () => {
              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
            </button>`
         : '';
+      const canToggleSuper = admin.id !== 'superadm' && (currentUser && admin.id !== currentUser.id);
+      const superToggleHtml = `
+        <label title="${isSuper ? 'Rétrograder en administrateur standard' : 'Promouvoir en Super Administrateur'}" style="display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; background: rgba(99, 102, 241, 0.1); padding: 0.3rem 0.55rem; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.25); margin-right: 0.35rem;">
+          <input type="checkbox" class="btn-item-super-toggle" ${isSuper ? 'checked' : ''} ${!canToggleSuper ? 'disabled' : ''} style="width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer;" />
+          <span style="font-size: 0.76rem; font-weight: 600; color: ${isSuper ? '#818cf8' : 'var(--text-muted)'}">Super Admin</span>
+        </label>
+      `;
 
       item.innerHTML = `
         <div class="collab-item-info">
           <span class="collab-item-name">${admin.firstName} ${admin.lastName} (${admin.id})</span>
-          <span class="collab-item-role">${roleBadge} &nbsp; ${compCount} &nbsp; ${admin.email}</span>
+          <span class="collab-item-role">${roleBadge} &nbsp; ${compBadges} &nbsp; ${admin.email}</span>
         </div>
         <div class="collab-item-actions">
+          ${superToggleHtml}
           <button type="button" class="btn-item-edit" title="Modifier">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
           </button>
@@ -660,6 +1019,33 @@ document.addEventListener('DOMContentLoaded', () => {
       item.querySelector('.btn-item-edit').addEventListener('click', () => {
         openAdminForm(admin);
       });
+
+      if (canToggleSuper) {
+        const toggleCb = item.querySelector('.btn-item-super-toggle');
+        if (toggleCb) {
+          toggleCb.addEventListener('change', async (e) => {
+            const nextRole = e.target.checked ? 'superadmin' : 'admin';
+            try {
+              await apiFetch(`${API_BASE}/admin/users/${admin.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  firstName: admin.firstName,
+                  lastName: admin.lastName,
+                  email: admin.email,
+                  role: nextRole,
+                  managedCompanies: nextRole === 'superadmin' ? [] : (admin.managedCompanies || [])
+                })
+              });
+              loadAdminsList();
+            } catch (err) {
+              console.error("Erreur modification statut superadmin:", err);
+              alert("Erreur lors de la modification du rôle.");
+              e.target.checked = !e.target.checked;
+            }
+          });
+        }
+      }
 
       if (canDelete) {
         item.querySelector('.btn-item-delete').addEventListener('click', () => {
@@ -695,7 +1081,13 @@ document.addEventListener('DOMContentLoaded', () => {
       adminFirstnameInput.value = admin.firstName;
       adminLastnameInput.value = admin.lastName;
       adminEmailInput.value = admin.email;
-      adminRoleInput.value = admin.role;
+      if (adminRoleInput) adminRoleInput.value = admin.role;
+      if (adminIsSuperadminInput) {
+        adminIsSuperadminInput.checked = (admin.role === 'superadmin');
+        const isSelfOrPrimary = admin.id === 'superadm' || (currentUser && admin.id === currentUser.id);
+        adminIsSuperadminInput.disabled = isSelfOrPrimary;
+        adminIsSuperadminInput.title = isSelfOrPrimary ? "Le statut du compte Super Admin principal ne peut pas être modifié ici." : "";
+      }
       adminPasswordInput.value = '';
       document.getElementById('admin-password-help').style.display = 'inline';
 
@@ -711,7 +1103,12 @@ document.addEventListener('DOMContentLoaded', () => {
       adminIdInput.value = '';
       adminIdInput.disabled = false;
       adminForm.reset();
-      adminRoleInput.value = 'admin';
+      if (adminRoleInput) adminRoleInput.value = 'admin';
+      if (adminIsSuperadminInput) {
+        adminIsSuperadminInput.checked = false;
+        adminIsSuperadminInput.disabled = false;
+        adminIsSuperadminInput.title = "";
+      }
       document.getElementById('admin-password-help').style.display = 'none';
 
       toggleCompaniesContainer('admin');
@@ -727,8 +1124,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  if (adminIsSuperadminInput) {
+    adminIsSuperadminInput.addEventListener('change', (e) => {
+      const role = e.target.checked ? 'superadmin' : 'admin';
+      if (adminRoleInput) adminRoleInput.value = role;
+      toggleCompaniesContainer(role);
+    });
+  }
   if (adminRoleInput) {
     adminRoleInput.addEventListener('change', (e) => {
+      if (adminIsSuperadminInput) adminIsSuperadminInput.checked = (e.target.value === 'superadmin');
       toggleCompaniesContainer(e.target.value);
     });
   }
@@ -769,7 +1174,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const firstName = adminFirstnameInput.value.trim();
       const lastName = adminLastnameInput.value.trim();
       const email = adminEmailInput.value.trim();
-      const role = adminRoleInput.value;
+      const role = (adminIsSuperadminInput && adminIsSuperadminInput.checked) 
+        ? 'superadmin' 
+        : (adminRoleInput ? adminRoleInput.value : 'admin');
       const password = adminPasswordInput.value;
 
       if (!id || id.length !== 8) {
@@ -842,16 +1249,20 @@ document.addEventListener('DOMContentLoaded', () => {
         zip: companyZipInput.value.trim(),
         city: companyCityInput.value.trim(),
         country: companyCountryInput.value.trim(),
+        subscription_end_date: companySubscriptionEndInput ? companySubscriptionEndInput.value : null,
+        is_subscription_active: companyIsSubscriptionActiveInput ? (companyIsSubscriptionActiveInput.checked ? 1 : 0) : 0,
         logo_custom_url: logoCustomUrl || '',
         theme: currentTheme,
         font: currentFont,
         accent_color: currentAccentColor,
         logo_size: parseInt(companyLogoSizeInput.value, 10),
+        logo_x: companyLogoXInput ? parseInt(companyLogoXInput.value, 10) : 0,
         button_style: currentButtonStyle,
         avatar_size: companyAvatarSizeInput ? parseInt(companyAvatarSizeInput.value, 10) : 100,
         show_name_under_logo: companyShowNameInput ? (companyShowNameInput.checked ? 1 : 0) : 1,
         show_tdconnect_message: companyShowMessageInput ? (companyShowMessageInput.checked ? 1 : 0) : 0,
-        tdconnect_message: companyMessageTextInput ? companyMessageTextInput.value.trim() : ''
+        tdconnect_message: companyMessageTextInput ? companyMessageTextInput.value.trim() : '',
+        tdconnect_url: companyMessageUrlInput ? companyMessageUrlInput.value.trim() : ''
       };
 
       try {
@@ -901,14 +1312,25 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Show/hide TDConnect custom message under footer
+    // Show/hide custom message under footer
     if (companyShowMessageInput && companyShowMessageInput.checked) {
       if (companyMessageContainer) {
         companyMessageContainer.classList.remove('hidden');
       }
       if (prevCompanyMessageUnderFooter) {
-        prevCompanyMessageUnderFooter.textContent = companyMessageTextInput.value.trim() || 'TDConnect est une marque de TDC Création';
-        prevCompanyMessageUnderFooter.classList.remove('hidden');
+        const msgText = companyMessageTextInput ? companyMessageTextInput.value.trim() : '';
+        const msgUrl = companyMessageUrlInput ? companyMessageUrlInput.value.trim() : '';
+        if (msgText) {
+          if (msgUrl) {
+            const targetUrl = msgUrl.startsWith('http') ? msgUrl : 'https://' + msgUrl;
+            prevCompanyMessageUnderFooter.innerHTML = `<a href="${targetUrl}" target="_blank" style="color: inherit; text-decoration: underline; cursor: pointer;">${msgText}</a>`;
+          } else {
+            prevCompanyMessageUnderFooter.textContent = msgText;
+          }
+          prevCompanyMessageUnderFooter.classList.remove('hidden');
+        } else {
+          prevCompanyMessageUnderFooter.classList.add('hidden');
+        }
       }
     } else {
       if (companyMessageContainer) {
@@ -932,9 +1354,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    if (selectedCollabId) {
-      updateMockupPreview();
-    }
+    updateMockupPreview();
   }
 
   if (companyShowNameInput) {
@@ -949,9 +1369,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  [companyNameInput, companyAddressInput, companyZipInput, companyCityInput, companyCountryInput, companyDomainInput, companyAvatarSizeInput, companyMessageTextInput].filter(Boolean).forEach(input => {
+  if (companyIsSubscriptionActiveInput) {
+    companyIsSubscriptionActiveInput.addEventListener('change', () => {
+      const testBanner = document.getElementById('company-test-banner');
+      if (testBanner) {
+        if (companyIsSubscriptionActiveInput.checked) {
+          testBanner.classList.add('hidden');
+        } else {
+          testBanner.classList.remove('hidden');
+        }
+      }
+    });
+  }
+
+  [companyNameInput, companyAddressInput, companyZipInput, companyCityInput, companyCountryInput, companyDomainInput, companySubscriptionEndInput, companyAvatarSizeInput, companyMessageTextInput, companyMessageUrlInput].filter(Boolean).forEach(input => {
     input.addEventListener('input', () => {
       updateCompanyPreview();
+      updateMockupPreview();
     });
   });
 
@@ -974,44 +1408,14 @@ document.addEventListener('DOMContentLoaded', () => {
     cardLogo.src = fallback;
   }
 
-  async function fetchLogoFromDomain() {
-    const domain = companyDomainInput.value.trim().toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '');
-    if (!domain) {
+  function fetchLogoFromDomain() {
+    // Logo automatique par domaine désactivé.
+    // Seul un logo uploadé manuellement est utilisé.
+    logoFetchedUrl = '';
+    if (!logoCustomUrl) {
       setFallbackLogo();
-      logoFetchedUrl = '';
-      return;
     }
-
-    cardLogo.style.opacity = '0.3';
-
-    const domainPattern = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/;
-    if (!domainPattern.test(domain)) {
-      setFallbackLogo();
-      cardLogo.style.opacity = '1';
-      logoFetchedUrl = '';
-      return;
-    }
-
-    const clearbitUrl = `https://logo.clearbit.com/${domain}?size=256`;
-
-    const imgTester = new Image();
-    imgTester.src = clearbitUrl;
-    
-    imgTester.onload = () => {
-      logoFetchedUrl = clearbitUrl;
-      if (!logoCustomUrl) {
-        cardLogo.src = clearbitUrl;
-      }
-      cardLogo.style.opacity = '1';
-    };
-
-    imgTester.onerror = () => {
-      logoFetchedUrl = '';
-      if (!logoCustomUrl) {
-        setFallbackLogo();
-      }
-      cardLogo.style.opacity = '1';
-    };
+    cardLogo.style.opacity = '1';
   }
 
   btnFetchLogo.addEventListener('click', fetchLogoFromDomain);
@@ -1169,8 +1573,8 @@ document.addEventListener('DOMContentLoaded', () => {
       prevAvatarImg.src = currentCollabPhotoUrl;
       prevAvatarImg.classList.remove('hidden');
       prevAvatarInitials.classList.add('hidden');
-      prevAvatarImg.style.transform = 'scale(1.0) translate(0%, 0%)';
-      prevAvatarImg.style.objectPosition = '50% 50%';
+      prevAvatarImg.style.transform = 'scale(1.0)';
+      prevAvatarImg.style.transformOrigin = '50% 50%';
     };
     reader.readAsDataURL(file);
   }
@@ -1225,11 +1629,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const x = parseFloat(collabPhotoXInput.value) || 50;
     const y = parseFloat(collabPhotoYInput.value) || 50;
     
-    const transX = zoom > 1 ? (50 - x) * (1 - 1 / zoom) : 0;
-    const transY = zoom > 1 ? (50 - y) * (1 - 1 / zoom) : 0;
-    
-    prevAvatarImg.style.transform = `scale(${zoom}) translate(${transX}%, ${transY}%)`;
-    prevAvatarImg.style.objectPosition = '50% 50%';
+    prevAvatarImg.style.transform = `scale(${zoom})`;
+    prevAvatarImg.style.transformOrigin = `${x}% ${y}%`;
   }
 
   [collabPhotoZoomInput, collabPhotoXInput, collabPhotoYInput].filter(Boolean).forEach(slider => {
@@ -1240,66 +1641,195 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateMockupPreview() {
     const collab = collaborators.find(c => c.id === selectedCollabId);
-    if (!collab) {
-      previewPlaceholderMsg.classList.remove('hidden');
-      previewCollabContent.classList.add('hidden');
-      sharingPanel.classList.add('hidden');
-      return;
+
+    // Check Subscription Expiration & Collaborator Active status for live blur preview
+    const subEndDateVal = companySubscriptionEndInput ? companySubscriptionEndInput.value : '';
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isSubExpired = subEndDateVal && (subEndDateVal < todayStr);
+    const isCollabInactive = collab && (collab.isActive === 0 || collab.is_active === 0);
+
+    const prevCardBlurOverlay = document.getElementById('prev-card-blur-overlay');
+    const prevBlurTitle = document.getElementById('prev-blur-title');
+    const prevBlurSubtitle = document.getElementById('prev-blur-subtitle');
+
+    if (prevCardBlurOverlay) {
+      if (isSubExpired) {
+        if (prevBlurTitle) prevBlurTitle.textContent = 'Abonnement échu';
+        if (prevBlurSubtitle) prevBlurSubtitle.textContent = "L'abonnement de cette entreprise a expiré.";
+        prevCardBlurOverlay.classList.remove('hidden');
+        if (cardElement) cardElement.style.filter = 'blur(6px) opacity(0.5)';
+      } else if (isCollabInactive) {
+        if (prevBlurTitle) prevBlurTitle.textContent = 'Collaborateur inactif';
+        if (prevBlurSubtitle) prevBlurSubtitle.textContent = 'Cette carte de visite est actuellement désactivée.';
+        prevCardBlurOverlay.classList.remove('hidden');
+        if (cardElement) cardElement.style.filter = 'blur(6px) opacity(0.5)';
+      } else {
+        prevCardBlurOverlay.classList.add('hidden');
+        if (cardElement) cardElement.style.filter = 'none';
+      }
     }
 
     previewPlaceholderMsg.classList.add('hidden');
     previewCollabContent.classList.remove('hidden');
-    sharingPanel.classList.remove('hidden');
 
-    const prefix = collab.civility ? collab.civility.trim() + ' ' : '';
-    prevCollabName.textContent = `${prefix}${collab.firstName} ${collab.lastName}`;
-    prevCollabRole.textContent = collab.role || 'Collaborateur';
-    prevBtnEmailText.textContent = `Email : ${collab.email}`;
+    if (collab) {
+      sharingPanel.classList.remove('hidden');
 
-    // Address fallback
-    let street = collab.address ? collab.address.trim() : '';
-    if (!street) {
+      // Connection counter display & Export ZIP for Super Admin
+      const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
+      if (collabConnectionCounterDisplay) {
+        if (isSuperAdmin) {
+          collabConnectionCounterDisplay.classList.remove('hidden');
+          if (collabConnectionCountBadge) {
+            const count = collab.connectionCount != null ? collab.connectionCount : 0;
+            collabConnectionCountBadge.textContent = `${count} visite(s)`;
+          }
+        } else {
+          collabConnectionCounterDisplay.classList.add('hidden');
+        }
+      }
+
+      if (collabExportZipWrapper) {
+        if (isSuperAdmin) {
+          collabExportZipWrapper.classList.remove('hidden');
+        } else {
+          collabExportZipWrapper.classList.add('hidden');
+        }
+      }
+
+      const prefix = collab.civility ? collab.civility.trim() + ' ' : '';
+      prevCollabName.textContent = `${prefix}${collab.lastName.toUpperCase()} ${collab.firstName}`;
+      
+      prevCollabRole.textContent = collab.role || '';
+      if (collab.role) {
+        prevCollabRole.classList.remove('hidden');
+      } else {
+        prevCollabRole.classList.add('hidden');
+      }
+
+      // Address fallback
+      let street = collab.address ? collab.address.trim() : '';
+      if (!street) {
+        const companyStreet = companyAddressInput.value.trim();
+        const companyZip = companyZipInput.value.trim();
+        const companyCity = companyCityInput.value.trim();
+        street = companyStreet;
+        if (companyZip || companyCity) {
+          street += (street ? ', ' : '') + `${companyZip} ${companyCity}`.trim();
+        }
+      }
+      prevCollabAddress.textContent = street || 'Adresse d\'entreprise';
+
+      // Avatar profile click url
+      const clickUrl = collab.photoClickUrl || '';
+      if (clickUrl) {
+        prevAvatarLink.href = clickUrl.startsWith('http') ? clickUrl : 'https://' + clickUrl;
+        prevAvatarLink.style.cursor = 'pointer';
+      } else {
+        prevAvatarLink.href = '#';
+        prevAvatarLink.style.cursor = 'default';
+      }
+
+      // Avatar profile photo
+      if (collab.photoUrl) {
+        prevAvatarImg.src = collab.photoUrl;
+        prevAvatarImg.classList.remove('hidden');
+        prevAvatarInitials.classList.add('hidden');
+        
+        // Apply saved database crop properties
+        const zoom = collab.photoZoom != null ? parseFloat(collab.photoZoom) : 1.0;
+        const x = collab.photoX != null ? parseFloat(collab.photoX) : 50;
+        const y = collab.photoY != null ? parseFloat(collab.photoY) : 50;
+        
+        prevAvatarImg.style.transform = `scale(${zoom})`;
+        prevAvatarImg.style.transformOrigin = `${x}% ${y}%`;
+      } else {
+        const initials = (collab.firstName[0] + (collab.lastName[0] || '')).toUpperCase();
+        prevAvatarInitials.textContent = initials;
+        prevAvatarInitials.classList.remove('hidden');
+        prevAvatarImg.classList.add('hidden');
+      }
+
+      // Determine active phone number based on select inputs
+      const defaultPhoneType = collabPhoneDefaultInput.value;
+      let activePhone = '';
+      let activeLabel = 'Mobile';
+      if (defaultPhoneType === 'work') {
+        activePhone = collabPhoneWorkInput.value.trim() || collabPhoneMobileInput.value.trim() || collab.phone || '';
+        activeLabel = 'Fixe';
+      } else if (defaultPhoneType === 'fax') {
+        activePhone = collabPhoneFaxInput.value.trim() || collabPhoneMobileInput.value.trim() || collab.phone || '';
+        activeLabel = 'Fax';
+      } else {
+        activePhone = collabPhoneMobileInput.value.trim() || collab.phone || '';
+        activeLabel = 'Mobile';
+      }
+
+      // Action Button links
+      if (activePhone) {
+        prevBtnPhoneText.textContent = `${activeLabel} : ${activePhone}`;
+        prevActionPhone.href = `tel:${activePhone}`;
+        prevActionPhone.classList.remove('hidden');
+      } else {
+        prevActionPhone.classList.add('hidden');
+      }
+
+      if (collab.email) {
+        prevActionEmail.href = `mailto:${collab.email}`;
+        prevBtnEmailText.textContent = `Email : ${collab.email}`;
+        prevActionEmail.classList.remove('hidden');
+      } else {
+        prevActionEmail.classList.add('hidden');
+      }
+
+      const urlId = collab.customSlug || collab.id;
+      prevActionVcard.href = `${API_BASE}/collaborators/${urlId}/vcf`;
+      btnExportZip.href = `${API_BASE}/collaborators/${urlId}/export`;
+
+      // Sharing Panel Info
+      let publicUrlBase = PUBLIC_URL_BASE;
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        if (serverLocalIP && serverLocalIP !== 'localhost') {
+          publicUrlBase = `${window.location.protocol}//${serverLocalIP}:3000`;
+        }
+      }
+      const publicUrl = `${publicUrlBase}/card/${urlId}`;
+      collabPublicUrl.value = publicUrl;
+      collabQrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(publicUrl)}`;
+    } else {
+      sharingPanel.classList.add('hidden');
+
+      prevCollabName.textContent = '';
+      prevCollabRole.textContent = '';
+      prevCollabRole.classList.remove('hidden');
+      
+      // Address fallback for company
       const companyStreet = companyAddressInput.value.trim();
       const companyZip = companyZipInput.value.trim();
       const companyCity = companyCityInput.value.trim();
-      street = companyStreet;
+      let street = companyStreet;
       if (companyZip || companyCity) {
         street += (street ? ', ' : '') + `${companyZip} ${companyCity}`.trim();
       }
-    }
-    prevCollabAddress.textContent = street || 'Adresse d\'entreprise';
+      prevCollabAddress.textContent = street || 'Adresse d\'entreprise';
 
-    // Avatar profile click url
-    const clickUrl = collab.photoClickUrl || '';
-    if (clickUrl) {
-      prevAvatarLink.href = clickUrl.startsWith('http') ? clickUrl : 'https://' + clickUrl;
-      prevAvatarLink.style.cursor = 'pointer';
-    } else {
       prevAvatarLink.href = '#';
       prevAvatarLink.style.cursor = 'default';
-    }
 
-    // Avatar profile photo
-    if (collab.photoUrl) {
-      prevAvatarImg.src = collab.photoUrl;
-      prevAvatarImg.classList.remove('hidden');
-      prevAvatarInitials.classList.add('hidden');
-      
-      // Apply saved database crop properties
-      const zoom = collab.photoZoom != null ? parseFloat(collab.photoZoom) : 1.0;
-      const x = collab.photoX != null ? parseFloat(collab.photoX) : 50;
-      const y = collab.photoY != null ? parseFloat(collab.photoY) : 50;
-      
-      const transX = zoom > 1 ? (50 - x) * (1 - 1 / zoom) : 0;
-      const transY = zoom > 1 ? (50 - y) * (1 - 1 / zoom) : 0;
-      
-      prevAvatarImg.style.transform = `scale(${zoom}) translate(${transX}%, ${transY}%)`;
-      prevAvatarImg.style.objectPosition = '50% 50%';
-    } else {
-      const initials = (collab.firstName[0] + (collab.lastName[0] || '')).toUpperCase();
-      prevAvatarInitials.textContent = initials;
-      prevAvatarInitials.classList.remove('hidden');
+      // Circle of photo empty (blank)
       prevAvatarImg.classList.add('hidden');
+      prevAvatarInitials.textContent = '';
+      prevAvatarInitials.classList.remove('hidden');
+
+      // Action Buttons dummy
+      prevBtnPhoneText.textContent = 'Mobile';
+      prevActionPhone.href = '#';
+      prevActionPhone.classList.remove('hidden');
+      prevActionEmail.href = '#';
+      prevBtnEmailText.textContent = 'Email';
+      prevActionEmail.classList.remove('hidden');
+      prevActionVcard.href = '#';
+      btnExportZip.href = '#';
     }
 
     // Apply company avatar size
@@ -1326,6 +1856,12 @@ document.addEventListener('DOMContentLoaded', () => {
     cardLogo.style.height = `${logoSize}px`;
     cardLogo.style.maxWidth = `${logoSize * 3.5}px`;
 
+    // Apply logo X position
+    const logoXVal = companyLogoXInput ? parseInt(companyLogoXInput.value, 10) : 0;
+    if (prevCompanyLogoLink) {
+      prevCompanyLogoLink.style.transform = `translateX(${logoXVal}px)`;
+    }
+
     // Apply company name under logo visibility in preview
     if (companyShowNameInput && companyShowNameInput.checked) {
       if (prevCompanyNameUnderLogo) {
@@ -1338,29 +1874,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Determine active phone number based on select inputs
-    const defaultPhoneType = collabPhoneDefaultInput.value;
-    let activePhone = '';
-    let activeLabel = 'Mobile';
-    if (defaultPhoneType === 'work') {
-      activePhone = collabPhoneWorkInput.value.trim() || collabPhoneMobileInput.value.trim() || collab.phone || '';
-      activeLabel = 'Fixe';
-    } else if (defaultPhoneType === 'fax') {
-      activePhone = collabPhoneFaxInput.value.trim() || collabPhoneMobileInput.value.trim() || collab.phone || '';
-      activeLabel = 'Fax';
-    } else {
-      activePhone = collabPhoneMobileInput.value.trim() || collab.phone || '';
-      activeLabel = 'Mobile';
-    }
-
-    // Action Button links
-    prevBtnPhoneText.textContent = `${activeLabel} : ${activePhone}`;
-    prevActionPhone.href = `tel:${activePhone}`;
-    prevActionEmail.href = `mailto:${collab.email}`;
-    const urlId = collab.customSlug || collab.id;
-    prevActionVcard.href = `${API_BASE}/collaborators/${urlId}/vcf`;
-    btnExportZip.href = `${API_BASE}/collaborators/${urlId}/export`;
-
     // Toggle button style classes
     const prevActionsContainer = document.getElementById('prev-actions-container');
     if (prevActionsContainer) {
@@ -1371,22 +1884,28 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Apply TDConnect custom message under footer in preview
+    // Apply custom message under footer in preview
     if (companyShowMessageInput && companyShowMessageInput.checked) {
       if (prevCompanyMessageUnderFooter) {
-        prevCompanyMessageUnderFooter.textContent = companyMessageTextInput.value.trim() || 'TDConnect est une marque de TDC Création';
-        prevCompanyMessageUnderFooter.classList.remove('hidden');
+        const msgText = companyMessageTextInput ? companyMessageTextInput.value.trim() : '';
+        const msgUrl = companyMessageUrlInput ? companyMessageUrlInput.value.trim() : '';
+        if (msgText) {
+          if (msgUrl) {
+            const targetUrl = msgUrl.startsWith('http') ? msgUrl : 'https://' + msgUrl;
+            prevCompanyMessageUnderFooter.innerHTML = `<a href="${targetUrl}" target="_blank" style="color: inherit; text-decoration: underline; cursor: pointer;">${msgText}</a>`;
+          } else {
+            prevCompanyMessageUnderFooter.textContent = msgText;
+          }
+          prevCompanyMessageUnderFooter.classList.remove('hidden');
+        } else {
+          prevCompanyMessageUnderFooter.classList.add('hidden');
+        }
       }
     } else {
       if (prevCompanyMessageUnderFooter) {
         prevCompanyMessageUnderFooter.classList.add('hidden');
       }
     }
-
-    // Sharing Panel Info
-    const publicUrl = `${PUBLIC_URL_BASE}/card/${urlId}`;
-    collabPublicUrl.value = publicUrl;
-    collabQrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(publicUrl)}`;
   }
 
   // Copy Link with fallback for non-secure HTTP contexts (IP addresses)
@@ -1460,12 +1979,26 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Sort collaborators by Nom (lastName) ASC, then Prénom (firstName) ASC
+    const sorted = [...collaborators].sort((a, b) => {
+      const lastA = (a.lastName || '').toLowerCase();
+      const lastB = (b.lastName || '').toLowerCase();
+      if (lastA < lastB) return -1;
+      if (lastA > lastB) return 1;
+      const firstA = (a.firstName || '').toLowerCase();
+      const firstB = (b.firstName || '').toLowerCase();
+      if (firstA < firstB) return -1;
+      if (firstA > firstB) return 1;
+      return 0;
+    });
+
     const q = filterQuery.toLowerCase().trim();
-    const filtered = collaborators.filter(collab => {
+    const filtered = sorted.filter(collab => {
       if (!q) return true;
-      const fullName = `${collab.firstName} ${collab.lastName}`.toLowerCase();
+      const nameLastFirst = `${collab.lastName} ${collab.firstName}`.toLowerCase();
+      const nameFirstLast = `${collab.firstName} ${collab.lastName}`.toLowerCase();
       const role = (collab.role || '').toLowerCase();
-      return fullName.includes(q) || role.includes(q);
+      return nameLastFirst.includes(q) || nameFirstLast.includes(q) || role.includes(q);
     });
 
     if (filtered.length === 0) {
@@ -1482,10 +2015,20 @@ document.addEventListener('DOMContentLoaded', () => {
         ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` 
         : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 
+      const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
+      const connectionCountVal = collab.connectionCount != null ? collab.connectionCount : 0;
+      const connBadgeHTML = isSuperAdmin
+        ? `<span class="collab-item-counter" title="${connectionCountVal} connexion(s) à cette carte" style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; font-weight: 700; background: rgba(99, 102, 241, 0.12); color: var(--accent); padding: 0.15rem 0.5rem; border-radius: 12px; margin-top: 0.25rem;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            ${connectionCountVal} connexion(s)
+          </span>`
+        : '';
+
       collabItem.innerHTML = `
         <div class="collab-item-info">
-          <span class="collab-item-name">${collab.firstName} ${collab.lastName}</span>
+          <span class="collab-item-name">${collab.lastName.toUpperCase()} ${collab.firstName}</span>
           <span class="collab-item-role">${collab.role || 'Collaborateur'}</span>
+          ${connBadgeHTML}
         </div>
         <div class="collab-item-actions">
           <button type="button" class="btn-item-edit" title="Modifier">
@@ -1579,9 +2122,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function openCollabForm(collab = null) {
     collabFormContainer.classList.remove('hidden');
     
+    const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
+    if (collabConnectionCountGroup) {
+      if (isSuperAdmin) {
+        collabConnectionCountGroup.classList.remove('hidden');
+      } else {
+        collabConnectionCountGroup.classList.add('hidden');
+      }
+    }
+
     if (collab) {
       collabFormTitle.textContent = "Modifier le collaborateur";
       collabIdInput.value = collab.id;
+      if (collabConnectionCountInput) collabConnectionCountInput.value = collab.connectionCount != null ? collab.connectionCount : 0;
       collabFirstnameInput.value = collab.firstName;
       collabLastnameInput.value = collab.lastName;
       collabTitleInput.value = collab.civility || '';
@@ -1621,6 +2174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       collabFormTitle.textContent = "Nouveau collaborateur";
       collabForm.reset();
+      if (collabConnectionCountInput) collabConnectionCountInput.value = 0;
       collabIdInput.value = 'collab_' + Date.now();
       collabPhoneMobileInput.value = '';
       collabPhoneWorkInput.value = '';
@@ -1674,12 +2228,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const phoneFax = collabPhoneFaxInput.value.trim();
     const phoneDefault = collabPhoneDefaultInput.value;
 
-    if (!firstName || !lastName || !email || !role || (!phoneMobile && !phoneWork && !phoneFax)) {
-      alert("Veuillez remplir tous les champs obligatoires (Prénom, Nom, Fonction, Email, et au moins un numéro de téléphone).");
+    if (!firstName || !lastName) {
+      alert("Veuillez remplir les champs obligatoires (Prénom, Nom).");
       return;
     }
 
     const collabIndex = collaborators.findIndex(c => c.id === id);
+    const connectionCount = (collabConnectionCountInput && currentUser && currentUser.role === 'superadmin')
+      ? parseInt(collabConnectionCountInput.value || '0', 10)
+      : (collabIndex > -1 ? (collaborators[collabIndex].connectionCount || 0) : 0);
+
     const collabData = { 
       id, 
       companyId: currentCompanyId,
@@ -1700,7 +2258,8 @@ document.addEventListener('DOMContentLoaded', () => {
       phoneDefault,
       photoClickUrl,
       isActive: collabActiveToggle ? (collabActiveToggle.checked ? 1 : 0) : 1,
-      customSlug
+      customSlug,
+      connectionCount
     };
 
     try {
@@ -1725,11 +2284,11 @@ document.addEventListener('DOMContentLoaded', () => {
       selectCollaborator(id);
     } catch (err) {
       console.error("Erreur de persistance du collaborateur:", err);
-      alert("Impossible de sauvegarder le collaborateur dans la base SQLite.");
+      alert("Impossible de sauvegarder le collaborateur dans la base de données.");
     }
   });
 
-  // Delete collaborator in SQLite
+  // Delete collaborator in MySQL
   async function deleteCollaborator(id) {
     if (confirm("Voulez-vous vraiment supprimer ce collaborateur ?")) {
       try {
@@ -1748,7 +2307,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateMockupPreview();
       } catch (err) {
         console.error("Erreur suppression collaborateur:", err);
-        alert("Impossible de supprimer le collaborateur de la base SQLite.");
+        alert("Impossible de supprimer le collaborateur de la base de données.");
       }
     }
   }
@@ -1757,9 +2316,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // VIEW A: COMPANIES LIST LOGIC
   // ==========================================
 
+  function getOneMonthFromNowDateString() {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   // Toggle company creation inline form
   btnAddCompanyShow.addEventListener('click', () => {
     companyAddFormContainer.classList.toggle('hidden');
+    if (newCompanySubscriptionEndInput && !newCompanySubscriptionEndInput.value) {
+      newCompanySubscriptionEndInput.value = getOneMonthFromNowDateString();
+    }
     newCompanyNameInput.focus();
   });
 
@@ -1767,12 +2338,16 @@ document.addEventListener('DOMContentLoaded', () => {
     companyAddFormContainer.classList.add('hidden');
     newCompanyNameInput.value = '';
     newCompanyDomainInput.value = '';
+    if (newCompanySubscriptionEndInput) newCompanySubscriptionEndInput.value = '';
   });
 
   // Save/Create new company
   btnSaveNewCompany.addEventListener('click', async () => {
     const name = newCompanyNameInput.value.trim();
     const domain = newCompanyDomainInput.value.trim().toLowerCase();
+    const subEndDate = (newCompanySubscriptionEndInput && newCompanySubscriptionEndInput.value)
+      ? newCompanySubscriptionEndInput.value
+      : getOneMonthFromNowDateString();
 
     if (!name) {
       alert("Veuillez renseigner le nom de l'entreprise.");
@@ -1783,13 +2358,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await apiFetch(`${API_BASE}/companies`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, domain })
+        body: JSON.stringify({
+          name,
+          domain,
+          subscription_end_date: subEndDate
+        })
       });
       const newCompany = await res.json();
       
       companyAddFormContainer.classList.add('hidden');
       newCompanyNameInput.value = '';
       newCompanyDomainInput.value = '';
+      if (newCompanySubscriptionEndInput) newCompanySubscriptionEndInput.value = '';
       
       // Reload and immediately select the new company
       await loadCompaniesList();
@@ -1800,7 +2380,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Load companies list from SQLite
+  // Load companies list from MySQL
   async function loadCompaniesList() {
     if (currentUser && currentUser.role === 'superadmin') {
       if (btnAddCompanyShow) btnAddCompanyShow.classList.remove('hidden');
@@ -1813,12 +2393,17 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await apiFetch(`${API_BASE}/companies`);
       allCompanies = await res.json();
+
+      if (!Array.isArray(allCompanies)) {
+        throw new Error(allCompanies.error || "Format de réponse invalide.");
+      }
       
       const searchVal = searchCompany ? searchCompany.value.toLowerCase().trim() : '';
       renderCompaniesList(allCompanies, searchVal);
     } catch (err) {
       console.error("Erreur chargement entreprises:", err);
-      companiesGrid.innerHTML = '<p class="empty-list-msg" style="color:#f43f5e;">Erreur réseau lors de la récupération.</p>';
+      const msg = err.message || "Erreur réseau lors de la récupération.";
+      companiesGrid.innerHTML = `<p class="empty-list-msg" style="color:#f43f5e;">${msg}</p>`;
     }
   }
 
@@ -1844,11 +2429,8 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = 'company-list-card';
       card.dataset.id = company.id;
 
-      // Fallback logo
-      let logoSrc = company.logo_custom_url;
-      if (!logoSrc && company.domain) {
-        logoSrc = `https://logo.clearbit.com/${company.domain}?size=128`;
-      }
+      // Logo : uniquement le logo uploadé manuellement
+      let logoSrc = company.logo_custom_url || '';
 
       let imgHtml = '';
       if (logoSrc) {
@@ -1921,6 +2503,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const companyInfo = await res.json();
       
       activeCompanyTitle.textContent = companyInfo.name;
+
+      const isSubActive = companyInfo.is_subscription_active === 1 || companyInfo.isSubscriptionActive === 1;
+
+      // Update test subscription banner notice (hidden if subscription is active)
+      const testBanner = document.getElementById('company-test-banner');
+      const testBannerText = document.getElementById('company-test-banner-text');
+      if (testBanner && testBannerText) {
+        const subDateVal = companyInfo.subscriptionEndDate || companyInfo.subscription_end_date;
+        if (!isSubActive && subDateVal) {
+          let formattedDate = subDateVal;
+          const parts = String(subDateVal).split('T')[0].split('-');
+          if (parts.length === 3) {
+            formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+          }
+          testBannerText.textContent = `Cette entreprise a été créée dans le cadre d'un test. L'abonnement est offert jusqu'au ${formattedDate}`;
+          testBanner.classList.remove('hidden');
+        } else {
+          testBanner.classList.add('hidden');
+        }
+      }
       
       // Prefill company inputs
       companyNameInput.value = companyInfo.name || '';
@@ -1929,10 +2531,45 @@ document.addEventListener('DOMContentLoaded', () => {
       companyZipInput.value = companyInfo.zip || '';
       companyCityInput.value = companyInfo.city || '';
       companyCountryInput.value = companyInfo.country || '';
+      const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
+      
+      if (companySubscriptionEndInput) {
+        companySubscriptionEndInput.value = companyInfo.subscriptionEndDate || companyInfo.subscription_end_date || '';
+        companySubscriptionEndInput.disabled = !isSuperAdmin;
+        if (!isSuperAdmin) {
+          companySubscriptionEndInput.title = "Seul le Super Admin peut modifier la date de fin d'abonnement.";
+          companySubscriptionEndInput.style.cursor = 'not-allowed';
+          companySubscriptionEndInput.style.opacity = '0.6';
+        } else {
+          companySubscriptionEndInput.title = '';
+          companySubscriptionEndInput.style.cursor = 'pointer';
+          companySubscriptionEndInput.style.opacity = '1';
+        }
+      }
+
+      if (companyIsSubscriptionActiveInput) {
+        companyIsSubscriptionActiveInput.checked = isSubActive;
+        companyIsSubscriptionActiveInput.disabled = !isSuperAdmin;
+        if (!isSuperAdmin) {
+          companyIsSubscriptionActiveInput.title = "Seul le Super Admin peut modifier le statut de l'abonnement.";
+          companyIsSubscriptionActiveInput.style.cursor = 'not-allowed';
+          companyIsSubscriptionActiveInput.style.opacity = '0.6';
+        } else {
+          companyIsSubscriptionActiveInput.title = '';
+          companyIsSubscriptionActiveInput.style.cursor = 'pointer';
+          companyIsSubscriptionActiveInput.style.opacity = '1';
+        }
+      }
       
       const logoSizeVal = companyInfo.logo_size !== undefined ? companyInfo.logo_size : 72;
-      companyLogoSizeInput.value = logoSizeVal;
-      companyLogoSizeVal.textContent = `${logoSizeVal}px`;
+      if (companyLogoSizeInput) companyLogoSizeInput.value = logoSizeVal;
+      if (companyLogoSizeVal) companyLogoSizeVal.textContent = `${logoSizeVal}px`;
+
+      if (companyLogoXInput && companyLogoXVal) {
+        const logoXVal = companyInfo.logo_x != null ? companyInfo.logo_x : 0;
+        companyLogoXInput.value = logoXVal;
+        companyLogoXVal.textContent = `${logoXVal > 0 ? '+' : ''}${logoXVal}px`;
+      }
       
       if (companyAvatarSizeInput && companyAvatarSizeVal) {
         const avatarSizeVal = companyInfo.avatar_size != null ? companyInfo.avatar_size : 100;
@@ -1949,6 +2586,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (companyMessageTextInput) {
         companyMessageTextInput.value = companyInfo.tdconnect_message || '';
+      }
+      if (companyMessageUrlInput) {
+        companyMessageUrlInput.value = companyInfo.tdconnect_url || companyInfo.tdconnectUrl || '';
       }
       if (companyMessageContainer) {
         if (companyInfo.show_tdconnect_message !== 0) {
@@ -1991,11 +2631,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Handle custom logo preview thumb
       if (logoCustomUrl) {
-        thumbImg.src = logoCustomUrl;
-        document.querySelector('.thumb-name').textContent = "logo_charge.png";
-        logoPreviewThumb.classList.remove('hidden');
+        if (thumbImg) thumbImg.src = logoCustomUrl;
+        const thumbNameEl = document.querySelector('.thumb-name');
+        if (thumbNameEl) thumbNameEl.textContent = "logo_charge.png";
+        if (logoPreviewThumb) logoPreviewThumb.classList.remove('hidden');
       } else {
-        logoPreviewThumb.classList.add('hidden');
+        if (logoPreviewThumb) logoPreviewThumb.classList.add('hidden');
       }
 
       updateCompanyPreview();
@@ -2020,11 +2661,12 @@ document.addEventListener('DOMContentLoaded', () => {
       updateLayoutMode();
       
       // Default tab to company on detail entry
-      document.querySelector('.tab-btn[data-tab="tab-company"]').click();
+      const tabBtnCompany = document.querySelector('.tab-btn[data-tab="tab-company"]');
+      if (tabBtnCompany) tabBtnCompany.click();
 
     } catch (err) {
       console.error("Erreur de chargement des détails de l'entreprise:", err);
-      alert("Impossible de charger l'entreprise.");
+      alert(err.message || "Impossible de charger l'entreprise.");
     }
   }
 
@@ -2048,6 +2690,15 @@ document.addEventListener('DOMContentLoaded', () => {
     companyLogoSizeVal.textContent = `${companyLogoSizeInput.value}px`;
     updateCompanyPreview();
   });
+
+  // Logo X offset slider change
+  if (companyLogoXInput) {
+    companyLogoXInput.addEventListener('input', () => {
+      const val = companyLogoXInput.value;
+      companyLogoXVal.textContent = `${val > 0 ? '+' : ''}${val}px`;
+      updateCompanyPreview();
+    });
+  }
 
   // Button style radio change
   companyBtnStyleRadios.forEach(radio => {

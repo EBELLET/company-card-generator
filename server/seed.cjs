@@ -9,7 +9,7 @@ async function seed() {
       return;
     }
 
-    console.log("Début de l'amorçage de la base de données SQLite...");
+    console.log("Début de l'amorçage de la base de données MySQL...");
 
     // 2. Fetch Estimancy Logo as Base64
     let logoBase64 = '';

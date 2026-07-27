@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
+    "server": "node server/index.cjs",
     "build": "vite build",
     "preview": "vite preview --host"
   },
@@ -14,8 +15,10 @@
   "dependencies": {
     "adm-zip": "^0.5.18",
     "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "sqlite3": "^6.0.1",
+    "mysql2": "^3.23.0",
+    "nodemailer": "^9.0.3",
     "xlsx": "^0.18.5"
   }
 }
