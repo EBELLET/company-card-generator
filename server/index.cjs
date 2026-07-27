@@ -994,13 +994,16 @@ app.post('/api/auth/register', async (req, res) => {
       domain: companyDomain ? companyDomain.trim() : ''
     });
 
+    const reqOrigin = req.headers.origin || req.headers.referer || process.env.APP_URL;
+
     // Send welcome email with temporary password asynchronously
     mailer.sendWelcomeEmail({
       to: email.trim(),
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       userId: userId.trim(),
-      password: tempPassword
+      password: tempPassword,
+      origin: reqOrigin
     }).catch(err => console.error('[Mail] Erreur envoi email bienvenue inscription:', err.message));
 
     // Generate token
@@ -1231,13 +1234,16 @@ app.post('/api/admin/users', authenticateToken, async (req, res) => {
       await db.assignCompaniesToUser(newUser.id, managedCompanies);
     }
 
+    const reqOrigin = req.headers.origin || req.headers.referer || process.env.APP_URL;
+
     // Send welcome email (non-blocking)
     mailer.sendWelcomeEmail({
       to: email,
       firstName,
       lastName,
       userId: id.trim(),
-      password
+      password,
+      origin: reqOrigin
     }).catch(err => console.error('[Mail] Erreur envoi email bienvenue:', err.message));
     
     res.status(201).json(newUser);

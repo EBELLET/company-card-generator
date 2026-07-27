@@ -548,6 +548,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Detect password reset token in URL parameter: ?token=...
+  const urlParams = new URLSearchParams(window.location.search);
+  const resetTokenParam = urlParams.get('token');
+  if (resetTokenParam) {
+    openResetModal(resetTokenParam);
+  }
+
   // Detect public card URL in path: /card/xxx
   (function detectPublicCardRoute() {
     const pathname = window.location.pathname;

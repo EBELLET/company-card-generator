@@ -6,8 +6,8 @@ services:
     container_name: tdconnect-db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: company_card_generator
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-company_card_generator}
     ports:
       - "3306:3306"
     volumes:
@@ -21,15 +21,13 @@ services:
       - "3000:3000"
     depends_on:
       - db
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - PORT=3000
       - DB_HOST=db
-      - DB_PORT=3306
-      - DB_USER=root
-      - DB_PASSWORD=rootpassword
-      - DB_NAME=company_card_generator
-      - JWT_SECRET=RemplissezAvecUneCleSecreteAleatoireEtLongue
 
 volumes:
   mysql-data:
+

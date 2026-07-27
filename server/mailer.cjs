@@ -33,8 +33,23 @@ function getSender() {
 }
 
 // ── URL publique de l'application ─────────────────────────────────────────────
-function getAppUrl() {
-  return process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
+function getAppUrl(origin) {
+  let rawUrl = origin || process.env.APP_URL;
+  if (rawUrl) {
+    try {
+      const parsed = new URL(rawUrl);
+      return `${parsed.protocol}//${parsed.host}`;
+    } catch (e) {
+      if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
+        try {
+          const parsed = new URL(`http://${rawUrl}`);
+          return `${parsed.protocol}//${parsed.host}`;
+        } catch (err) {}
+      }
+      return rawUrl;
+    }
+  }
+  return `http://localhost:${process.env.PORT || 3000}`;
 }
 
 // ── Template HTML commun ─────────────────────────────────────────────────────
@@ -78,8 +93,8 @@ function htmlWrapper(title, bodyHtml) {
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Email de bienvenue à la création de compte admin
 // ─────────────────────────────────────────────────────────────────────────────
-async function sendWelcomeEmail({ to, firstName, lastName, userId, password }) {
-  const appUrl = getAppUrl();
+async function sendWelcomeEmail({ to, firstName, lastName, userId, password, origin }) {
+  const appUrl = getAppUrl(origin);
   const subject = 'Votre compte TDConnect a été créé';
 
   const body = `
@@ -116,11 +131,7 @@ async function sendWelcomeEmail({ to, firstName, lastName, userId, password }) {
 // 2. Email de réinitialisation du mot de passe
 // ─────────────────────────────────────────────────────────────────────────────
 async function sendPasswordResetEmail({ to, firstName, lastName, userId, resetToken, origin }) {
-  let appUrl = origin ? origin : getAppUrl();
-  try {
-    const parsed = new URL(appUrl);
-    appUrl = `${parsed.protocol}//${parsed.host}`;
-  } catch (e) {}
+  const appUrl = getAppUrl(origin);
   const resetUrl = `${appUrl}/?token=${resetToken}`;
   const subject = `Réinitialisation du mot de passe pour le compte ${userId}`;
 
