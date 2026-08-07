@@ -1705,7 +1705,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const prefix = collab.civility ? collab.civility.trim() + ' ' : '';
-      prevCollabName.textContent = `${prefix}${collab.lastName.toUpperCase()} ${collab.firstName}`;
+      prevCollabName.textContent = `${prefix}${collab.firstName} ${collab.lastName ? collab.lastName.toUpperCase() : ''}`;
       
       prevCollabRole.textContent = collab.role || '';
       if (collab.role) {
@@ -2033,7 +2033,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       collabItem.innerHTML = `
         <div class="collab-item-info">
-          <span class="collab-item-name">${collab.lastName.toUpperCase()} ${collab.firstName}</span>
+          <span class="collab-item-name">${collab.lastName ? collab.lastName.toUpperCase() : ''} ${collab.firstName || ''}</span>
           <span class="collab-item-role">${collab.role || 'Collaborateur'}</span>
           ${connBadgeHTML}
         </div>

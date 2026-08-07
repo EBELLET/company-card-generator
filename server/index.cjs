@@ -108,6 +108,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   const avatarSize = company.avatar_size != null ? company.avatar_size : 100;
   const logoX = company.logo_x != null ? parseInt(company.logo_x, 10) : 0;
   
+  const prefix = collab.civility ? collab.civility.trim() + ' ' : '';
   const cleanFirst = collab.firstName.trim().replace(/[^a-zA-Z0-9-]/g, '_');
   const cleanLast = collab.lastName.trim().toUpperCase().replace(/[^a-zA-Z0-9-]/g, '_');
   const vcfFilename = `${cleanFirst}_${cleanLast}.vcf`;
@@ -663,7 +664,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       ${avatarHTML}
     </div>
 
-    <h1 class="collab-name">${collab.lastName ? collab.lastName.toUpperCase() : ''} ${collab.firstName || ''}</h1>
+    <h1 class="collab-name">${prefix}${collab.firstName || ''} ${collab.lastName ? collab.lastName.toUpperCase() : ''}</h1>
     ${collab.role ? `<p class="collab-role">${collab.role}</p>` : ''}
 
     ${buttonsHTML}
