@@ -955,11 +955,14 @@
               </div>
               <div class="link-container">
                 <label for="collab-public-url">Lien web public</label>
-                <div class="copy-input-wrapper">
+                <div class="copy-input-wrapper" style="display: flex; gap: 0.5rem;">
                   <input type="text" id="collab-public-url" value="" readonly />
                   <button type="button" id="btn-copy-url" class="btn-copy">
                     <span>Copier</span>
                   </button>
+                  <a id="btn-open-url" href="#" target="_blank" class="btn-copy" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); color: #a5b4fc;" title="Ouvrir la carte (Mode aperçu sans incrémenter le compteur de connexions)">
+                    <span>Ouvrir</span>
+                  </a>
                 </div>
                 <p class="link-subtext">Ce lien permet à quiconque de visualiser la carte mobile, d'appeler, d'envoyer un mail ou de télécharger le fichier VCF.</p>
                 

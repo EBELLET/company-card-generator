@@ -1330,8 +1330,28 @@ app.get('/card/:id', async (req, res) => {
       return res.status(404).send('<h1 style="color:#f43f5e;font-family:sans-serif;text-align:center;margin-top:5rem;">Collaborateur non trouvé</h1>');
     }
 
-    // Incrémenter le compteur de connexions
-    db.incrementCollaboratorConnectionCount(collab.id);
+    // Incrémenter le compteur de connexions UNIQUEMENT pour les visites externes réelles.
+    // Ne PAS incrémenter si:
+    // - req.query contient preview=1, internal=1, ou ssr=1
+    // - req provient d'un administrateur connecté (Authorization Bearer Token)
+    // - req provient d'un iframe ou preview interne
+    const isInternalPreview = req.query.preview === '1' || 
+                              req.query.preview === 'true' || 
+                              req.query.internal === '1' || 
+                              req.query.ssr === '1' ||
+                              req.headers['x-internal-preview'] === '1' ||
+                              req.headers['sec-fetch-dest'] === 'iframe';
+
+    let isAuthenticatedAdmin = false;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token && verifyToken(token)) {
+      isAuthenticatedAdmin = true;
+    }
+
+    if (!isInternalPreview && !isAuthenticatedAdmin) {
+      db.incrementCollaboratorConnectionCount(collab.id);
+    }
 
     const company = await db.getCompanyById(collab.companyId);
     if (!company) {
@@ -1477,7 +1497,7 @@ app.get('/api/collaborators/:id/export', async (req, res) => {
     // 2. Resolve logo file
     let logoExt = 'png';
     let logoBuffer = null;
-    const logoSrc = company.logo_custom_url || (company.domain ? `https://logo.clearbit.com/${company.domain}?size=128` : '');
+    const logoSrc = company.logo_custom_url || '';
     if (logoSrc) {
       if (logoSrc.startsWith('data:image/')) {
         const matches = logoSrc.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);

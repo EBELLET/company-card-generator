@@ -203,6 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const collabQrCode = document.getElementById('collab-qr-code');
   const collabPublicUrl = document.getElementById('collab-public-url');
   const btnCopyUrl = document.getElementById('btn-copy-url');
+  const btnOpenUrl = document.getElementById('btn-open-url');
   const btnExportZip = document.getElementById('btn-export-zip');
   const collabExportZipWrapper = document.getElementById('collab-export-zip-wrapper');
 
@@ -353,6 +354,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnMyAccountShow) btnMyAccountShow.classList.add('hidden');
     if (myAccountModal) myAccountModal.classList.add('hidden');
     
+    sessionStorage.removeItem('tdconnect_active_company');
+    sessionStorage.removeItem('tdconnect_active_collab');
+    sessionStorage.removeItem('tdconnect_active_tab');
+    sessionStorage.removeItem('tdconnect_collab_editing_id');
+
     // Reset Views
     viewDashboard.classList.add('hidden');
     viewCompanyDetail.classList.add('hidden');
@@ -557,16 +563,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Detect public card URL in path: /card/xxx
   (function detectPublicCardRoute() {
+    if (window.__card_rendered__) return;
     const pathname = window.location.pathname;
     if (pathname.includes('/card/')) {
       const cardId = pathname.substring(pathname.lastIndexOf('/card/') + 6);
       if (cardId) {
+        window.__card_rendered__ = true;
         fetch(`/card/${cardId}?ssr=1`)
           .then(res => res.text())
           .then(html => {
             if (html && (html.includes('<!DOCTYPE html>') || html.includes('card-container'))) {
+              // Remove recursive main.js script tag from injected HTML to prevent loop
+              const cleanHtml = html.replace(/<script[^>]*src=["'][^"']*src\/main\.js["'][^>]*><\/script>/gi, '');
               document.open();
-              document.write(html);
+              document.write(cleanHtml);
               document.close();
             }
           })
@@ -925,6 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.add('active');
       const targetTab = btn.dataset.tab;
       document.getElementById(targetTab).classList.remove('hidden');
+      sessionStorage.setItem('tdconnect_active_tab', targetTab);
     });
   });
 
@@ -1802,6 +1813,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       const publicUrl = `${publicUrlBase}/card/${urlId}`;
       collabPublicUrl.value = publicUrl;
+      if (btnOpenUrl) {
+        btnOpenUrl.href = `${publicUrl}?preview=1`;
+      }
       collabQrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(publicUrl)}`;
     } else {
       sharingPanel.classList.add('hidden');
@@ -2100,6 +2114,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function selectCollaborator(id) {
     selectedCollabId = id;
+    if (id) {
+      sessionStorage.setItem('tdconnect_active_collab', id);
+    } else {
+      sessionStorage.removeItem('tdconnect_active_collab');
+    }
     const searchVal = searchCollab ? searchCollab.value : '';
     renderCollaboratorsList(searchVal);
     updateMockupPreview();
@@ -2139,6 +2158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (collab) {
+      if (collab.id) sessionStorage.setItem('tdconnect_collab_editing_id', collab.id);
       collabFormTitle.textContent = "Modifier le collaborateur";
       collabIdInput.value = collab.id;
       if (collabConnectionCountInput) collabConnectionCountInput.value = collab.connectionCount != null ? collab.connectionCount : 0;
@@ -2206,6 +2226,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeCollabForm() {
+    sessionStorage.removeItem('tdconnect_collab_editing_id');
     collabFormContainer.classList.add('hidden');
     collabForm.reset();
     collabPhotoClickUrlInput.value = '';
@@ -2503,6 +2524,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadCompanyDetail(companyId) {
     currentCompanyId = companyId;
+    sessionStorage.setItem('tdconnect_active_company', companyId);
     
     try {
       // 1. Fetch Company Info
@@ -2652,10 +2674,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const collabRes = await apiFetch(`${API_BASE}/companies/${companyId}/collaborators`);
       collaborators = await collabRes.json();
       
-      if (collaborators.length > 0) {
+      const savedCollabId = sessionStorage.getItem('tdconnect_active_collab');
+      if (savedCollabId && collaborators.some(c => c.id === savedCollabId)) {
+        selectedCollabId = savedCollabId;
+      } else if (collaborators.length > 0) {
         selectedCollabId = collaborators[0].id;
       } else {
         selectedCollabId = null;
+      }
+      if (selectedCollabId) {
+        sessionStorage.setItem('tdconnect_active_collab', selectedCollabId);
       }
 
       if (searchCollab) searchCollab.value = '';
@@ -2667,9 +2695,15 @@ document.addEventListener('DOMContentLoaded', () => {
       viewCompanyDetail.classList.remove('hidden');
       updateLayoutMode();
       
-      // Default tab to company on detail entry
-      const tabBtnCompany = document.querySelector('.tab-btn[data-tab="tab-company"]');
-      if (tabBtnCompany) tabBtnCompany.click();
+      // Default tab or restore active tab
+      const savedTab = sessionStorage.getItem('tdconnect_active_tab') || 'tab-company';
+      const targetTabBtn = document.querySelector(`.tab-btn[data-tab="${savedTab}"]`);
+      if (targetTabBtn) {
+        targetTabBtn.click();
+      } else {
+        const tabBtnCompany = document.querySelector('.tab-btn[data-tab="tab-company"]');
+        if (tabBtnCompany) tabBtnCompany.click();
+      }
 
     } catch (err) {
       console.error("Erreur de chargement des détails de l'entreprise:", err);
@@ -2682,6 +2716,11 @@ document.addEventListener('DOMContentLoaded', () => {
     currentCompanyId = null;
     collaborators = [];
     selectedCollabId = null;
+
+    sessionStorage.removeItem('tdconnect_active_company');
+    sessionStorage.removeItem('tdconnect_active_collab');
+    sessionStorage.removeItem('tdconnect_active_tab');
+    sessionStorage.removeItem('tdconnect_collab_editing_id');
 
     closeCollabForm();
     updateMockupPreview();
@@ -3004,7 +3043,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Initial loading ---
   if (authToken && currentUser) {
     toggleAppView(true);
-    loadCompaniesList();
+    const savedCompanyId = sessionStorage.getItem('tdconnect_active_company');
+    const savedEditingId = sessionStorage.getItem('tdconnect_collab_editing_id');
+
+    if (savedCompanyId) {
+      loadCompanyDetail(savedCompanyId).then(() => {
+        if (savedEditingId) {
+          const collabToEdit = collaborators.find(c => c.id === savedEditingId);
+          if (collabToEdit) {
+            openCollabForm(collabToEdit);
+          }
+        }
+      }).catch((err) => {
+        console.warn("Impossible de réouvrir l'entreprise active:", err);
+        loadCompaniesList();
+      });
+    } else {
+      loadCompaniesList();
+    }
   } else {
     toggleAppView(false);
   }
