@@ -1,23 +1,26 @@
 /* ==========================================
-   DESIGN SYSTEM & VARIABLES
+   DESIGN SYSTEM & VARIABLES (TDCONNECT CHARTER)
    ========================================== */
 :root {
-  --bg-color: #0b0f19;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --glass-bg: rgba(15, 23, 42, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-shine: rgba(255, 255, 255, 0.03);
+  --bg-color: #F6E1C4; /* Secondary Charter Color: Beige */
+  --text-primary: #373534; /* Primary Dark Charter Color: Noir chaud */
+  --text-secondary: #575554;
+  --text-muted: #787573;
+  --border-color: rgba(55, 53, 52, 0.14);
+  --glass-bg: #FFFFFF;
+  --glass-border: rgba(55, 53, 52, 0.12);
+  --glass-shine: rgba(255, 255, 255, 0.8);
   
-  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-serif: 'Playfair Display', Georgia, Cambria, serif;
+  --font-title: 'Raleway', sans-serif;
+  --font-sans: 'Quicksand', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: 'Raleway', Georgia, serif;
   --font-mono: 'JetBrains Mono', Courier, monospace;
 
   /* Button Colors */
-  --primary-color: #0284c7; /* Professional blue inspired by Estimancy */
-  --primary-hover: #0369a1;
+  --primary-color: #8C52FF; /* Primary Charter Color: Violet */
+  --primary-hover: #793ee6;
+  --dark-color: #373534; /* Primary Dark Charter Color */
+  --dark-hover: #252423;
   --success-color: #10b981;
   --success-hover: #059669;
   --danger-color: #f43f5e;
@@ -43,8 +46,15 @@ body {
   justify-content: center;
 }
 
-button, input {
-  font-family: inherit;
+h1, h2, h3, h4, h5, h6,
+.logo-text, .logo-text-hero, .features-section-title, .section-title,
+.companies-section-header h2, .modal-header h3 {
+  font-family: var(--font-title);
+  color: var(--text-primary);
+}
+
+button, input, select, textarea {
+  font-family: var(--font-sans);
   color: inherit;
 }
 
@@ -59,22 +69,21 @@ button, input {
   height: 100vh;
   z-index: -10;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 50%, #0e172a 0%, #020617 100%);
+  background: radial-gradient(circle at 50% 50%, #FAF0E4 0%, #F6E1C4 100%);
 }
 
 .glow-sphere {
   position: absolute;
   border-radius: 50%;
   filter: blur(120px);
-  opacity: 0.35;
-  mix-blend-mode: screen;
+  opacity: 0.25;
   pointer-events: none;
 }
 
 .glow-1 {
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.8) 0%, rgba(0, 0, 0, 0) 70%);
+  background: radial-gradient(circle, rgba(140, 82, 255, 0.4) 0%, rgba(246, 225, 196, 0) 70%);
   top: -10%;
   right: 5%;
   animation: float-slow-1 25s infinite alternate ease-in-out;
@@ -83,7 +92,7 @@ button, input {
 .glow-2 {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.6) 0%, rgba(0, 0, 0, 0) 70%);
+  background: radial-gradient(circle, rgba(55, 53, 52, 0.15) 0%, rgba(246, 225, 196, 0) 70%);
   bottom: -15%;
   left: -10%;
   animation: float-slow-2 30s infinite alternate ease-in-out;
@@ -92,7 +101,7 @@ button, input {
 .glow-3 {
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, rgba(236, 72, 153, 0.5) 0%, rgba(0, 0, 0, 0) 70%);
+  background: radial-gradient(circle, rgba(140, 82, 255, 0.3) 0%, rgba(246, 225, 196, 0) 70%);
   top: 40%;
   left: 30%;
   animation: float-slow-3 20s infinite alternate ease-in-out;
@@ -133,28 +142,24 @@ button, input {
 }
 
 .logo-text {
+  font-family: var(--font-title);
   font-size: 2.5rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
 }
 
 .logo-text span {
-  background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--primary-color);
 }
 
 .baseline {
+  font-family: var(--font-sans);
   font-size: 1.25rem;
   font-weight: 700;
   margin-top: 0.5rem;
   letter-spacing: 0.05em;
-  background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--primary-color);
   display: inline-block;
 }
 
@@ -185,13 +190,13 @@ button, input {
   border: 1px solid var(--glass-border);
   border-radius: 24px;
   padding: 2.25rem;
-  backdrop-filter: blur(16px) saturate(120%);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
-  transition: border-color 0.3s ease;
+  box-shadow: 0 12px 36px -5px rgba(55, 53, 52, 0.09);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .glass-panel:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(55, 53, 52, 0.25);
+  box-shadow: 0 16px 40px -5px rgba(55, 53, 52, 0.12);
 }
 
 /* Sidebar View Controller wrapper */
@@ -343,8 +348,8 @@ label {
 
 .input-wrapper input {
   width: 100%;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #FAF6F0;
+  border: 1px solid rgba(55, 53, 52, 0.18);
   border-radius: 12px;
   padding: 0.75rem 1rem;
   color: var(--text-primary);
@@ -354,8 +359,8 @@ label {
 }
 
 .input-wrapper input:focus {
-  border-color: transparent;
-  box-shadow: 0 0 0 1px rgba(2, 132, 199, 0.4), 0 10px 15px -3px rgba(2, 132, 199, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(140, 82, 255, 0.15);
 }
 
 .focus-border {
@@ -364,7 +369,7 @@ label {
   left: 50%;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--primary-color), #38bdf8);
+  background: linear-gradient(90deg, var(--primary-color), var(--dark-color));
   transition: all 0.3s ease;
   transform: translateX(-50%);
   pointer-events: none;
@@ -379,8 +384,8 @@ label {
 .btn-secondary-icon {
   position: absolute;
   right: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(55, 53, 52, 0.06);
+  border: 1px solid rgba(55, 53, 52, 0.15);
   border-radius: 8px;
   width: 32px;
   height: 32px;
@@ -393,9 +398,9 @@ label {
 }
 
 .btn-secondary-icon:hover {
-  background: rgba(2, 132, 199, 0.2);
-  border-color: rgba(2, 132, 199, 0.4);
-  color: #38bdf8;
+  background: rgba(140, 82, 255, 0.12);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .input-wrapper input[id="company-domain"] {
@@ -405,7 +410,7 @@ label {
 .form-divider {
   border: 0;
   height: 1px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0));
+  background: linear-gradient(90deg, rgba(55, 53, 52, 0), rgba(55, 53, 52, 0.12) 50%, rgba(55, 53, 52, 0));
   margin: 0.5rem 0;
 }
 
@@ -413,7 +418,7 @@ label {
    DRAG AND DROP ZONE FOR LOGO/PHOTO UPLOAD
    ========================================== */
 .drop-zone {
-  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border: 2px dashed rgba(55, 53, 52, 0.22);
   border-radius: 16px;
   padding: 1.25rem;
   display: flex;
@@ -424,14 +429,14 @@ label {
   cursor: pointer;
   position: relative;
   transition: all 0.3s ease;
-  background: rgba(15, 23, 42, 0.3);
+  background: rgba(250, 246, 240, 0.6);
   min-height: 100px;
 }
 
 .drop-zone.drag-over {
   border-color: var(--primary-color);
-  background: rgba(2, 132, 199, 0.08);
-  box-shadow: inset 0 0 10px rgba(2, 132, 199, 0.15);
+  background: rgba(140, 82, 255, 0.08);
+  box-shadow: inset 0 0 10px rgba(140, 82, 255, 0.15);
 }
 
 .file-input {
@@ -480,7 +485,9 @@ label {
   width: 100%;
   height: 100%;
   border-radius: 14px;
-  background: rgba(15, 23, 42, 0.95);
+  background: #FFFFFF;
+  border: 1px solid rgba(55, 53, 52, 0.15);
+  box-shadow: 0 4px 12px rgba(55, 53, 52, 0.08);
   display: flex;
   align-items: center;
   padding: 1rem;
@@ -705,9 +712,10 @@ label {
 }
 
 .companies-section-header h2 {
+  font-family: var(--font-title);
   font-size: 1.45rem;
   font-weight: 800;
-  color: white;
+  color: var(--text-primary);
 }
 
 .companies-grid {
@@ -724,14 +732,14 @@ label {
   width: 5px;
 }
 .companies-grid::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.08);
+  background: rgba(55, 53, 52, 0.15);
   border-radius: 10px;
 }
 
 /* Company grid item card */
 .company-list-card {
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #FFFFFF;
+  border: 1px solid rgba(55, 53, 52, 0.14);
   border-radius: 16px;
   padding: 0.85rem 1.25rem;
   cursor: pointer;
@@ -741,13 +749,14 @@ label {
   gap: 1.25rem;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  box-shadow: 0 4px 14px -2px rgba(55, 53, 52, 0.06);
 }
 
 .company-list-card:hover {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: #FFFFFF;
+  border-color: var(--primary-color);
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px -10px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 24px -4px rgba(140, 82, 255, 0.18);
 }
 
 .company-list-card-header {
@@ -761,8 +770,8 @@ label {
   width: 48px;
   height: 48px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #FAF6F0;
+  border: 1px solid rgba(55, 53, 52, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -776,8 +785,9 @@ label {
 }
 
 .company-logo-initials {
+  font-family: var(--font-title);
   font-size: 1.35rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--primary-color);
 }
 
@@ -813,9 +823,10 @@ label {
 }
 
 .company-card-name {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: white;
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -823,9 +834,9 @@ label {
 }
 
 .company-card-domain {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
 }
 
 /* ==========================================
@@ -913,7 +924,7 @@ label {
   font-size: 0.85rem;
   color: var(--text-muted);
   padding: 1.5rem;
-  border: 1px dashed rgba(255, 255, 255, 0.06);
+  border: 1px dashed rgba(55, 53, 52, 0.15);
   border-radius: 12px;
 }
 
@@ -922,22 +933,25 @@ label {
   justify-content: space-between;
   align-items: center;
   padding: 0.85rem 1rem;
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #FFFFFF;
+  border: 1px solid rgba(55, 53, 52, 0.12);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(55, 53, 52, 0.04);
 }
 
 .collab-item:hover {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: #FFFFFF;
+  border-color: rgba(140, 82, 255, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(55, 53, 52, 0.08);
 }
 
 .collab-item.active {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(140, 82, 255, 0.08);
   border-color: var(--primary-color);
-  box-shadow: 0 0 10px rgba(99, 102, 241, 0.05);
+  box-shadow: 0 4px 14px rgba(140, 82, 255, 0.15);
 }
 
 .collab-item-info {
@@ -1608,13 +1622,13 @@ label {
 }
 
 .btn-nav-action {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--dark-color);
+  border: 1px solid rgba(55, 53, 52, 0.2);
   border-radius: 12px;
   padding: 0.6rem 1.2rem;
   font-size: 0.88rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1623,13 +1637,12 @@ label {
 }
 
 .btn-nav-action:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--dark-hover);
   transform: translateY(-1px);
 }
 
 .btn-nav-action svg {
-  color: #818cf8;
+  color: var(--primary-color);
 }
 
 .landing-view {
@@ -1642,29 +1655,25 @@ label {
 }
 
 .logo-text-hero {
+  font-family: var(--font-title);
   font-size: 3.5rem;
   font-weight: 800;
   letter-spacing: -0.04em;
-  background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
   line-height: 1;
 }
 
 .logo-text-hero span {
-  background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--primary-color);
 }
 
 .baseline-hero {
+  font-family: var(--font-sans);
   font-size: 1.35rem;
   font-weight: 700;
   margin-top: 0.35rem;
   letter-spacing: 0.05em;
-  background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--primary-color);
   display: inline-block;
 }
 
@@ -1679,7 +1688,7 @@ label {
 }
 
 .btn-cta {
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  background: var(--primary-color);
   border: none;
   border-radius: 14px;
   padding: 0.8rem 1.8rem;
@@ -1691,13 +1700,13 @@ label {
   gap: 0.75rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 10px 25px -5px rgba(140, 82, 255, 0.4);
 }
 
 .btn-cta:hover {
+  background: var(--primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.5);
-  filter: brightness(1.1);
+  box-shadow: 0 15px 30px -5px rgba(140, 82, 255, 0.5);
 }
 
 .features-section {
@@ -1706,9 +1715,10 @@ label {
 }
 
 .features-section-title {
+  font-family: var(--font-title);
   font-size: 1.35rem;
   font-weight: 800;
-  color: white;
+  color: var(--text-primary);
   text-align: center;
   margin-bottom: 1rem;
   letter-spacing: -0.02em;
@@ -1734,23 +1744,22 @@ label {
 }
 
 .feature-card {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: #FFFFFF;
+  border: 1px solid rgba(55, 53, 52, 0.12);
   border-radius: 20px;
   padding: 1.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(16px) saturate(120%);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
+  box-shadow: 0 8px 24px -4px rgba(55, 53, 52, 0.08);
 }
 
 .feature-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(15, 23, 42, 0.8);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4);
+  border-color: rgba(140, 82, 255, 0.3);
+  box-shadow: 0 16px 36px -4px rgba(55, 53, 52, 0.12);
 }
 
 .feature-icon-wrapper {
@@ -1961,11 +1970,10 @@ input:checked + .slider:before {
 }
 
 .modal-header h3 {
+  font-family: var(--font-title);
   font-size: 1.6rem;
   font-weight: 800;
-  background: linear-gradient(135deg, white, var(--text-secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
@@ -1976,8 +1984,8 @@ input:checked + .slider:before {
 
 .btn-submit-full {
   width: 100%;
-  background: linear-gradient(135deg, var(--primary-color), #0284c7);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--primary-color);
+  border: none;
   padding: 0.85rem;
   border-radius: 12px;
   font-weight: 700;
@@ -1986,13 +1994,13 @@ input:checked + .slider:before {
   cursor: pointer;
   transition: all 0.25s ease;
   margin-top: 0.5rem;
-  box-shadow: 0 4px 15px -3px rgba(2, 132, 199, 0.4);
+  box-shadow: 0 4px 15px -3px rgba(140, 82, 255, 0.4);
 }
 
 .btn-submit-full:hover {
-  filter: brightness(1.1);
+  background: var(--primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px -3px rgba(2, 132, 199, 0.5);
+  box-shadow: 0 6px 20px -3px rgba(140, 82, 255, 0.5);
 }
 
 .error-msg-box {
@@ -2045,24 +2053,24 @@ input:checked + .slider:before {
 }
 
 .admin-badge.superadmin {
-  background: rgba(168, 85, 247, 0.12);
-  border: 1px solid rgba(168, 85, 247, 0.25);
-  color: #c084fc;
+  background: rgba(140, 82, 255, 0.12);
+  border: 1px solid rgba(140, 82, 255, 0.25);
+  color: var(--primary-color);
 }
 
 .admin-badge.admin {
-  background: rgba(14, 165, 233, 0.12);
-  border: 1px solid rgba(14, 165, 233, 0.25);
-  color: #38bdf8;
+  background: rgba(55, 53, 52, 0.1);
+  border: 1px solid rgba(55, 53, 52, 0.2);
+  color: var(--dark-color);
 }
 
 .admin-companies-count {
   font-size: 0.75rem;
   color: var(--text-secondary);
-  background: rgba(255,255,255,0.04);
+  background: rgba(55, 53, 52, 0.04);
   padding: 0.15rem 0.4rem;
   border-radius: 4px;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(55, 53, 52, 0.08);
 }
 
 .admin-companies-pills {
@@ -2077,9 +2085,9 @@ input:checked + .slider:before {
   font-weight: 600;
   padding: 0.15rem 0.5rem;
   border-radius: 20px;
-  background: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  color: #a5b4fc;
+  background: rgba(140, 82, 255, 0.12);
+  border: 1px solid rgba(140, 82, 255, 0.25);
+  color: var(--primary-color);
   white-space: nowrap;
 }
 
@@ -2096,12 +2104,12 @@ input:checked + .slider:before {
 .form-msg.success {
   background: rgba(16, 185, 129, 0.12);
   border: 1px solid rgba(16, 185, 129, 0.3);
-  color: #6ee7b7;
+  color: #059669;
 }
 .form-msg.error {
   background: rgba(244, 63, 94, 0.1);
   border: 1px solid rgba(244, 63, 94, 0.3);
-  color: #fda4af;
+  color: var(--danger-color);
 }
 
 /* Application Footer Styling */
@@ -2112,9 +2120,8 @@ input:checked + .slider:before {
   text-align: center;
   position: relative;
   z-index: 100;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(55, 53, 52, 0.12);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .app-footer p {
@@ -2128,13 +2135,13 @@ input:checked + .slider:before {
   cursor: pointer !important;
   position: relative;
   z-index: 105;
-  color: #818cf8 !important;
+  color: var(--primary-color) !important;
   text-decoration: underline !important;
   font-weight: 600 !important;
 }
 
 .app-footer a:hover,
 .link-tdconnect-contact:hover {
-  color: #a5b4fc !important;
+  color: var(--primary-hover) !important;
   text-decoration: underline !important;
 }

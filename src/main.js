@@ -71,6 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Navigation & Landing Elements
   const navLogo = document.getElementById('nav-logo');
+  const btnNavHome = document.getElementById('btn-nav-home');
+  const btnNavDashboard = document.getElementById('btn-nav-dashboard');
   const btnLoginToggle = document.getElementById('btn-login-toggle');
   const btnLoginText = document.getElementById('btn-login-text');
   const iconLogin = btnLoginToggle ? btnLoginToggle.querySelector('.icon-login') : null;
@@ -203,9 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const collabQrCode = document.getElementById('collab-qr-code');
   const collabPublicUrl = document.getElementById('collab-public-url');
   const btnCopyUrl = document.getElementById('btn-copy-url');
-  const btnOpenUrl = document.getElementById('btn-open-url');
   const btnExportZip = document.getElementById('btn-export-zip');
-  const collabExportZipWrapper = document.getElementById('collab-export-zip-wrapper');
 
   // Login Modal Elements
   const loginModal = document.getElementById('login-modal');
@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let logoCustomUrl = '';
   let currentTheme = 'theme-glass';
   let currentFont = 'font-outfit';
-  let currentAccentColor = '#6366f1';
+  let currentAccentColor = '#8C52FF';
   let currentButtonStyle = 'rectangle';
   
   let currentCompanyId = null; // Scoped to active company
@@ -301,14 +301,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Navigation & Page Transition Logique ---
   function toggleAppView(toDashboard) {
-    if (toDashboard) {
+    const isLoggedIn = !!(authToken && currentUser);
+
+    if (btnNavDashboard) {
+      if (isLoggedIn) btnNavDashboard.classList.remove('hidden');
+      else btnNavDashboard.classList.add('hidden');
+    }
+    if (btnMyAccountShow) {
+      if (isLoggedIn) btnMyAccountShow.classList.remove('hidden');
+      else btnMyAccountShow.classList.add('hidden');
+    }
+
+    if (toDashboard && isLoggedIn) {
       viewLanding.classList.add('hidden');
       if (viewRegister) viewRegister.classList.add('hidden');
       viewDashboard.classList.remove('hidden');
-      if (btnMyAccountShow) btnMyAccountShow.classList.remove('hidden');
       updateLayoutMode();
       
-      // Update toggle button to "Quitter"
       if (btnLoginText) btnLoginText.textContent = 'Quitter';
       if (iconLogin) iconLogin.classList.add('hidden');
       if (iconLogout) iconLogout.classList.remove('hidden');
@@ -316,13 +325,24 @@ document.addEventListener('DOMContentLoaded', () => {
       viewLanding.classList.remove('hidden');
       if (viewRegister) viewRegister.classList.add('hidden');
       viewDashboard.classList.add('hidden');
-      if (btnMyAccountShow) btnMyAccountShow.classList.add('hidden');
       updateLayoutMode();
       
-      // Update toggle button to "Connexion"
-      if (btnLoginText) btnLoginText.textContent = 'Connexion';
-      if (iconLogin) iconLogin.classList.remove('hidden');
-      if (iconLogout) iconLogout.classList.add('hidden');
+      if (isLoggedIn) {
+        if (btnLoginText) btnLoginText.textContent = 'Quitter';
+        if (iconLogin) iconLogin.classList.add('hidden');
+        if (iconLogout) iconLogout.classList.remove('hidden');
+      } else {
+        if (btnLoginText) btnLoginText.textContent = 'Connexion';
+        if (iconLogin) iconLogin.classList.remove('hidden');
+        if (iconLogout) iconLogout.classList.add('hidden');
+      }
+    }
+
+    if (btnCtaStart) {
+      const ctaSpan = btnCtaStart.querySelector('span');
+      if (ctaSpan) {
+        ctaSpan.textContent = isLoggedIn ? "Accéder à mes entreprises" : "Commencer l'aventure";
+      }
     }
   }
 
@@ -354,11 +374,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnMyAccountShow) btnMyAccountShow.classList.add('hidden');
     if (myAccountModal) myAccountModal.classList.add('hidden');
     
-    sessionStorage.removeItem('tdconnect_active_company');
-    sessionStorage.removeItem('tdconnect_active_collab');
-    sessionStorage.removeItem('tdconnect_active_tab');
-    sessionStorage.removeItem('tdconnect_collab_editing_id');
-
     // Reset Views
     viewDashboard.classList.add('hidden');
     viewCompanyDetail.classList.add('hidden');
@@ -554,29 +569,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Detect password reset token in URL parameter: ?token=...
-  const urlParams = new URLSearchParams(window.location.search);
-  const resetTokenParam = urlParams.get('token');
-  if (resetTokenParam) {
-    openResetModal(resetTokenParam);
-  }
-
   // Detect public card URL in path: /card/xxx
   (function detectPublicCardRoute() {
-    if (window.__card_rendered__) return;
     const pathname = window.location.pathname;
     if (pathname.includes('/card/')) {
       const cardId = pathname.substring(pathname.lastIndexOf('/card/') + 6);
       if (cardId) {
-        window.__card_rendered__ = true;
         fetch(`/card/${cardId}?ssr=1`)
           .then(res => res.text())
           .then(html => {
             if (html && (html.includes('<!DOCTYPE html>') || html.includes('card-container'))) {
-              // Remove recursive main.js script tag from injected HTML to prevent loop
-              const cleanHtml = html.replace(/<script[^>]*src=["'][^"']*src\/main\.js["'][^>]*><\/script>/gi, '');
               document.open();
-              document.write(cleanHtml);
+              document.write(html);
               document.close();
             }
           })
@@ -586,16 +590,15 @@ document.addEventListener('DOMContentLoaded', () => {
   })();
 
 
-  const ctaButtons = document.querySelectorAll('#btn-cta-start, .btn-cta-start-trigger');
-  ctaButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
+  if (btnCtaStart) {
+    btnCtaStart.addEventListener('click', () => {
       if (authToken) {
         toggleAppView(true);
       } else {
         showRegisterView();
       }
     });
-  });
+  }
 
   // --- Registration View Toggling & Form Submit Handling ---
   function showRegisterView() {
@@ -923,6 +926,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (btnNavHome) {
+    btnNavHome.addEventListener('click', () => {
+      toggleAppView(false);
+    });
+  }
+
+  if (btnNavDashboard) {
+    btnNavDashboard.addEventListener('click', () => {
+      if (authToken && currentUser) {
+        toggleAppView(true);
+        loadCompaniesList();
+      } else {
+        showLoginModal();
+      }
+    });
+  }
+
   // --- Sidebar Tab Switching ---
   const tabButtons = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
@@ -935,7 +955,6 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.add('active');
       const targetTab = btn.dataset.tab;
       document.getElementById(targetTab).classList.remove('hidden');
-      sessionStorage.setItem('tdconnect_active_tab', targetTab);
     });
   });
 
@@ -1693,7 +1712,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (collab) {
       sharingPanel.classList.remove('hidden');
 
-      // Connection counter display & Export ZIP for Super Admin
+      // Connection counter display for Super Admin
       const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
       if (collabConnectionCounterDisplay) {
         if (isSuperAdmin) {
@@ -1707,16 +1726,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      if (collabExportZipWrapper) {
-        if (isSuperAdmin) {
-          collabExportZipWrapper.classList.remove('hidden');
-        } else {
-          collabExportZipWrapper.classList.add('hidden');
-        }
-      }
-
       const prefix = collab.civility ? collab.civility.trim() + ' ' : '';
-      prevCollabName.textContent = `${prefix}${collab.firstName} ${collab.lastName ? collab.lastName.toUpperCase() : ''}`;
+      prevCollabName.textContent = `${prefix}${collab.lastName.toUpperCase()} ${collab.firstName}`;
       
       prevCollabRole.textContent = collab.role || '';
       if (collab.role) {
@@ -1813,9 +1824,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       const publicUrl = `${publicUrlBase}/card/${urlId}`;
       collabPublicUrl.value = publicUrl;
-      if (btnOpenUrl) {
-        btnOpenUrl.href = `${publicUrl}?preview=1`;
-      }
       collabQrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(publicUrl)}`;
     } else {
       sharingPanel.classList.add('hidden');
@@ -2047,7 +2055,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       collabItem.innerHTML = `
         <div class="collab-item-info">
-          <span class="collab-item-name">${collab.lastName ? collab.lastName.toUpperCase() : ''} ${collab.firstName || ''}</span>
+          <span class="collab-item-name">${collab.lastName.toUpperCase()} ${collab.firstName}</span>
           <span class="collab-item-role">${collab.role || 'Collaborateur'}</span>
           ${connBadgeHTML}
         </div>
@@ -2114,11 +2122,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function selectCollaborator(id) {
     selectedCollabId = id;
-    if (id) {
-      sessionStorage.setItem('tdconnect_active_collab', id);
-    } else {
-      sessionStorage.removeItem('tdconnect_active_collab');
-    }
     const searchVal = searchCollab ? searchCollab.value : '';
     renderCollaboratorsList(searchVal);
     updateMockupPreview();
@@ -2158,7 +2161,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (collab) {
-      if (collab.id) sessionStorage.setItem('tdconnect_collab_editing_id', collab.id);
       collabFormTitle.textContent = "Modifier le collaborateur";
       collabIdInput.value = collab.id;
       if (collabConnectionCountInput) collabConnectionCountInput.value = collab.connectionCount != null ? collab.connectionCount : 0;
@@ -2226,7 +2228,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeCollabForm() {
-    sessionStorage.removeItem('tdconnect_collab_editing_id');
     collabFormContainer.classList.add('hidden');
     collabForm.reset();
     collabPhotoClickUrlInput.value = '';
@@ -2524,7 +2525,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadCompanyDetail(companyId) {
     currentCompanyId = companyId;
-    sessionStorage.setItem('tdconnect_active_company', companyId);
     
     try {
       // 1. Fetch Company Info
@@ -2630,7 +2630,7 @@ document.addEventListener('DOMContentLoaded', () => {
       logoCustomUrl = companyInfo.logo_custom_url || '';
       currentTheme = companyInfo.theme || 'theme-glass';
       currentFont = companyInfo.font || 'font-outfit';
-      currentAccentColor = companyInfo.accent_color || '#6366f1';
+      currentAccentColor = companyInfo.accent_color || '#8C52FF';
 
       currentButtonStyle = companyInfo.button_style || 'rectangle';
 
@@ -2674,16 +2674,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const collabRes = await apiFetch(`${API_BASE}/companies/${companyId}/collaborators`);
       collaborators = await collabRes.json();
       
-      const savedCollabId = sessionStorage.getItem('tdconnect_active_collab');
-      if (savedCollabId && collaborators.some(c => c.id === savedCollabId)) {
-        selectedCollabId = savedCollabId;
-      } else if (collaborators.length > 0) {
+      if (collaborators.length > 0) {
         selectedCollabId = collaborators[0].id;
       } else {
         selectedCollabId = null;
-      }
-      if (selectedCollabId) {
-        sessionStorage.setItem('tdconnect_active_collab', selectedCollabId);
       }
 
       if (searchCollab) searchCollab.value = '';
@@ -2695,15 +2689,9 @@ document.addEventListener('DOMContentLoaded', () => {
       viewCompanyDetail.classList.remove('hidden');
       updateLayoutMode();
       
-      // Default tab or restore active tab
-      const savedTab = sessionStorage.getItem('tdconnect_active_tab') || 'tab-company';
-      const targetTabBtn = document.querySelector(`.tab-btn[data-tab="${savedTab}"]`);
-      if (targetTabBtn) {
-        targetTabBtn.click();
-      } else {
-        const tabBtnCompany = document.querySelector('.tab-btn[data-tab="tab-company"]');
-        if (tabBtnCompany) tabBtnCompany.click();
-      }
+      // Default tab to company on detail entry
+      const tabBtnCompany = document.querySelector('.tab-btn[data-tab="tab-company"]');
+      if (tabBtnCompany) tabBtnCompany.click();
 
     } catch (err) {
       console.error("Erreur de chargement des détails de l'entreprise:", err);
@@ -2716,11 +2704,6 @@ document.addEventListener('DOMContentLoaded', () => {
     currentCompanyId = null;
     collaborators = [];
     selectedCollabId = null;
-
-    sessionStorage.removeItem('tdconnect_active_company');
-    sessionStorage.removeItem('tdconnect_active_collab');
-    sessionStorage.removeItem('tdconnect_active_tab');
-    sessionStorage.removeItem('tdconnect_collab_editing_id');
 
     closeCollabForm();
     updateMockupPreview();
@@ -3042,25 +3025,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Initial loading ---
   if (authToken && currentUser) {
-    toggleAppView(true);
-    const savedCompanyId = sessionStorage.getItem('tdconnect_active_company');
-    const savedEditingId = sessionStorage.getItem('tdconnect_collab_editing_id');
-
-    if (savedCompanyId) {
-      loadCompanyDetail(savedCompanyId).then(() => {
-        if (savedEditingId) {
-          const collabToEdit = collaborators.find(c => c.id === savedEditingId);
-          if (collabToEdit) {
-            openCollabForm(collabToEdit);
-          }
-        }
-      }).catch((err) => {
-        console.warn("Impossible de réouvrir l'entreprise active:", err);
-        loadCompaniesList();
-      });
-    } else {
-      loadCompaniesList();
-    }
+    toggleAppView(false);
+    loadCompaniesList();
   } else {
     toggleAppView(false);
   }

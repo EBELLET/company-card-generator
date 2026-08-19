@@ -12,7 +12,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Outfit:wght@100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Quicksand:wght@400;500;600;700&family=Raleway:wght@600;700;800;900&display=swap" rel="stylesheet">
   </head>
   <body>
     <!-- Background glow elements for rich aesthetics -->
@@ -26,9 +26,17 @@
       <!-- TOP NAVIGATION BAR -->
       <nav class="nav-bar">
         <div class="nav-logo" id="nav-logo">
-          <span class="logo-text"><span>TD</span>Connect</span>
+          <img src="/logo-tdconnect.png" alt="TDConnect" class="nav-brand-logo" style="height: 42px; width: auto; object-fit: contain; cursor: pointer;" />
         </div>
-        <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn-nav-action" id="btn-nav-home">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span>Accueil</span>
+          </button>
+          <button type="button" class="btn-nav-action hidden" id="btn-nav-dashboard">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>Mes entreprises</span>
+          </button>
           <button type="button" class="btn-nav-action hidden" id="btn-my-account-show">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <span>Mon compte</span>
@@ -44,9 +52,14 @@
       <!-- LANDING VIEW -->
       <div id="view-landing" class="landing-view">
         <header class="app-header">
-          <h1 class="logo-text-hero"><span>TD</span>Connect</h1>
-          <p class="baseline-hero">Touchez Diffusez Connectez</p>
+          <div class="hero-logo-container" style="margin: 0 auto 0.75rem; display: flex; justify-content: center; align-items: center;">
+            <img src="/logo-tdconnect.png" alt="TDConnect - Touchez Diffusez Connectez" class="hero-brand-logo" style="max-height: 110px; width: auto; max-width: 90%; object-fit: contain;" />
+          </div>
           <p class="subtitle-hero">Créez des cartes de visite virtuelles et des pages contact mobiles pour votre équipe</p>
+          <button type="button" class="btn-cta" id="btn-cta-start">
+            <span>Commencer l'aventure</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
         </header>
 
         <!-- Product Presentation / Features Grid -->
@@ -78,20 +91,12 @@
               <p>Diffusez votre profil grâce à des QR Codes générés automatiquement ou via le téléchargement de votre vCard en un clic.</p>
             </div>
 
-            <div class="feature-card" style="display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
-                <div class="feature-icon-wrapper color-pink">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
-                </div>
-                <h4>Cartes Physiques & Virtuelles</h4>
-                <p>Créer votre compte de test, créez votre entreprise et vos collaborateurs pour créer leur carte de visite virtuelle. Demander la création des cartes métaliques (ou bois) NFC et QRcode pour avec laquelle ils échangerons leur contacts.</p>
+            <div class="feature-card">
+              <div class="feature-icon-wrapper color-pink">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               </div>
-              <div style="margin-top: 1.25rem; width: 100%; display: flex; justify-content: flex-end;">
-                <button type="button" class="btn-cta" id="btn-cta-start" style="font-size: 0.9rem; padding: 0.65rem 1.25rem;">
-                  <span>Commencez l'aventure</span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                </button>
-              </div>
+              <h4>Export ZIP Autonome</h4>
+              <p>Téléchargez un pack de fichiers autonome prêt à être hébergé n'importe où (cPanel, FTP, Vercel) de manière indépendante.</p>
             </div>
 
           </div>
@@ -955,18 +960,15 @@
               </div>
               <div class="link-container">
                 <label for="collab-public-url">Lien web public</label>
-                <div class="copy-input-wrapper" style="display: flex; gap: 0.5rem;">
+                <div class="copy-input-wrapper">
                   <input type="text" id="collab-public-url" value="" readonly />
                   <button type="button" id="btn-copy-url" class="btn-copy">
                     <span>Copier</span>
                   </button>
-                  <a id="btn-open-url" href="#" target="_blank" class="btn-copy" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); color: #a5b4fc;" title="Ouvrir la carte (Mode aperçu sans incrémenter le compteur de connexions)">
-                    <span>Ouvrir</span>
-                  </a>
                 </div>
                 <p class="link-subtext">Ce lien permet à quiconque de visualiser la carte mobile, d'appeler, d'envoyer un mail ou de télécharger le fichier VCF.</p>
                 
-                <div id="collab-export-zip-wrapper" class="superadmin-only-field hidden" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
                   <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary);">Exporter pour hébergement externe</label>
                   <a id="btn-export-zip" href="#" class="btn-copy" style="text-align: center; text-decoration: none; background: var(--success-color); display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>

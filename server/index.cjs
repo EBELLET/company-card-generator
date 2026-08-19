@@ -108,7 +108,6 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   const avatarSize = company.avatar_size != null ? company.avatar_size : 100;
   const logoX = company.logo_x != null ? parseInt(company.logo_x, 10) : 0;
   
-  const prefix = collab.civility ? collab.civility.trim() + ' ' : '';
   const cleanFirst = collab.firstName.trim().replace(/[^a-zA-Z0-9-]/g, '_');
   const cleanLast = collab.lastName.trim().toUpperCase().replace(/[^a-zA-Z0-9-]/g, '_');
   const vcfFilename = `${cleanFirst}_${cleanLast}.vcf`;
@@ -664,7 +663,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       ${avatarHTML}
     </div>
 
-    <h1 class="collab-name">${prefix}${collab.firstName || ''} ${collab.lastName ? collab.lastName.toUpperCase() : ''}</h1>
+    <h1 class="collab-name">${collab.lastName ? collab.lastName.toUpperCase() : ''} ${collab.firstName || ''}</h1>
     ${collab.role ? `<p class="collab-role">${collab.role}</p>` : ''}
 
     ${buttonsHTML}
@@ -995,16 +994,13 @@ app.post('/api/auth/register', async (req, res) => {
       domain: companyDomain ? companyDomain.trim() : ''
     });
 
-    const reqOrigin = req.headers.origin || req.headers.referer || process.env.APP_URL;
-
     // Send welcome email with temporary password asynchronously
     mailer.sendWelcomeEmail({
       to: email.trim(),
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       userId: userId.trim(),
-      password: tempPassword,
-      origin: reqOrigin
+      password: tempPassword
     }).catch(err => console.error('[Mail] Erreur envoi email bienvenue inscription:', err.message));
 
     // Generate token
@@ -1235,16 +1231,13 @@ app.post('/api/admin/users', authenticateToken, async (req, res) => {
       await db.assignCompaniesToUser(newUser.id, managedCompanies);
     }
 
-    const reqOrigin = req.headers.origin || req.headers.referer || process.env.APP_URL;
-
     // Send welcome email (non-blocking)
     mailer.sendWelcomeEmail({
       to: email,
       firstName,
       lastName,
       userId: id.trim(),
-      password,
-      origin: reqOrigin
+      password
     }).catch(err => console.error('[Mail] Erreur envoi email bienvenue:', err.message));
     
     res.status(201).json(newUser);
@@ -1330,26 +1323,9 @@ app.get('/card/:id', async (req, res) => {
       return res.status(404).send('<h1 style="color:#f43f5e;font-family:sans-serif;text-align:center;margin-top:5rem;">Collaborateur non trouvé</h1>');
     }
 
-    // Incrémenter le compteur de connexions UNIQUEMENT pour les visites externes réelles.
-    // Ne PAS incrémenter si:
-    // - req.query contient preview=1, internal=1, ou ssr=1
-    // - req provient d'un administrateur connecté (Authorization Bearer Token)
-    // - req provient d'un iframe ou preview interne
-    const isInternalPreview = req.query.preview === '1' || 
-                              req.query.preview === 'true' || 
-                              req.query.internal === '1' || 
-                              req.query.ssr === '1' ||
-                              req.headers['x-internal-preview'] === '1' ||
-                              req.headers['sec-fetch-dest'] === 'iframe';
-
-    let isAuthenticatedAdmin = false;
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (token && verifyToken(token)) {
-      isAuthenticatedAdmin = true;
-    }
-
-    if (!isInternalPreview && !isAuthenticatedAdmin) {
+    // Incrémenter le compteur de connexions UNIQUEMENT pour les visites externes publiques (hors preview/admin)
+    const isInternalAccess = req.query.ssr === '1' || req.query.preview === '1' || req.headers['authorization'] || (req.headers.referer && (req.headers.referer.includes('/admin') || req.headers.referer.includes(':5173') || req.headers.referer.includes(':3000')));
+    if (!isInternalAccess) {
       db.incrementCollaboratorConnectionCount(collab.id);
     }
 
@@ -1497,7 +1473,7 @@ app.get('/api/collaborators/:id/export', async (req, res) => {
     // 2. Resolve logo file
     let logoExt = 'png';
     let logoBuffer = null;
-    const logoSrc = company.logo_custom_url || '';
+    const logoSrc = company.logo_custom_url || (company.domain ? `https://logo.clearbit.com/${company.domain}?size=128` : '');
     if (logoSrc) {
       if (logoSrc.startsWith('data:image/')) {
         const matches = logoSrc.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);

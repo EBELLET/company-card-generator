@@ -6,7 +6,7 @@ export default defineConfig({
     host: true,
     port: 5173,
     watch: {
-      ignored: ['**/database.sqlite*', '**/*.sqlite*', '**/scratch/**', '**/dist/**', '**/server/**']
+      ignored: ['**/scratch/**', '**/dist/**']
     },
     proxy: {
       '/api': {

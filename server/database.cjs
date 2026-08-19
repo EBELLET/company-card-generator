@@ -96,6 +96,11 @@ async function initializeDatabase() {
     await pool.query(`ALTER TABLE company_info ADD COLUMN tdconnect_url TEXT`);
   } catch (e) {}
 
+  // Ensure all existing companies have an active valid subscription date for testing
+  try {
+    await pool.query(`UPDATE company_info SET subscription_end_date = '2030-12-31', is_subscription_active = 1 WHERE subscription_end_date IS NULL OR subscription_end_date < CURRENT_DATE()`);
+  } catch (e) {}
+
   // 2. Create collaborators table
   await pool.query(`
     CREATE TABLE IF NOT EXISTS collaborators (
@@ -244,7 +249,7 @@ function mapCollaboratorRow(row) {
 
 function getOneMonthFromNowDateString() {
   const d = new Date();
-  d.setMonth(d.getMonth() + 1);
+  d.setFullYear(d.getFullYear() + 1);
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
