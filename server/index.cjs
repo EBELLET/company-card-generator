@@ -44,7 +44,7 @@ function authenticateToken(req, res, next) {
   if (!token) return res.status(401).json({ error: "Token d'authentification manquant." });
   
   const decoded = verifyToken(token);
-  if (!decoded) return res.status(403).json({ error: "Session expirée ou invalide. Veuillez vous reconnecter." });
+  if (!decoded) return res.status(401).json({ error: "Session expirée ou invalide. Veuillez vous reconnecter." });
   
   req.user = decoded;
   next();
@@ -98,6 +98,24 @@ function checkCardStatus(collab, company) {
   };
 }
 
+function getCompanyInitials(name) {
+  if (!name || !name.trim()) return 'EC';
+  const clean = name.trim();
+  const words = clean.split(/[\s\-]+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  return clean.substring(0, 2).toUpperCase();
+}
+
+function getCollaboratorInitials(firstName, lastName) {
+  const f = (firstName || '').trim();
+  const l = (lastName || '').trim();
+  const fInit = f ? f[0].toUpperCase() : '';
+  const lInit = l ? l[0].toUpperCase() : '';
+  return (fInit + lInit) || 'C';
+}
+
 // --- HTML Template for Virtual Business Card ---
 function generateVirtualCardHTML(collab, company, isStandalone = false) {
   const cardStatus = checkCardStatus(collab, company);
@@ -119,14 +137,13 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   let customMsgContentHTML = customMsgText;
   if (customMsgUrl && !cardStatus.isBlurred) {
     const targetUrl = customMsgUrl.startsWith('http') ? customMsgUrl : 'https://' + customMsgUrl;
-    customMsgContentHTML = `<a href="${targetUrl}" target="_blank" style="color: inherit; text-decoration: underline; cursor: pointer;">${customMsgText}</a>`;
+    customMsgContentHTML = `<a href="${targetUrl}" target="_blank" style="color: inherit; text-decoration: underline; opacity: 0.9;">${customMsgText}</a>`;
   }
-
   const customMsgHTML = (showCustomMsg && customMsgText) ? `<div class="tdconnect-custom-message" style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.8; margin-top: 0.35rem; font-weight: 500; text-align: center; width: 100%;">${customMsgContentHTML}</div>` : '';
   
   // Resolve profile picture with alignment properties
   let avatarHTML = '';
-  if (collab.photoUrl) {
+  if (collab.photoUrl && collab.photoUrl !== '[Photo Base64]') {
     const zoom = collab.photoZoom != null ? parseFloat(collab.photoZoom) : 1.0;
     const x = collab.photoX != null ? parseFloat(collab.photoX) : 50;
     const y = collab.photoY != null ? parseFloat(collab.photoY) : 50;
@@ -141,9 +158,9 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       photoSrc = `./photo.${photoExt}`;
     }
     
-    avatarHTML = `<img src="${photoSrc}" style="transform: scale(${zoom}); transform-origin: ${x}% ${y}%; object-fit: cover; width: 100%; height: 100%;" alt="${collab.firstName} ${collab.lastName}" />`;
+    avatarHTML = `<img src="${photoSrc}" style="transform: scale(${zoom}); transform-origin: ${x}% ${y}%; object-fit: cover; width: 100%; height: 100%;" alt="${collab.firstName} ${collab.lastName}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'initials-avatar\\'>${getCollaboratorInitials(collab.firstName, collab.lastName)}</div>';" />`;
   } else {
-    const initials = (collab.firstName[0] + (collab.lastName[0] || '')).toUpperCase();
+    const initials = getCollaboratorInitials(collab.firstName, collab.lastName);
     avatarHTML = `<div class="initials-avatar">${initials}</div>`;
   }
 
@@ -171,29 +188,44 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   }
   
   const showNameUnderLogo = company.show_name_under_logo !== 0;
+  const nameSubtext = showNameUnderLogo ? `<div class="company-logo-subtext" style="font-size: 0.85rem; font-weight: 700; margin-top: 0.35rem; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); text-align: center;">${companyName}</div>` : '';
+
   if (logoSrc) {
-    const nameSubtext = showNameUnderLogo ? `<div class="company-logo-subtext" style="font-size: 0.85rem; font-weight: 700; margin-top: 0.35rem; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); text-align: center;">${companyName}</div>` : '';
     logoHTML = `<a href="${logoTargetUrl}" target="_blank" style="display:flex; flex-direction:column; align-items:center; text-decoration:none; color:inherit;"><img class="company-logo" src="${logoSrc}" alt="${companyName} Logo" />${nameSubtext}</a>`;
   } else {
-    logoHTML = `<a href="${logoTargetUrl}" target="_blank" style="text-decoration:none; color:inherit;"><span class="company-logo-text">${companyName}</span></a>`;
-  }
+    const compInitials = getCompanyInitials(companyName);
+    const logoSize = company.logo_size !== undefined ? company.logo_size : 72;
+    logoHTML = `<a href="${logoTargetUrl}" target="_blank" style="display:flex; flex-direction:column; align-items:center; text-decoration:none; color:inherit;">
+      <div class="company-logo-initials-badge" style="width: ${logoSize}px; height: ${logoSize}px; border-radius: ${Math.round(logoSize * 0.25)}px; background: rgba(140, 82, 255, 0.12); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: ${Math.round(logoSize * 0.42)}px; font-weight: 800; color: var(--accent); letter-spacing: 0.04em; text-transform: uppercase; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">${compInitials}</div>
+      ${nameSubtext}
+    </a>`;
+  };
 
   // Resolve address
-  let street = collab.address ? collab.address.trim() : '';
-  if (!street) {
-    const mainStreet = company.address || '';
-    const mainZip = company.zip || '';
-    const mainCity = company.city || '';
-    const mainCountry = company.country || '';
-    street = mainStreet;
-    if (mainZip || mainCity) {
-      street += (street ? ', ' : '') + `${mainZip} ${mainCity}`.trim();
+  let formattedAddress = '';
+  if (collab.address && collab.address.trim()) {
+    const rawCollab = collab.address.trim();
+    if (rawCollab.includes('\n')) {
+      formattedAddress = rawCollab.replace(/\r\n|\r|\n/g, '<br/>');
+    } else if (rawCollab.includes(',')) {
+      formattedAddress = rawCollab.split(',').map(s => s.trim()).filter(Boolean).join('<br/>');
+    } else {
+      formattedAddress = rawCollab;
     }
-    if (mainCountry) {
-      street += (street ? ', ' : '') + mainCountry;
-    }
+  } else {
+    const mainStreet = (company.address || '').trim();
+    const mainZip = (company.zip || '').trim();
+    const mainCity = (company.city || '').trim();
+    const mainCountry = (company.country || '').trim();
+    
+    const lines = [];
+    if (mainStreet) lines.push(mainStreet);
+    const zipCity = [mainZip, mainCity].filter(Boolean).join(' ');
+    if (zipCity) lines.push(zipCity);
+    if (mainCountry) lines.push(mainCountry);
+
+    formattedAddress = lines.join('<br/>');
   }
-  if (!street) street = 'Adresse non renseignée';
 
   // Fonts URL loading
   let fontLink = '';
@@ -388,11 +420,14 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
 
     /* Company Address underneath Logo */
     .company-address {
-      font-size: 0.72rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       margin-bottom: 1.5rem;
-      line-height: 1.4;
+      line-height: 1.35;
       letter-spacing: 0.02em;
+      text-align: center;
+      word-break: normal;
+      overflow-wrap: normal;
     }
 
     /* Profile Avatar */
@@ -655,9 +690,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       ${logoHTML}
     </div>
     
-    <div class="company-address">
-      ${street.replace(/\r\n|\r|\n/g, '<br>')}
-    </div>
+    ${formattedAddress ? `<div class="company-address">${formattedAddress}</div>` : ''}
 
     <div class="avatar-wrapper">
       ${avatarHTML}
@@ -711,11 +744,11 @@ app.get('/api/companies/:id', authenticateToken, async (req, res) => {
       const currUser = users.find(u => u.id === req.user.id);
       const allowedIds = currUser ? (currUser.managedCompanies || []).map(id => Number(id)) : [];
       if (!allowedIds.includes(Number(companyId))) {
-        return res.status(403).json({ error: "Vous n'avez pas l'autorisation d'accéder à cette entreprise." });
+        return res.status(403).json({ error: "Entreprise inexistante" });
       }
     }
     const info = await db.getCompanyById(companyId);
-    if (!info) return res.status(404).json({ error: 'Entreprise non trouvée.' });
+    if (!info) return res.status(404).json({ error: 'Entreprise inexistante' });
     res.json(info);
   } catch (err) {
     console.error(`Erreur GET /api/companies/${req.params.id}:`, err.message);
@@ -787,7 +820,7 @@ app.get('/api/companies/:companyId/collaborators', authenticateToken, async (req
     const currUser = users.find(u => u.id === req.user.id);
     const allowedIds = currUser ? (currUser.managedCompanies || []).map(id => Number(id)) : [];
     if (!allowedIds.includes(Number(companyId))) {
-      return res.status(403).json({ error: "Accès refusé pour cette entreprise." });
+      return res.status(403).json({ error: "Entreprise inexistante" });
     }
   }
   try {
@@ -1591,7 +1624,7 @@ app.use((req, res) => {
 });
 
 // Run Express API Server and trigger Seed Seeding
-app.listen(PORT, async () => {
+app.listen(PORT, '0.0.0.0', async () => {
   const os = require('os');
   const interfaces = os.networkInterfaces();
   const localIPs = [];

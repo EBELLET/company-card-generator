@@ -16,10 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
       options.headers['Authorization'] = `Bearer ${authToken}`;
     }
     const res = await fetch(url, options);
-    if (res.status === 401 || res.status === 403) {
+    if (res.status === 401) {
       logoutUser();
       showLoginModal();
-      throw new Error("Session expirée ou non autorisée. Veuillez vous reconnecter.");
+      throw new Error("Session expirée ou invalide. Veuillez vous reconnecter.");
     }
     const contentType = res.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
@@ -143,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const collabFormTitle = document.getElementById('collab-form-title');
   
   const collabIdInput = document.getElementById('collab-id');
+  const collabDisplayIdInput = document.getElementById('collab-display-id');
   const collabFirstnameInput = document.getElementById('collab-firstname');
   const collabLastnameInput = document.getElementById('collab-lastname');
   const collabTitleInput = document.getElementById('collab-title');
@@ -299,7 +300,78 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedCollabId = null;
   let currentCollabPhotoUrl = '';
 
-  // --- Navigation & Page Transition Logique ---
+  // --- Navigation & Router SPA System ---
+  function navigateTo(hash, pushHistory = true) {
+    const cleanHash = hash.startsWith('#') ? hash : '#' + hash;
+    if (pushHistory) {
+      if (window.location.hash !== cleanHash) {
+        history.pushState({ hash: cleanHash }, '', cleanHash);
+      }
+    } else {
+      if (window.location.hash !== cleanHash) {
+        history.replaceState({ hash: cleanHash }, '', cleanHash);
+      }
+    }
+    renderRoute(cleanHash);
+  }
+
+  function renderRoute(hash) {
+    const rawHash = hash || window.location.hash || '#home';
+    const cleanHash = rawHash.startsWith('#') ? rawHash : '#' + rawHash;
+    const isLoggedIn = !!(authToken && currentUser);
+
+    if (cleanHash.startsWith('#company/')) {
+      const parts = cleanHash.split('/');
+      const companyId = parts[1];
+      if (isLoggedIn && companyId) {
+        toggleAppView(true);
+        if (currentCompanyId !== companyId) {
+          loadCompanyDetail(companyId);
+        } else {
+          viewCompaniesList.classList.add('hidden');
+          if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
+          viewCompanyDetail.classList.remove('hidden');
+          updateLayoutMode();
+        }
+        return;
+      }
+    }
+
+    if (cleanHash === '#admin') {
+      if (isLoggedIn) {
+        if (currentUser && currentUser.role === 'superadmin') {
+          toggleAppView(true);
+          viewCompaniesList.classList.add('hidden');
+          if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
+          if (viewAdminPanel) viewAdminPanel.classList.remove('hidden');
+          updateLayoutMode();
+          closeAdminForm();
+          loadAdminsList();
+          return;
+        } else {
+          alert("Accès réservé aux Super Administrateurs.");
+          navigateTo('#dashboard');
+          return;
+        }
+      }
+    }
+
+    if (cleanHash === '#dashboard' || cleanHash === '#companies') {
+      if (isLoggedIn) {
+        toggleAppView(true);
+        if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
+        if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
+        viewCompaniesList.classList.remove('hidden');
+        updateLayoutMode();
+        loadCompaniesList();
+        return;
+      }
+    }
+
+    // Default: Home Landing view
+    toggleAppView(false);
+  }
+
   function toggleAppView(toDashboard) {
     const isLoggedIn = !!(authToken && currentUser);
 
@@ -315,6 +387,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toDashboard && isLoggedIn) {
       viewLanding.classList.add('hidden');
       if (viewRegister) viewRegister.classList.add('hidden');
+      if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
+      if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
       viewDashboard.classList.remove('hidden');
       updateLayoutMode();
       
@@ -325,10 +399,12 @@ document.addEventListener('DOMContentLoaded', () => {
       viewLanding.classList.remove('hidden');
       if (viewRegister) viewRegister.classList.add('hidden');
       viewDashboard.classList.add('hidden');
+      if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
+      if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
       updateLayoutMode();
       
       if (isLoggedIn) {
-        if (btnLoginText) btnLoginText.textContent = 'Quitter';
+        if (btnLoginText) btnLoginText.textContent = 'Déconnexion';
         if (iconLogin) iconLogin.classList.add('hidden');
         if (iconLogout) iconLogout.classList.remove('hidden');
       } else {
@@ -341,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnCtaStart) {
       const ctaSpan = btnCtaStart.querySelector('span');
       if (ctaSpan) {
-        ctaSpan.textContent = isLoggedIn ? "Accéder à mes entreprises" : "Commencer l'aventure";
+        ctaSpan.textContent = isLoggedIn ? "Accéder à mes entreprises" : "Essayez, créez votre carte";
       }
     }
   }
@@ -383,6 +459,10 @@ document.addEventListener('DOMContentLoaded', () => {
     viewLanding.classList.remove('hidden');
     
     updateLayoutMode();
+
+    if (window.location.hash) {
+      history.replaceState(null, '', window.location.pathname);
+    }
     
     // Update login button to "Connexion"
     if (btnLoginText) btnLoginText.textContent = 'Connexion';
@@ -392,12 +472,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnLoginToggle) {
     btnLoginToggle.addEventListener('click', () => {
-      const isDashboardVisible = !viewDashboard.classList.contains('hidden');
-      const isRegisterVisible = viewRegister && !viewRegister.classList.contains('hidden');
-      if (isDashboardVisible || isRegisterVisible) {
-        logoutUser();
-      } else {
+      const isLoggedIn = !!(authToken && currentUser);
+      if (!isLoggedIn) {
         showLoginModal();
+        return;
+      }
+
+      const isDashboardVisible = !viewDashboard.classList.contains('hidden');
+      const isDetailVisible = viewCompanyDetail && !viewCompanyDetail.classList.contains('hidden');
+      const isAdminPanelVisible = viewAdminPanel && !viewAdminPanel.classList.contains('hidden');
+      const isRegisterVisible = viewRegister && !viewRegister.classList.contains('hidden');
+
+      if (isDashboardVisible || isDetailVisible || isAdminPanelVisible || isRegisterVisible) {
+        navigateTo('#home');
+      } else {
+        logoutUser();
       }
     });
   }
@@ -593,7 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnCtaStart) {
     btnCtaStart.addEventListener('click', () => {
       if (authToken) {
-        toggleAppView(true);
+        navigateTo('#dashboard');
       } else {
         showRegisterView();
       }
@@ -922,21 +1011,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (navLogo) {
     navLogo.addEventListener('click', () => {
-      toggleAppView(false);
+      navigateTo('#home');
     });
   }
 
   if (btnNavHome) {
     btnNavHome.addEventListener('click', () => {
-      toggleAppView(false);
+      navigateTo('#home');
     });
   }
 
   if (btnNavDashboard) {
     btnNavDashboard.addEventListener('click', () => {
       if (authToken && currentUser) {
-        toggleAppView(true);
-        loadCompaniesList();
+        navigateTo('#dashboard');
       } else {
         showLoginModal();
       }
@@ -961,21 +1049,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Admin Panel Navigation & Management Logic ---
   if (btnAdminPanelShow) {
     btnAdminPanelShow.addEventListener('click', () => {
-      viewCompaniesList.classList.add('hidden');
-      viewCompanyDetail.classList.add('hidden');
-      if (viewAdminPanel) viewAdminPanel.classList.remove('hidden');
-      updateLayoutMode();
-      closeAdminForm();
-      loadAdminsList();
+      navigateTo('#admin');
     });
   }
 
   if (btnBackToCompanies) {
     btnBackToCompanies.addEventListener('click', () => {
-      if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
-      viewCompaniesList.classList.remove('hidden');
-      updateLayoutMode();
-      loadCompaniesList();
+      navigateTo('#dashboard');
     });
   }
 
@@ -1428,16 +1508,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Logo Handling & Fetch API ---
 
+  function getCompanyInitials(name) {
+    if (!name || !name.trim()) return 'EC';
+    const clean = name.trim();
+    const words = clean.split(/[\s\-]+/).filter(Boolean);
+    if (words.length >= 2) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return clean.substring(0, 2).toUpperCase();
+  }
+
+  function getCollaboratorInitials(firstName, lastName) {
+    const f = (firstName || '').trim();
+    const l = (lastName || '').trim();
+    const fInit = f ? f[0].toUpperCase() : '';
+    const lInit = l ? l[0].toUpperCase() : '';
+    return (fInit + lInit) || 'C';
+  }
+
   function getFallbackLogoSVG(name) {
-    const initials = name 
-      ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() 
-      : 'AC';
-    
+    const initials = getCompanyInitials(name);
     const color = encodeURIComponent(currentAccentColor);
     const textFill = currentTheme === 'theme-minimalist' ? '%230f172a' : '%23ffffff';
     const bgFill = currentTheme === 'theme-minimalist' ? '%23f1f5f9' : '%231e293b';
 
-    return `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='${bgFill}' stroke='${color}' stroke-width='2'/><text x='50%' y='55%' font-family='Outfit, sans-serif' font-weight='bold' font-size='36' fill='${textFill}' dominant-baseline='middle' text-anchor='middle'>${initials}</text></svg>`;
+    return `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='${bgFill}' stroke='${color}' stroke-width='3'/><text x='50%' y='55%' font-family='Outfit, sans-serif' font-weight='800' font-size='38' fill='${color}' dominant-baseline='middle' text-anchor='middle'>${initials}</text></svg>`;
   }
 
   function setFallbackLogo() {
@@ -1674,6 +1769,32 @@ document.addEventListener('DOMContentLoaded', () => {
     slider.addEventListener('input', updatePhotoFramingPreview);
   });
 
+  // Address helper: format street, zip, city, country into clean multi-line display with word-wrap protection
+  function buildFormattedAddress(collabAddr, companyStreet, companyZip, companyCity, companyCountry) {
+    if (collabAddr && collabAddr.trim()) {
+      const raw = collabAddr.trim();
+      if (raw.includes('\n')) {
+        return raw.replace(/\r\n|\r|\n/g, '<br/>');
+      } else if (raw.includes(',')) {
+        return raw.split(',').map(s => s.trim()).filter(Boolean).join('<br/>');
+      }
+      return raw;
+    }
+
+    const street = (companyStreet || '').trim();
+    const zip = (companyZip || '').trim();
+    const city = (companyCity || '').trim();
+    const country = (companyCountry || '').trim();
+
+    const lines = [];
+    if (street) lines.push(street);
+    const zipCity = [zip, city].filter(Boolean).join(' ');
+    if (zipCity) lines.push(zipCity);
+    if (country) lines.push(country);
+
+    return lines.join('<br/>');
+  }
+
   // --- Collaborator Card Preview Rendering inside Mockup ---
 
   function updateMockupPreview() {
@@ -1736,18 +1857,22 @@ document.addEventListener('DOMContentLoaded', () => {
         prevCollabRole.classList.add('hidden');
       }
 
-      // Address fallback
-      let street = collab.address ? collab.address.trim() : '';
-      if (!street) {
-        const companyStreet = companyAddressInput.value.trim();
-        const companyZip = companyZipInput.value.trim();
-        const companyCity = companyCityInput.value.trim();
-        street = companyStreet;
-        if (companyZip || companyCity) {
-          street += (street ? ', ' : '') + `${companyZip} ${companyCity}`.trim();
-        }
+      // Address formatting & fallback
+      const formattedAddr = buildFormattedAddress(
+        collab.address,
+        companyAddressInput ? companyAddressInput.value : '',
+        companyZipInput ? companyZipInput.value : '',
+        companyCityInput ? companyCityInput.value : '',
+        companyCountryInput ? companyCountryInput.value : ''
+      );
+
+      if (formattedAddr) {
+        prevCollabAddress.innerHTML = formattedAddr;
+        prevCollabAddress.classList.remove('hidden');
+      } else {
+        prevCollabAddress.innerHTML = '';
+        prevCollabAddress.classList.add('hidden');
       }
-      prevCollabAddress.textContent = street || 'Adresse d\'entreprise';
 
       // Avatar profile click url
       const clickUrl = collab.photoClickUrl || '';
@@ -1759,12 +1884,19 @@ document.addEventListener('DOMContentLoaded', () => {
         prevAvatarLink.style.cursor = 'default';
       }
 
-      // Avatar profile photo
-      if (collab.photoUrl) {
+      // Avatar profile photo & initials fallback
+      if (collab.photoUrl && collab.photoUrl !== '[Photo Base64]') {
         prevAvatarImg.src = collab.photoUrl;
         prevAvatarImg.classList.remove('hidden');
         prevAvatarInitials.classList.add('hidden');
         
+        prevAvatarImg.onerror = () => {
+          const initials = getCollaboratorInitials(collab.firstName, collab.lastName);
+          prevAvatarInitials.textContent = initials;
+          prevAvatarInitials.classList.remove('hidden');
+          prevAvatarImg.classList.add('hidden');
+        };
+
         // Apply saved database crop properties
         const zoom = collab.photoZoom != null ? parseFloat(collab.photoZoom) : 1.0;
         const x = collab.photoX != null ? parseFloat(collab.photoX) : 50;
@@ -1773,7 +1905,7 @@ document.addEventListener('DOMContentLoaded', () => {
         prevAvatarImg.style.transform = `scale(${zoom})`;
         prevAvatarImg.style.transformOrigin = `${x}% ${y}%`;
       } else {
-        const initials = (collab.firstName[0] + (collab.lastName[0] || '')).toUpperCase();
+        const initials = getCollaboratorInitials(collab.firstName, collab.lastName);
         prevAvatarInitials.textContent = initials;
         prevAvatarInitials.classList.remove('hidden');
         prevAvatarImg.classList.add('hidden');
@@ -1832,15 +1964,22 @@ document.addEventListener('DOMContentLoaded', () => {
       prevCollabRole.textContent = '';
       prevCollabRole.classList.remove('hidden');
       
-      // Address fallback for company
-      const companyStreet = companyAddressInput.value.trim();
-      const companyZip = companyZipInput.value.trim();
-      const companyCity = companyCityInput.value.trim();
-      let street = companyStreet;
-      if (companyZip || companyCity) {
-        street += (street ? ', ' : '') + `${companyZip} ${companyCity}`.trim();
+      // Address formatting & fallback for company
+      const formattedAddr = buildFormattedAddress(
+        '',
+        companyAddressInput ? companyAddressInput.value : '',
+        companyZipInput ? companyZipInput.value : '',
+        companyCityInput ? companyCityInput.value : '',
+        companyCountryInput ? companyCountryInput.value : ''
+      );
+
+      if (formattedAddr) {
+        prevCollabAddress.innerHTML = formattedAddr;
+        prevCollabAddress.classList.remove('hidden');
+      } else {
+        prevCollabAddress.innerHTML = '';
+        prevCollabAddress.classList.add('hidden');
       }
-      prevCollabAddress.textContent = street || 'Adresse d\'entreprise';
 
       prevAvatarLink.href = '#';
       prevAvatarLink.style.cursor = 'default';
@@ -2001,6 +2140,24 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderCollaboratorsList(filterQuery = '') {
     collabListContainer.innerHTML = '';
     
+    // Update summary counts
+    const countTotalEl = document.getElementById('collab-count-total');
+    const countInactiveEl = document.getElementById('collab-count-inactive');
+    const totalCount = collaborators.length;
+    const inactiveCount = collaborators.filter(c => c.isActive === 0 || c.is_active === 0).length;
+
+    if (countTotalEl) {
+      countTotalEl.textContent = `${totalCount} collaborateur(s)`;
+    }
+    if (countInactiveEl) {
+      countInactiveEl.textContent = `${inactiveCount} inactif(s)`;
+      if (inactiveCount > 0) {
+        countInactiveEl.style.color = 'var(--danger-color)';
+      } else {
+        countInactiveEl.style.color = 'var(--text-secondary)';
+      }
+    }
+
     if (collaborators.length === 0) {
       collabListContainer.innerHTML = '<p class="empty-list-msg">Aucun collaborateur créé pour le moment.</p>';
       selectedCollabId = null;
@@ -2053,9 +2210,12 @@ document.addEventListener('DOMContentLoaded', () => {
           </span>`
         : '';
 
+      const compIndex = collaborators.findIndex(c => c.id === collab.id) + 1;
+      const indexBadgeHTML = `<span class="collab-index-badge" style="font-family: monospace; font-size: 0.72rem; font-weight: 800; background: rgba(140, 82, 255, 0.12); color: var(--accent); padding: 0.15rem 0.45rem; border-radius: 6px; margin-right: 0.4rem; display: inline-block;">N° ${compIndex}</span>`;
+
       collabItem.innerHTML = `
         <div class="collab-item-info">
-          <span class="collab-item-name">${collab.lastName.toUpperCase()} ${collab.firstName}</span>
+          <span class="collab-item-name">${indexBadgeHTML}${collab.lastName.toUpperCase()} ${collab.firstName}</span>
           <span class="collab-item-role">${collab.role || 'Collaborateur'}</span>
           ${connBadgeHTML}
         </div>
@@ -2122,6 +2282,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function selectCollaborator(id) {
     selectedCollabId = id;
+    closeCollabForm();
     const searchVal = searchCollab ? searchCollab.value : '';
     renderCollaboratorsList(searchVal);
     updateMockupPreview();
@@ -2149,6 +2310,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Form toggling
   function openCollabForm(collab = null) {
+    if (collab) {
+      selectedCollabId = collab.id;
+      const searchVal = searchCollab ? searchCollab.value : '';
+      renderCollaboratorsList(searchVal);
+      updateMockupPreview();
+    }
     collabFormContainer.classList.remove('hidden');
     
     const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
@@ -2161,8 +2328,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (collab) {
-      collabFormTitle.textContent = "Modifier le collaborateur";
+      const compIndex = collaborators.findIndex(c => c.id === collab.id) + 1;
+      collabFormTitle.textContent = `Modifier le collaborateur N° ${compIndex}`;
       collabIdInput.value = collab.id;
+      if (collabDisplayIdInput) collabDisplayIdInput.value = compIndex;
       if (collabConnectionCountInput) collabConnectionCountInput.value = collab.connectionCount != null ? collab.connectionCount : 0;
       collabFirstnameInput.value = collab.firstName;
       collabLastnameInput.value = collab.lastName;
@@ -2201,10 +2370,13 @@ document.addEventListener('DOMContentLoaded', () => {
         photoFramingControls.classList.add('hidden');
       }
     } else {
-      collabFormTitle.textContent = "Nouveau collaborateur";
+      const nextIndex = collaborators.length + 1;
+      collabFormTitle.textContent = `Nouveau collaborateur N° ${nextIndex}`;
       collabForm.reset();
       if (collabConnectionCountInput) collabConnectionCountInput.value = 0;
-      collabIdInput.value = 'collab_' + Date.now();
+      const newId = 'collab_' + Date.now();
+      collabIdInput.value = newId;
+      if (collabDisplayIdInput) collabDisplayIdInput.value = nextIndex;
       collabPhoneMobileInput.value = '';
       collabPhoneWorkInput.value = '';
       collabPhoneFaxInput.value = '';
@@ -2492,7 +2664,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.closest('.btn-company-delete')) {
           return;
         }
-        loadCompanyDetail(company.id);
+        navigateTo(`#company/${company.id}`);
       });
 
       // Delete company card
@@ -2695,7 +2867,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       console.error("Erreur de chargement des détails de l'entreprise:", err);
-      alert(err.message || "Impossible de charger l'entreprise.");
+      alert(err.message || "Impossible de charger cette entreprise.");
+      navigateTo('#dashboard');
     }
   }
 
@@ -2707,11 +2880,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     closeCollabForm();
     updateMockupPreview();
-    loadCompaniesList();
-
-    viewCompanyDetail.classList.add('hidden');
-    viewCompaniesList.classList.remove('hidden');
-    updateLayoutMode();
+    navigateTo('#dashboard');
   });
 
   // Logo size slider change
@@ -2762,7 +2931,11 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        const dataToExport = collaborators.map(c => ({
+        const companyNameVal = activeCompanyTitle ? activeCompanyTitle.textContent.trim() : 'Entreprise';
+
+        const dataToExport = collaborators.map((c, index) => ({
+          'Nom de l\'entreprise': companyNameVal,
+          'N° Index': index + 1,
           'Civilité': c.civility || '',
           'Prénom': c.firstName || '',
           'Nom': c.lastName || '',
@@ -2838,31 +3011,35 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           const headerMapping = {
-            'prénom': 'firstName', 'firstname': 'firstName', 'first_name': 'firstName',
-            'nom': 'lastName', 'lastname': 'lastName', 'last_name': 'lastName',
-            'civilité': 'civility', 'civility': 'civility',
-            'poste': 'role', 'fonction': 'role', 'role': 'role', 'title': 'role', 'poste / fonction': 'role',
-            'email': 'email', 'e_mail': 'email', 'adresse e-mail': 'email',
-            'adresse': 'address', 'address': 'address',
-            'mobile': 'phoneMobile', 'portable': 'phoneMobile', 'téléphone mobile': 'phoneMobile', 'phone_mobile': 'phoneMobile', 'phonemobile': 'phoneMobile',
-            'fixe': 'phoneWork', 'téléphone fixe': 'phoneWork', 'phone_work': 'phoneWork', 'phonework': 'phoneWork',
-            'fax': 'phoneFax', 'phone_fax': 'phoneFax', 'phonefax': 'phoneFax',
-            'téléphone par défaut': 'phoneDefault', 'phone_default': 'phoneDefault', 'phonedefault': 'phoneDefault',
+            'n° index (id)': 'importedIndex', 'n° index': 'importedIndex', 'id / index': 'importedIndex', 'index': 'importedIndex', 'n°d\'index': 'importedIndex', 'numéro index': 'importedIndex', 'n° id': 'importedIndex', 'id': 'importedIndex', 'id unique': 'importedIndex',
+            'prénom': 'firstName', 'prenom': 'firstName', 'firstname': 'firstName', 'first_name': 'firstName', 'first name': 'firstName',
+            'nom': 'lastName', 'lastname': 'lastName', 'last_name': 'lastName', 'last name': 'lastName', 'nom de famille': 'lastName',
+            'civilité': 'civility', 'civilite': 'civility', 'civility': 'civility', 'titre': 'civility', 'title': 'civility',
+            'poste': 'role', 'fonction': 'role', 'role': 'role', 'rôle': 'role', 'title': 'role', 'job': 'role', 'poste / fonction': 'role', 'poste/fonction': 'role',
+            'email': 'email', 'e_mail': 'email', 'e-mail': 'email', 'courriel': 'email', 'adresse e-mail': 'email', 'adresse email': 'email', 'mail': 'email',
+            'adresse': 'address', 'address': 'address', 'adresse postale': 'address',
+            'mobile': 'phoneMobile', 'portable': 'phoneMobile', 'téléphone mobile': 'phoneMobile', 'telephone mobile': 'phoneMobile', 'phone_mobile': 'phoneMobile', 'phonemobile': 'phoneMobile', 'tel mobile': 'phoneMobile', 'tél mobile': 'phoneMobile', 'tel_mobile': 'phoneMobile',
+            'fixe': 'phoneWork', 'téléphone fixe': 'phoneWork', 'telephone fixe': 'phoneWork', 'phone_work': 'phoneWork', 'phonework': 'phoneWork', 'tel fixe': 'phoneWork', 'tél fixe': 'phoneWork', 'tel_fixe': 'phoneWork', 'bureau': 'phoneWork',
+            'fax': 'phoneFax', 'téléphone fax': 'phoneFax', 'telephone fax': 'phoneFax', 'phone_fax': 'phoneFax', 'phonefax': 'phoneFax',
+            'téléphone par défaut': 'phoneDefault', 'telephone par defaut': 'phoneDefault', 'phone_default': 'phoneDefault', 'phonedefault': 'phoneDefault', 'tel par defaut': 'phoneDefault',
             'lien clic photo': 'photoClickUrl', 'photo_click_url': 'photoClickUrl', 'photoclickurl': 'photoClickUrl',
-            'photo url': 'photoUrl', 'photo_url': 'photoUrl', 'photourl': 'photoUrl',
+            'photo url': 'photoUrl', 'photo_url': 'photoUrl', 'photourl': 'photoUrl', 'photo': 'photoUrl',
             'zoom photo': 'photoZoom', 'photo_zoom': 'photoZoom', 'photozoom': 'photoZoom',
             'position x': 'photoX', 'photo_x': 'photoX', 'photox': 'photoX',
             'position y': 'photoY', 'photo_y': 'photoY', 'photoy': 'photoY',
-            'lien web personnalisé': 'customSlug', 'custom_slug': 'customSlug', 'customslug': 'customSlug', 'lien_web_personnalisé': 'customSlug',
+            'lien web personnalisé': 'customSlug', 'custom_slug': 'customSlug', 'customslug': 'customSlug', 'lien_web_personnalisé': 'customSlug', 'slug': 'customSlug', 'url': 'customSlug',
             'taille cercle photo': 'avatarSize', 'avatar_size': 'avatarSize', 'avatarsize': 'avatarSize', 'taille_cercle_photo': 'avatarSize',
-            'actif': 'isActive', 'is_active': 'isActive', 'isactive': 'isActive'
+            'actif': 'isActive', 'is_active': 'isActive', 'isactive': 'isActive', 'statut': 'isActive'
           };
 
           const validCollabs = [];
+          let rowIndex = 0;
           for (const row of rows) {
+            rowIndex++;
             const collab = {
-              id: 'collab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+              id: 'collab_' + Date.now() + '_' + rowIndex + '_' + Math.random().toString(36).substring(2, 9),
               companyId: currentCompanyId,
+              importedIndex: '',
               firstName: '', lastName: '', civility: '', role: '', phone: '', email: '',
               address: '', photoUrl: '', photoZoom: 1.0, photoX: 50, photoY: 50,
               phoneMobile: '', phoneWork: '', phoneFax: '', phoneDefault: 'mobile',
@@ -2887,33 +3064,51 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }
 
-            // Validation logic
-            if (collab.firstName && collab.lastName && collab.email && collab.role) {
-              // Deduplicate by email
-              const existing = collaborators.find(c => c.email.toLowerCase() === collab.email.toLowerCase());
-              if (existing) {
-                collab.id = existing.id;
-                // Preserve photo if imported is empty or placeholder
-                if (!collab.photoUrl || collab.photoUrl === '[Photo Base64]' || collab.photoUrl.startsWith('[')) {
-                  collab.photoUrl = existing.photoUrl || '';
+            // Validation logic: require at least Prénom and Nom
+            if (collab.firstName && collab.lastName) {
+              if (!collab.role) collab.role = 'Collaborateur';
+
+              // ONLY N° Index is used to identify an existing collaborator for UPDATE
+              const rawIndexVal = (collab.importedIndex || '').trim();
+              if (rawIndexVal) {
+                const parsedIndex = parseInt(rawIndexVal, 10);
+                let existing = null;
+                if (!isNaN(parsedIndex) && parsedIndex > 0) {
+                  // Match by 1-based sequential index in this company
+                  existing = collaborators[parsedIndex - 1] || null;
+                }
+                if (!existing) {
+                  // Fallback match by internal string ID (collab_...)
+                  existing = collaborators.find(c => c.id === rawIndexVal) || null;
+                }
+
+                if (existing) {
+                  collab.id = existing.id;
+                  // Preserve photo if imported is empty or placeholder
+                  if (!collab.photoUrl || collab.photoUrl === '[Photo Base64]' || collab.photoUrl.startsWith('[')) {
+                    collab.photoUrl = existing.photoUrl || '';
+                  }
                 }
               }
-              // Set the default legacy phone field
+
+              // Set default legacy phone field
               collab.phone = collab.phoneMobile || collab.phoneWork || collab.phoneFax || '';
               validCollabs.push(collab);
             }
           }
 
           if (validCollabs.length === 0) {
-            alert("Aucun collaborateur valide trouvé dans le fichier Excel (Champs requis : Prénom, Nom, Poste, Email).");
+            alert("Aucun collaborateur valide trouvé dans le fichier Excel (Champs requis au minimum : Prénom et Nom).");
             return;
           }
 
           // Disable button during loading
           btnExcelImport.disabled = true;
-          btnExcelImport.querySelector('span').textContent = 'Importation...';
+          const btnSpan = btnExcelImport.querySelector('span');
+          if (btnSpan) btnSpan.textContent = 'Importation...';
 
-          const savePromises = validCollabs.map(async (c) => {
+          // Sequential save to avoid race conditions or ID collisions
+          for (const c of validCollabs) {
             const isEdit = collaborators.some(ex => ex.id === c.id);
             const url = isEdit ? `${API_BASE}/collaborators/${c.id}` : `${API_BASE}/companies/${currentCompanyId}/collaborators`;
             const method = isEdit ? 'PUT' : 'POST';
@@ -2923,9 +3118,7 @@ document.addEventListener('DOMContentLoaded', () => {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(c)
             });
-          });
-
-          await Promise.all(savePromises);
+          }
 
           // Refresh list from DB
           const collabRes = await apiFetch(`${API_BASE}/companies/${currentCompanyId}/collaborators`);
@@ -2946,7 +3139,8 @@ document.addEventListener('DOMContentLoaded', () => {
           alert("Erreur lors de la lecture ou du traitement du fichier Excel.");
         } finally {
           btnExcelImport.disabled = false;
-          btnExcelImport.querySelector('span').textContent = 'Import Excel';
+          const btnSpan = btnExcelImport.querySelector('span');
+          if (btnSpan) btnSpan.textContent = 'Import Excel';
           excelImportFile.value = '';
         }
       };
@@ -3023,11 +3217,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Initial loading ---
+  // --- Router Event Listeners & Initial Loading ---
+  window.addEventListener('popstate', (e) => {
+    const hash = (e.state && e.state.hash) || window.location.hash || '#home';
+    renderRoute(hash);
+  });
+
+  window.addEventListener('hashchange', () => {
+    renderRoute(window.location.hash);
+  });
+
   if (authToken && currentUser) {
-    toggleAppView(false);
-    loadCompaniesList();
+    const initialHash = window.location.hash || '#dashboard';
+    navigateTo(initialHash, false);
   } else {
-    toggleAppView(false);
+    const initialHash = window.location.hash || '#home';
+    navigateTo(initialHash, false);
   }
 });
