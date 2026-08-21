@@ -1,13 +1,11 @@
-version: '3.8'
-
 services:
   db:
     image: mysql:8.0
     container_name: tdconnect-db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpassword}
-      MYSQL_DATABASE: ${DB_NAME:-company_card_generator}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
     volumes:
       - mysql-data:/var/lib/mysql
 
@@ -24,7 +22,6 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - DB_HOST=db
 
 volumes:
   mysql-data:
