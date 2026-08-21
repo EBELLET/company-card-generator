@@ -116,6 +116,95 @@ function getCollaboratorInitials(firstName, lastName) {
   return (fInit + lInit) || 'C';
 }
 
+// --- HTML Template for Unknown / Missing Virtual Business Card (HTTP 404) ---
+function generateUnknownCardHTML() {
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carte inconnue - TDConnect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    .card-container {
+      width: 100%;
+      max-width: 400px;
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.08);
+      text-align: center;
+    }
+    .icon-wrapper {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(244, 63, 94, 0.1);
+      color: #f43f5e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem auto;
+    }
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      color: #0f172a;
+    }
+    p {
+      font-size: 0.88rem;
+      color: #64748b;
+      line-height: 1.5;
+      margin-bottom: 1.75rem;
+    }
+    .btn-home {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #6366f1;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn-home:hover {
+      background: #4f46e5;
+    }
+  </style>
+</head>
+<body>
+  <div class="card-container">
+    <div class="icon-wrapper">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    </div>
+    <h1>Carte inconnue</h1>
+    <p>Cette carte de visite n'existe pas ou l'adresse URL renseignée est incorrecte.</p>
+    <a href="/" class="btn-home">Retour à l'accueil</a>
+  </div>
+</body>
+</html>`;
+}
+
 // --- HTML Template for Virtual Business Card ---
 function generateVirtualCardHTML(collab, company, isStandalone = false) {
   const cardStatus = checkCardStatus(collab, company);
@@ -354,7 +443,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       flex-direction: column;
       align-items: center;
       justify-content: flex-start; /* Stable top margin alignment */
-      padding: 3rem 1.5rem;
+      padding: 1.5rem 1rem;
       position: relative;
     }
 
@@ -369,7 +458,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
-      padding: 2.5rem 2rem;
+      padding: 1.75rem 1.5rem;
       box-shadow: 
         0 10px 25px -5px rgba(0, 0, 0, 0.05),
         0 8px 10px -6px rgba(0, 0, 0, 0.03);
@@ -401,7 +490,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.35rem;
       transform: translateX(${logoX}px);
     }
 
@@ -422,7 +511,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     .company-address {
       font-size: 0.78rem;
       color: var(--text-muted);
-      margin-bottom: 1.5rem;
+      margin-bottom: 0.85rem;
       line-height: 1.35;
       letter-spacing: 0.02em;
       text-align: center;
@@ -436,7 +525,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       height: ${avatarSize}px;
       border-radius: 50%;
       overflow: hidden;
-      margin: 0 auto 1rem auto;
+      margin: 0 auto 0.75rem auto;
       border: 2px solid var(--accent);
       background: #ffffff;
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
@@ -490,14 +579,14 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       font-size: 0.85rem;
       font-weight: 600;
       color: var(--text-muted);
-      margin-bottom: 1.75rem;
+      margin-bottom: 1.25rem;
     }
 
     /* Stacked Wide Action Buttons */
     .actions-list-stacked {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.5rem;
       width: 100%;
       margin-top: 0.5rem;
     }
@@ -509,7 +598,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       justify-content: center;
       gap: 1.25rem;
       width: 100%;
-      margin-top: 1rem;
+      margin-top: 0.75rem;
     }
 
     .actions-list-round .action-row-btn {
@@ -529,7 +618,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       color: #ffffff !important;
       font-weight: 600;
       font-size: 0.85rem;
-      padding: 0.85rem 1.25rem;
+      padding: 0.75rem 1rem;
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -558,7 +647,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
 
     /* Footer Info */
     .card-footer {
-      margin-top: 2rem;
+      margin-top: 1.25rem;
       font-size: 0.72rem;
       color: var(--text-muted);
       opacity: 0.8;
@@ -586,38 +675,38 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
         border: none;
         border-radius: 0;
         box-shadow: none;
-        padding: 3rem 2rem;
+        padding: 1.5rem 1.25rem;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
       }
       .logo-container {
-        transform: translateX(${logoX}px) scale(1.15) !important;
-        margin-bottom: 1.75rem !important;
+        transform: translateX(${logoX}px) scale(1.05) !important;
+        margin-bottom: 0.75rem !important;
       }
       .company-address {
-        font-size: 0.9rem;
-        margin-bottom: 2rem;
+        font-size: 0.85rem;
+        margin-bottom: 0.85rem;
       }
       .avatar-wrapper {
-        width: 130px !important;
-        height: 130px !important;
-        margin-bottom: 1.5rem !important;
+        width: 110px !important;
+        height: 110px !important;
+        margin-bottom: 0.85rem !important;
       }
       .initials-avatar {
-        font-size: 45px !important;
+        font-size: 38px !important;
       }
       .collab-name {
-        font-size: 1.75rem;
-        margin-bottom: 0.5rem;
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
       }
       .collab-role {
-        font-size: 1.1rem;
-        margin-bottom: 2.25rem;
+        font-size: 1rem;
+        margin-bottom: 1.25rem;
       }
       .action-row-btn {
-        font-size: 1.05rem;
-        padding: 1rem 1.5rem;
+        font-size: 0.95rem;
+        padding: 0.75rem 1.25rem;
         border-radius: 12px;
       }
       .actions-list-round .action-row-btn {
@@ -1353,7 +1442,7 @@ app.get('/card/:id', async (req, res) => {
       collab = await db.getCollaboratorBySlug(req.params.id);
     }
     if (!collab) {
-      return res.status(404).send('<h1 style="color:#f43f5e;font-family:sans-serif;text-align:center;margin-top:5rem;">Collaborateur non trouvé</h1>');
+      return res.status(404).send(generateUnknownCardHTML());
     }
 
     // Incrémenter le compteur de connexions UNIQUEMENT pour les visites externes publiques (hors preview/admin)
@@ -1364,7 +1453,7 @@ app.get('/card/:id', async (req, res) => {
 
     const company = await db.getCompanyById(collab.companyId);
     if (!company) {
-      return res.status(404).send('<h1 style="color:#f43f5e;font-family:sans-serif;text-align:center;margin-top:5rem;">Entreprise non trouvée</h1>');
+      return res.status(404).send(generateUnknownCardHTML());
     }
     const htmlContent = generateVirtualCardHTML(collab, company);
     res.send(htmlContent);
