@@ -638,7 +638,7 @@
                       <div class="form-group" style="margin-bottom: 0;">
                         <label class="switch-label" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.85rem; font-weight: 600; user-select: none; color: var(--text-secondary);">
                           <input type="checkbox" id="company-is-subscription-active" style="width: 18px; height: 18px; cursor: pointer;" />
-                          <span>Abonnement actif :</span>
+                          <span>Accès suspendu :</span>
                           <span id="sub-active-superadmin-badge" style="font-size: 0.72rem; color: #818cf8; font-weight: 500;">(Réservé au Super Admin)</span>
                         </label>
                       </div>
@@ -656,10 +656,10 @@
                 <div class="collab-section-header">
                   <h3>Membres de l'équipe</h3>
                   <div class="collab-header-actions" style="display: flex; gap: 0.5rem; align-items: center;">
-                    <!-- Export Excel -->
-                    <button type="button" id="btn-excel-export" class="btn-secondary-badge" title="Exporter vers Excel">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                      <span>Export Excel</span>
+                    <!-- Add Collab (+ Ajouter) -->
+                    <button type="button" id="btn-add-collab" class="btn-add-badge">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                      <span>+ Ajouter</span>
                     </button>
                     <!-- Import Excel -->
                     <button type="button" id="btn-excel-import" class="btn-secondary-badge" title="Importer depuis Excel">
@@ -667,10 +667,10 @@
                       <span>Import Excel</span>
                     </button>
                     <input type="file" id="excel-import-file" accept=".xlsx, .xls" class="hidden" />
-                    <!-- Add Collab -->
-                    <button type="button" id="btn-add-collab" class="btn-add-badge">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                      <span>Ajouter</span>
+                    <!-- Export Excel -->
+                    <button type="button" id="btn-excel-export" class="btn-secondary-badge" title="Exporter vers Excel">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                      <span>Export Excel</span>
                     </button>
                   </div>
                 </div>
@@ -837,8 +837,11 @@
                         </div>
                       </div>
 
-                      <div style="margin-top: 0.75rem;">
-                        <label for="collab-custom-slug" style="font-size: 0.8rem; margin-bottom: 0.35rem;">Lien web public personnalisé (facultatif)</label>
+                      <div id="collab-custom-slug-group" class="superadmin-only-field hidden" style="margin-top: 0.75rem;">
+                        <label for="collab-custom-slug" style="font-size: 0.8rem; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
+                          <span>Lien web public personnalisé (facultatif)</span>
+                          <span style="font-size: 0.72rem; color: #818cf8; font-weight: 500;">(Réservé au Super Admin)</span>
+                        </label>
                         <div class="input-wrapper" style="display: flex; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;">
                           <span style="font-size: 0.82rem; color: var(--text-muted); padding-left: 0.75rem; user-select: none;">tdconnect.fr/card/</span>
                           <input type="text" id="collab-custom-slug" placeholder="prenom-nom" style="flex-grow: 1; border: none; background: transparent; padding: 0.55rem 0.5rem 0.55rem 0.25rem; font-size: 0.9rem; color: var(--text-primary); outline: none;" />
@@ -991,10 +994,13 @@
                 </div>
                 <p class="link-subtext">Ce lien permet à quiconque de visualiser la carte mobile, d'appeler, d'envoyer un mail ou de télécharger le fichier VCF.</p>
                 
-                <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                  <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary);">Exporter pour hébergement externe</label>
+                <div id="collab-export-zip-container" class="superadmin-only-field hidden" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                  <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem;">
+                    <span>Exporter pour hébergement externe</span>
+                    <span style="font-size: 0.72rem; color: #818cf8; font-weight: 500;">(Réservé au Super Admin)</span>
+                  </label>
                   <a id="btn-export-zip" href="#" class="btn-copy" style="text-align: center; text-decoration: none; background: var(--success-color); display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                     <span>Télécharger le pack ZIP (autonome)</span>
                   </a>
                   <p class="link-subtext" style="margin-top: 0.25rem;">Génère un dossier zippé autonome (HTML + images localisées + vCard) prêt à être hébergé ailleurs (FTP, cPanel, Vercel...).</p>
@@ -1003,7 +1009,8 @@
                 <div id="collab-connection-counter-display" class="superadmin-only-field hidden" style="margin-top: 1rem; border-top: 1px dashed var(--border-color); padding-top: 0.85rem; display: flex; align-items: center; justify-content: space-between;">
                   <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                    Connexions à cette carte :
+                    <span>Connexions à cette carte :</span>
+                    <span style="font-size: 0.72rem; color: #818cf8; font-weight: 500;">(Super Admin)</span>
                   </span>
                   <span id="collab-connection-count-badge" class="badge-conn-count" style="font-weight: 800; font-size: 0.85rem; background: rgba(99, 102, 241, 0.12); color: var(--accent); padding: 0.2rem 0.65rem; border-radius: 20px;">0 visite(s)</span>
                 </div>
@@ -1016,12 +1023,17 @@
       <footer class="app-footer">
         <p>&copy; 2026 TDConnect. Conçu avec soin pour une esthétique web d'exception. TDConnect est une marque de TDC Création</p>
         <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
-          Pour tout contact avec TDConnect, suivez ce <a href="javascript:void(0);" id="link-tdconnect-contact" class="link-tdconnect-contact" onclick="window.toggleContactEncart && window.toggleContactEncart(); return false;" style="color: #818cf8; text-decoration: underline; font-weight: 600; cursor: pointer; display: inline-block; padding: 2px 4px;">lien</a>
+          Pour tout contact avec TDConnect, suivez ce <a href="javascript:void(0);" id="link-tdconnect-contact" class="link-tdconnect-contact" onclick="window.openContactEncart && window.openContactEncart(); return false;" style="color: #818cf8; text-decoration: underline; font-weight: 600; cursor: pointer; display: inline-block; padding: 2px 4px;">lien</a>
         </p>
 
         <!-- Inline Contact Encart (Card box appearing directly on the page) -->
-        <div id="footer-contact-encart" class="hidden" style="max-width: 460px; margin: 1.25rem auto 0; padding: 1.5rem; background: #FFFFFF; border: 1px solid rgba(140, 82, 255, 0.3); border-radius: 20px; backdrop-filter: blur(12px); box-shadow: 0 15px 35px rgba(55, 53, 52, 0.12); text-align: center;">
+        <div id="footer-contact-encart" class="hidden" style="position: relative; max-width: 460px; margin: 1.25rem auto 0; padding: 1.5rem; background: #FFFFFF; border: 1px solid rgba(140, 82, 255, 0.3); border-radius: 20px; backdrop-filter: blur(12px); box-shadow: 0 15px 35px rgba(55, 53, 52, 0.12); text-align: center;">
           
+          <!-- Close Cross Button (Croix) -->
+          <button type="button" onclick="window.closeContactEncart && window.closeContactEncart();" aria-label="Fermer l'encart de contact" title="Fermer" style="position: absolute; top: 12px; right: 14px; background: rgba(55, 53, 52, 0.08); border: none; font-size: 1rem; font-weight: bold; color: #373534; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+            ✕
+          </button>
+
           <!-- Step 1: Verification -->
           <div id="encart-step-verify">
             <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem; color: #818cf8; font-weight: 700; font-size: 1rem;">
@@ -1056,12 +1068,12 @@
               <span>Vérification réussie</span>
             </div>
 
-            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 1rem; margin-bottom: 1rem;">
-              <p style="font-size: 0.85rem; color: #e2e8f0; margin-bottom: 0.35rem;">Envoyez un mail à :</p>
-              <a href="mailto:contact@tdconnect.fr" style="color: #38bdf8; font-size: 1.1rem; font-weight: 700; text-decoration: underline;">contact@tdconnect.fr</a>
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 1rem; margin-bottom: 1rem;">
+              <p style="font-size: 0.85rem; color: #373534; margin-bottom: 0.35rem;">Envoyez un mail à :</p>
+              <a href="mailto:contact@tdconnect.fr" target="_blank" rel="noopener noreferrer" style="color: #6366f1; font-size: 1.1rem; font-weight: 700; text-decoration: underline;">contact@tdconnect.fr</a>
             </div>
 
-            <button type="button" onclick="window.toggleContactEncart && window.toggleContactEncart();" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #ffffff; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.82rem; cursor: pointer;">
+            <button type="button" onclick="window.closeContactEncart && window.closeContactEncart();" style="background: rgba(55, 53, 52, 0.08); border: 1px solid rgba(55, 53, 52, 0.15); color: #373534; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.82rem; cursor: pointer; font-weight: 600;">
               Fermer l'encart
             </button>
           </div>
@@ -1150,14 +1162,14 @@
           <div class="form-group">
             <label for="reset-password-input">Nouveau mot de passe</label>
             <div class="input-wrapper">
-              <input type="password" id="reset-password-input" placeholder="6 caractères minimum" required minlength="6" />
+              <input type="password" id="reset-password-input" placeholder="8 car. min. (lettres et chiffres)" required minlength="8" />
               <span class="focus-border"></span>
             </div>
           </div>
           <div class="form-group">
             <label for="reset-confirm-input">Confirmer le mot de passe</label>
             <div class="input-wrapper">
-              <input type="password" id="reset-confirm-input" placeholder="Identique au mot de passe" required minlength="6" />
+              <input type="password" id="reset-confirm-input" placeholder="Identique au mot de passe" required minlength="8" />
               <span class="focus-border"></span>
             </div>
           </div>
@@ -1233,22 +1245,35 @@
       </div>
     <!-- Encart Contact Controller Global Script -->
     <script>
+      window.openContactEncart = function() {
+        var encart = document.getElementById('footer-contact-encart');
+        if (encart) {
+          encart.classList.remove('hidden');
+          var s1 = document.getElementById('encart-step-verify');
+          var s2 = document.getElementById('encart-step-result');
+          var chk = document.getElementById('chk-encart-human');
+          var err = document.getElementById('encart-error-msg');
+          if (s1) s1.classList.remove('hidden');
+          if (s2) s2.classList.add('hidden');
+          if (chk) chk.checked = false;
+          if (err) err.classList.add('hidden');
+        }
+      };
+
+      window.closeContactEncart = function() {
+        var encart = document.getElementById('footer-contact-encart');
+        if (encart) {
+          encart.classList.add('hidden');
+        }
+      };
+
       window.toggleContactEncart = function() {
         var encart = document.getElementById('footer-contact-encart');
         if (encart) {
-          var isHidden = encart.classList.contains('hidden');
-          if (isHidden) {
-            encart.classList.remove('hidden');
-            var s1 = document.getElementById('encart-step-verify');
-            var s2 = document.getElementById('encart-step-result');
-            var chk = document.getElementById('chk-encart-human');
-            var err = document.getElementById('encart-error-msg');
-            if (s1) s1.classList.remove('hidden');
-            if (s2) s2.classList.add('hidden');
-            if (chk) chk.checked = false;
-            if (err) err.classList.add('hidden');
+          if (encart.classList.contains('hidden')) {
+            window.openContactEncart();
           } else {
-            encart.classList.add('hidden');
+            window.closeContactEncart();
           }
         }
       };

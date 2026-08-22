@@ -5,13 +5,36 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Commit** : `947fc40`
-* **Date** : 17 août 2026
-* **Statut** : Version stable en production / MySQL
+* **Version / Tag** : `v2.2-securite-abonnements`
+* **Date** : 22 août 2026
+* **Statut** : Version stable en production / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
+
+### 🚀 Version `v2.2-securite-abonnements` (Dernière version)
+**Thème : Sécurité des mots de passe, Gestion fine des abonnements & Badges synthétiques**
+* **Sécurité des Mots de Passe & Ergonomie** :
+  * Renforcement des mots de passe (minimum 8 caractères alphanumériques avec au moins 1 lettre et 1 chiffre).
+  * Inscription des critères précis manquants en cas d'erreur de saisie.
+  * Ajout d'un bouton d'affichage/masquage oeil (👁️) sur tous les champs de mot de passe.
+* **Ergonomie du Panneau Contact** :
+  * Ajout d'une croix de fermeture `✕` sur l'encart de contact du footer.
+  * Fermeture automatique de l'encart de contact lors du changement de page/route.
+  * Ouverture sécurisée des liens e-mail dans un nouvel onglet navigateur (`target="_blank"`).
+* **Réorganisation des Actions Collaborateurs** :
+  * Nouvel ordre des boutons d'action dans la fiche entreprise : `+ Ajouter` (violet `#8C52FF`, survol vert `#10b981`), `Import Excel` puis `Export Excel`.
+* **Restrictions d'Accès Super Admin** :
+  * Export ZIP autonome des cartes, affichage/modification du compteur de visites et forçage de l'URL personnalisé (`customSlug`) strictement réservés au rôle Super Admin (frontend + vérification token backend HTTP 403).
+* **Gestion du Statut "Accès suspendu"** :
+  * Modification du toggle entreprise vers **"Accès suspendu :"** avec inversion de la logique.
+  * Si la case est cochée : accès bloqué et flouté immédiatement (*"Accès suspendu par l'administrateur"*).
+  * Si la case est décochée : la date de fin d'abonnement prévaut automatiquement.
+* **Tableau de Bord / Liste des Entreprises** :
+  * Ajout de badges d'information synthétiques sur chaque carte entreprise : nombre de collaborateurs actifs, inactifs, date d'échéance de l'abonnement et statut d'accès (`⛔ Accès suspendu`, `⚠️ Abonnement échu`, `🟢 Accès actif`).
+
+---
 
 ### 🚀 Version `947fc40` (Dernière version)
 **Thème : Sécurité Chrome/OVH, Filtrage des Connexions, Navigation F5 & Stabilité Vite**

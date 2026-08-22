@@ -274,20 +274,40 @@ function formatCompany(row) {
     ...row,
     subscription_end_date: subEndDate,
     subscriptionEndDate: subEndDate,
-    is_subscription_active: row.is_subscription_active != null ? row.is_subscription_active : 0,
-    isSubscriptionActive: row.is_subscription_active != null ? row.is_subscription_active : 0
+    is_subscription_active: row.is_subscription_active != null ? row.is_subscription_active : 1,
+    isSubscriptionActive: row.is_subscription_active != null ? row.is_subscription_active : 1,
+    active_collabs_count: Number(row.active_collabs_count || 0),
+    inactive_collabs_count: Number(row.inactive_collabs_count || 0)
   };
 }
 
 // --- Company Info Queries ---
 
 const getCompanies = async () => {
-  const [rows] = await pool.query('SELECT * FROM company_info ORDER BY name ASC');
+  const [rows] = await pool.query(`
+    SELECT 
+      c.*,
+      COALESCE(SUM(CASE WHEN col.is_active != 0 THEN 1 ELSE 0 END), 0) AS active_collabs_count,
+      COALESCE(SUM(CASE WHEN col.is_active = 0 THEN 1 ELSE 0 END), 0) AS inactive_collabs_count
+    FROM company_info c
+    LEFT JOIN collaborators col ON col.company_id = c.id
+    GROUP BY c.id
+    ORDER BY c.name ASC
+  `);
   return rows.map(formatCompany);
 };
 
 const getCompanyById = async (id) => {
-  const [rows] = await pool.query('SELECT * FROM company_info WHERE id = ?', [id]);
+  const [rows] = await pool.query(`
+    SELECT 
+      c.*,
+      COALESCE(SUM(CASE WHEN col.is_active != 0 THEN 1 ELSE 0 END), 0) AS active_collabs_count,
+      COALESCE(SUM(CASE WHEN col.is_active = 0 THEN 1 ELSE 0 END), 0) AS inactive_collabs_count
+    FROM company_info c
+    LEFT JOIN collaborators col ON col.company_id = c.id
+    WHERE c.id = ?
+    GROUP BY c.id
+  `, [id]);
   return formatCompany(rows[0]) || null;
 };
 

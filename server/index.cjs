@@ -37,6 +37,29 @@ function verifyToken(token) {
   }
 }
 
+function validatePasswordRules(password) {
+  if (!password || typeof password !== 'string') {
+    return "Le mot de passe est obligatoire.";
+  }
+  const errors = [];
+  if (password.length < 8) {
+    errors.push("au moins 8 caractères");
+  }
+  if (!/[a-zA-Z]/.test(password)) {
+    errors.push("au moins une lettre");
+  }
+  if (!/[0-9]/.test(password)) {
+    errors.push("au moins un chiffre");
+  }
+  if (errors.length > 0) {
+    if (errors.length === 1) {
+      return `Le mot de passe doit contenir ${errors[0]}.`;
+    }
+    return `Le mot de passe n'est pas valide. Critères manquants : ${errors.join(', ')}.`;
+  }
+  return null;
+}
+
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -71,10 +94,24 @@ function checkCardStatus(collab, company) {
   let messageTitle = '';
   let messageSubtitle = '';
 
-  if (company && company.subscription_end_date) {
-    const subDateStr = String(company.subscription_end_date).split('T')[0];
-    const todayStr = new Date().toISOString().split('T')[0];
-    if (subDateStr < todayStr) {
+  if (company) {
+    const subActiveVal = company.is_subscription_active != null ? company.is_subscription_active : (company.isSubscriptionActive != null ? company.isSubscriptionActive : 1);
+    const isSuspended = Number(subActiveVal) === 0 || subActiveVal === false;
+    
+    let isDateExpired = false;
+    if (company.subscription_end_date) {
+      const subDateStr = String(company.subscription_end_date).split('T')[0];
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (subDateStr < todayStr) {
+        isDateExpired = true;
+      }
+    }
+
+    if (isSuspended) {
+      isExpired = true;
+      messageTitle = 'Accès suspendu';
+      messageSubtitle = "L'accès aux cartes de visite de cette entreprise a été suspendu par l'administrateur.";
+    } else if (isDateExpired) {
       isExpired = true;
       messageTitle = 'Abonnement échu';
       messageSubtitle = "L'abonnement de cette entreprise a expiré. Veuillez contacter l'administrateur.";
@@ -1222,8 +1259,12 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 // Reset password — validates token and sets new password
 app.post('/api/auth/reset-password', async (req, res) => {
   const { token, password } = req.body;
-  if (!token || !password || password.length < 6) {
-    return res.status(400).json({ error: "Token et mot de passe (6 caractères min.) requis." });
+  if (!token) {
+    return res.status(400).json({ error: "Token de réinitialisation manquant." });
+  }
+  const passError = validatePasswordRules(password);
+  if (passError) {
+    return res.status(400).json({ error: passError });
   }
   try {
     const record = await db.getPasswordResetToken(token);
@@ -1255,6 +1296,13 @@ app.put('/api/auth/me', authenticateToken, async (req, res) => {
 
   if (!firstName || !firstName.trim() || !lastName || !lastName.trim() || !email || !email.trim()) {
     return res.status(400).json({ error: "Prenom, Nom et Email sont obligatoires." });
+  }
+
+  if (password) {
+    const passError = validatePasswordRules(password);
+    if (passError) {
+      return res.status(400).json({ error: passError });
+    }
   }
 
   try {
@@ -1330,8 +1378,9 @@ app.post('/api/admin/users', authenticateToken, async (req, res) => {
   if (!id || id.trim().length !== 8) {
     return res.status(400).json({ error: "L'identifiant doit comporter exactement 8 caractères." });
   }
-  if (!password || password.trim().length < 4) {
-    return res.status(400).json({ error: "Le mot de passe doit contenir au moins 4 caractères." });
+  const passError = validatePasswordRules(password);
+  if (passError) {
+    return res.status(400).json({ error: passError });
   }
   
   try {
@@ -1380,6 +1429,13 @@ app.put('/api/admin/users/:id', authenticateToken, async (req, res) => {
     const user = await db.getUserById(userId);
     if (!user) {
       return res.status(404).json({ error: "Utilisateur non trouvé." });
+    }
+    
+    if (password) {
+      const passError = validatePasswordRules(password);
+      if (passError) {
+        return res.status(400).json({ error: passError });
+      }
     }
     
     // Prevent self-demotion or self-deletion of Super Admin role if they are the last one
@@ -1550,6 +1606,15 @@ app.get('/api/collaborators/:id/vcf', async (req, res) => {
 
 app.get('/api/collaborators/:id/export', async (req, res) => {
   try {
+    const authHeader = req.headers['authorization'];
+    const queryToken = req.query.token;
+    const token = (authHeader && authHeader.split(' ')[1]) || queryToken;
+    const decoded = token ? verifyToken(token) : null;
+
+    if (!decoded || decoded.role !== 'superadmin') {
+      return res.status(403).send('Accès réservé aux Super Administrateurs.');
+    }
+
     const AdmZip = require('adm-zip');
     let collab = await db.getCollaboratorById(req.params.id);
     if (!collab) {

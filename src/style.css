@@ -401,6 +401,34 @@ label {
   border-radius: 2px;
 }
 
+/* Password Toggle Button */
+.input-wrapper.has-password-toggle input {
+  padding-right: 2.75rem !important;
+}
+
+.btn-toggle-password {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  z-index: 2;
+}
+
+.btn-toggle-password:hover {
+  color: var(--primary-color, #8C52FF);
+  background: rgba(140, 82, 255, 0.1);
+}
+
 /* Domain Fetch Button */
 .btn-secondary-icon {
   position: absolute;
@@ -885,18 +913,22 @@ label {
   gap: 0.35rem;
   padding: 0.45rem 0.85rem;
   border-radius: 20px;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  color: #34d399;
+  background: #8C52FF;
+  border: 1px solid #7c3aed;
+  color: #ffffff;
   font-size: 0.8rem;
   font-weight: 600;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(140, 82, 255, 0.25);
 }
 
 .btn-add-badge:hover {
-  background: var(--success-color);
-  color: white;
+  background: #10b981;
+  border-color: #059669;
+  color: #ffffff;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
 }
 
 .btn-secondary-badge {

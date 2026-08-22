@@ -6,6 +6,76 @@ document.addEventListener('DOMContentLoaded', () => {
   const API_BASE = '/api';
   const PUBLIC_URL_BASE = window.location.origin;
 
+  // --- Password Validation Helper ---
+  function validatePasswordRules(password) {
+    if (!password) return "Le mot de passe est obligatoire.";
+    const errors = [];
+    if (password.length < 8) {
+      errors.push("au moins 8 caractères");
+    }
+    if (!/[a-zA-Z]/.test(password)) {
+      errors.push("au moins une lettre");
+    }
+    if (!/[0-9]/.test(password)) {
+      errors.push("au moins un chiffre");
+    }
+    if (errors.length > 0) {
+      if (errors.length === 1) {
+        return `Le mot de passe doit contenir ${errors[0]}.`;
+      }
+      return `Le mot de passe n'est pas valide. Critères manquants : ${errors.join(', ')}.`;
+    }
+    return null;
+  }
+
+  // --- Password Toggle Eye Icon Helper ---
+  function setupPasswordToggles() {
+    const passwordInputs = document.querySelectorAll('input[type="password"], input[data-password-toggle="true"]');
+    passwordInputs.forEach((input) => {
+      const wrapper = input.parentElement;
+      if (!wrapper || !wrapper.classList.contains('input-wrapper')) return;
+      if (wrapper.querySelector('.btn-toggle-password')) return;
+
+      wrapper.classList.add('has-password-toggle');
+      input.setAttribute('data-password-toggle', 'true');
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-toggle-password';
+      btn.setAttribute('aria-label', 'Afficher le mot de passe');
+      btn.tabIndex = -1;
+      btn.innerHTML = `
+        <svg class="icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <svg class="icon-eye-off hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+        </svg>
+      `;
+
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        btn.setAttribute('aria-label', isPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+        const eyeOn = btn.querySelector('.icon-eye');
+        const eyeOff = btn.querySelector('.icon-eye-off');
+        if (isPassword) {
+          eyeOn.classList.add('hidden');
+          eyeOff.classList.remove('hidden');
+        } else {
+          eyeOn.classList.remove('hidden');
+          eyeOff.classList.add('hidden');
+        }
+      });
+
+      wrapper.appendChild(btn);
+    });
+  }
+
   // --- Authentication State & Fetch Wrapper ---
   let authToken = localStorage.getItem('tdconnect_token') || '';
   let currentUser = JSON.parse(localStorage.getItem('tdconnect_user')) || null;
@@ -159,11 +229,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const collabActiveToggle = document.getElementById('collab-active-toggle');
   const collabActiveLabel = document.getElementById('collab-active-label');
   const collabCustomSlugInput = document.getElementById('collab-custom-slug');
+  const collabCustomSlugGroup = document.getElementById('collab-custom-slug-group');
   const collabSlugWarning = document.getElementById('collab-slug-warning');
   const collabConnectionCountInput = document.getElementById('collab-connection-count');
   const collabConnectionCountGroup = document.getElementById('collab-connection-count-group');
   const collabConnectionCounterDisplay = document.getElementById('collab-connection-counter-display');
   const collabConnectionCountBadge = document.getElementById('collab-connection-count-badge');
+  const collabExportZipContainer = document.getElementById('collab-export-zip-container');
 
   // Collaborator Profile Photo Upload
   const collabPhotoZone = document.getElementById('collab-photo-zone');
@@ -316,6 +388,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderRoute(hash) {
+    if (window.closeContactEncart) {
+      window.closeContactEncart();
+    }
     const rawHash = hash || window.location.hash || '#home';
     const cleanHash = rawHash.startsWith('#') ? rawHash : '#' + rawHash;
     const isLoggedIn = !!(authToken && currentUser);
@@ -623,8 +698,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const token = resetModal ? resetModal.dataset.resetToken : '';
       const password = resetPasswordInput ? resetPasswordInput.value : '';
       const confirm = resetConfirmInput ? resetConfirmInput.value : '';
-      if (password.length < 6) {
-        if (resetMsg) { resetMsg.textContent = 'Le mot de passe doit contenir au moins 6 caractères.'; resetMsg.className = 'form-msg error'; }
+      const passErr = validatePasswordRules(password);
+      if (passErr) {
+        if (resetMsg) { resetMsg.textContent = passErr; resetMsg.className = 'form-msg error'; }
         return;
       }
       if (password !== confirm) {
@@ -912,7 +988,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (targetLink) {
       e.preventDefault();
       e.stopPropagation();
-      openContactModal();
+      if (window.openContactEncart) {
+        window.openContactEncart();
+      } else {
+        openContactModal();
+      }
     }
   });
 
@@ -965,8 +1045,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (password) {
-        if (password.length < 4) {
-          myAccErrorMsg.textContent = "Le mot de passe doit comporter au moins 4 caractères.";
+        const passErr = validatePasswordRules(password);
+        if (passErr) {
+          myAccErrorMsg.textContent = passErr;
           myAccErrorMsg.classList.remove('hidden');
           return;
         }
@@ -1304,9 +1385,12 @@ document.addEventListener('DOMContentLoaded', () => {
         alert("Veuillez remplir tous les champs obligatoires (Prénom, Nom, Email).");
         return;
       }
-      if (mode === 'create' && (!password || password.length < 4)) {
-        alert("Le mot de passe doit comporter au moins 4 caractères.");
-        return;
+      if (mode === 'create' || password) {
+        const passErr = validatePasswordRules(password);
+        if (passErr) {
+          alert(passErr);
+          return;
+        }
       }
 
       const managedCompanies = [];
@@ -1367,7 +1451,7 @@ document.addEventListener('DOMContentLoaded', () => {
         city: companyCityInput.value.trim(),
         country: companyCountryInput.value.trim(),
         subscription_end_date: companySubscriptionEndInput ? companySubscriptionEndInput.value : null,
-        is_subscription_active: companyIsSubscriptionActiveInput ? (companyIsSubscriptionActiveInput.checked ? 1 : 0) : 0,
+        is_subscription_active: companyIsSubscriptionActiveInput ? (companyIsSubscriptionActiveInput.checked ? 0 : 1) : 1,
         logo_custom_url: logoCustomUrl || '',
         theme: currentTheme,
         font: currentFont,
@@ -1496,6 +1580,7 @@ document.addEventListener('DOMContentLoaded', () => {
           testBanner.classList.remove('hidden');
         }
       }
+      updateMockupPreview();
     });
   }
 
@@ -1801,9 +1886,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const collab = collaborators.find(c => c.id === selectedCollabId);
 
     // Check Subscription Expiration & Collaborator Active status for live blur preview
+    // Checkbox is "Accès suspendu" -> checked means access IS suspended!
+    const isSuspended = companyIsSubscriptionActiveInput ? companyIsSubscriptionActiveInput.checked : false;
     const subEndDateVal = companySubscriptionEndInput ? companySubscriptionEndInput.value : '';
     const todayStr = new Date().toISOString().split('T')[0];
-    const isSubExpired = subEndDateVal && (subEndDateVal < todayStr);
+    const isDateExpired = subEndDateVal && (subEndDateVal < todayStr);
     const isCollabInactive = collab && (collab.isActive === 0 || collab.is_active === 0);
 
     const prevCardBlurOverlay = document.getElementById('prev-card-blur-overlay');
@@ -1811,7 +1898,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const prevBlurSubtitle = document.getElementById('prev-blur-subtitle');
 
     if (prevCardBlurOverlay) {
-      if (isSubExpired) {
+      if (isSuspended) {
+        if (prevBlurTitle) prevBlurTitle.textContent = 'Accès suspendu';
+        if (prevBlurSubtitle) prevBlurSubtitle.textContent = "L'accès aux cartes de cette entreprise a été suspendu par l'administrateur.";
+        prevCardBlurOverlay.classList.remove('hidden');
+        if (cardElement) cardElement.style.filter = 'blur(6px) opacity(0.5)';
+      } else if (isDateExpired) {
         if (prevBlurTitle) prevBlurTitle.textContent = 'Abonnement échu';
         if (prevBlurSubtitle) prevBlurSubtitle.textContent = "L'abonnement de cette entreprise a expiré.";
         prevCardBlurOverlay.classList.remove('hidden');
@@ -1833,7 +1925,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (collab) {
       sharingPanel.classList.remove('hidden');
 
-      // Connection counter display for Super Admin
+      // Connection counter & ZIP Export display for Super Admin only
       const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
       if (collabConnectionCounterDisplay) {
         if (isSuperAdmin) {
@@ -1844,6 +1936,13 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         } else {
           collabConnectionCounterDisplay.classList.add('hidden');
+        }
+      }
+      if (collabExportZipContainer) {
+        if (isSuperAdmin) {
+          collabExportZipContainer.classList.remove('hidden');
+        } else {
+          collabExportZipContainer.classList.add('hidden');
         }
       }
 
@@ -1945,7 +2044,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const urlId = collab.customSlug || collab.id;
       prevActionVcard.href = `${API_BASE}/collaborators/${urlId}/vcf`;
-      btnExportZip.href = `${API_BASE}/collaborators/${urlId}/export`;
+      btnExportZip.href = `${API_BASE}/collaborators/${urlId}/export?token=${authToken}`;
 
       // Sharing Panel Info
       let publicUrlBase = PUBLIC_URL_BASE;
@@ -2326,6 +2425,13 @@ document.addEventListener('DOMContentLoaded', () => {
         collabConnectionCountGroup.classList.add('hidden');
       }
     }
+    if (collabCustomSlugGroup) {
+      if (isSuperAdmin) {
+        collabCustomSlugGroup.classList.remove('hidden');
+      } else {
+        collabCustomSlugGroup.classList.add('hidden');
+      }
+    }
 
     if (collab) {
       const compIndex = collaborators.findIndex(c => c.id === collab.id) + 1;
@@ -2422,7 +2528,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = collabEmailInput.value.trim();
     const address = collabAddressInput.value.trim();
     const photoClickUrl = collabPhotoClickUrlInput.value.trim();
-    const customSlug = collabCustomSlugInput ? extractSlug(collabCustomSlugInput.value) : '';
+    const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
+    const collabIndex = collaborators.findIndex(c => c.id === id);
+    const customSlug = (collabCustomSlugInput && isSuperAdmin) 
+      ? extractSlug(collabCustomSlugInput.value) 
+      : (collabIndex > -1 ? (collaborators[collabIndex].customSlug || '') : '');
 
     const phoneMobile = collabPhoneMobileInput.value.trim();
     const phoneWork = collabPhoneWorkInput.value.trim();
@@ -2434,7 +2544,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const collabIndex = collaborators.findIndex(c => c.id === id);
     const connectionCount = (collabConnectionCountInput && currentUser && currentUser.role === 'superadmin')
       ? parseInt(collabConnectionCountInput.value || '0', 10)
       : (collabIndex > -1 ? (collaborators[collabIndex].connectionCount || 0) : 0);
@@ -2641,16 +2750,64 @@ document.addEventListener('DOMContentLoaded', () => {
         imgHtml = `<span class="company-logo-initials">${company.name[0].toUpperCase()}</span>`;
       }
 
+      // Active / Inactive collaborator counts
+      const activeCount = company.active_collabs_count != null ? company.active_collabs_count : 0;
+      const inactiveCount = company.inactive_collabs_count != null ? company.inactive_collabs_count : 0;
+
+      // Subscription End Date
+      const rawSubDate = company.subscriptionEndDate || company.subscription_end_date;
+      let formattedSubDate = 'Non définie';
+      let isDateExpired = false;
+      if (rawSubDate) {
+        const parts = String(rawSubDate).split('T')[0].split('-');
+        if (parts.length === 3) {
+          formattedSubDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        } else {
+          formattedSubDate = String(rawSubDate);
+        }
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (String(rawSubDate).split('T')[0] < todayStr) {
+          isDateExpired = true;
+        }
+      }
+
+      // Access Status (Accès suspendu / Accès actif / Abonnement échu)
+      const isSuspended = company.is_subscription_active === 0 || company.isSubscriptionActive === 0;
+      let statusBadgeHtml = '';
+      if (isSuspended) {
+        statusBadgeHtml = `<span class="company-meta-badge status-suspended" style="background: rgba(244, 63, 94, 0.12); color: #e11d48; border: 1px solid rgba(244, 63, 94, 0.25); padding: 0.18rem 0.55rem; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">⛔ Accès suspendu</span>`;
+      } else if (isDateExpired) {
+        statusBadgeHtml = `<span class="company-meta-badge status-expired" style="background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.25); padding: 0.18rem 0.55rem; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">⚠️ Abonnement échu</span>`;
+      } else {
+        statusBadgeHtml = `<span class="company-meta-badge status-active" style="background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25); padding: 0.18rem 0.55rem; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">🟢 Accès actif</span>`;
+      }
+
       card.innerHTML = `
         <div class="company-logo-thumb-wrapper">
           ${imgHtml}
         </div>
-        <div class="company-card-info">
-          <span class="company-card-name">${company.name}</span>
-          <span class="company-card-domain">${company.domain || 'Sans site web'}</span>
+        <div class="company-card-info" style="flex-grow: 1; display: flex; flex-direction: column; gap: 0.35rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+            <span class="company-card-name" style="font-size: 1.02rem; font-weight: 700;">${company.name}</span>
+            <span class="company-card-domain" style="font-size: 0.8rem; color: var(--text-muted);">${company.domain || 'Sans site web'}</span>
+          </div>
+
+          <div class="company-card-meta-row" style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; margin-top: 0.15rem; font-size: 0.78rem;">
+            <span class="company-meta-badge active-collabs" style="background: rgba(16, 185, 129, 0.12); color: #059669; padding: 0.18rem 0.55rem; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+              👥 ${activeCount} actif(s)
+            </span>
+            <span class="company-meta-badge inactive-collabs" style="background: rgba(148, 163, 184, 0.15); color: #64748b; padding: 0.18rem 0.55rem; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+              ${inactiveCount} inactif(s)
+            </span>
+            <span class="company-meta-badge sub-date" style="background: rgba(99, 102, 241, 0.08); color: #4f46e5; padding: 0.18rem 0.55rem; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+              📅 Fin : ${formattedSubDate}
+            </span>
+            ${statusBadgeHtml}
+          </div>
         </div>
         <button type="button" class="btn-company-delete" title="Supprimer l'entreprise">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        </button>
       `;
 
       // Hide delete button if not superadmin
@@ -2705,14 +2862,14 @@ document.addEventListener('DOMContentLoaded', () => {
       
       activeCompanyTitle.textContent = companyInfo.name;
 
-      const isSubActive = companyInfo.is_subscription_active === 1 || companyInfo.isSubscriptionActive === 1;
+      const isSuspended = companyInfo.is_subscription_active === 0 || companyInfo.isSubscriptionActive === 0;
 
-      // Update test subscription banner notice (hidden if subscription is active)
+      // Update test subscription banner notice (hidden if access is suspended)
       const testBanner = document.getElementById('company-test-banner');
       const testBannerText = document.getElementById('company-test-banner-text');
       if (testBanner && testBannerText) {
         const subDateVal = companyInfo.subscriptionEndDate || companyInfo.subscription_end_date;
-        if (!isSubActive && subDateVal) {
+        if (!isSuspended && subDateVal) {
           let formattedDate = subDateVal;
           const parts = String(subDateVal).split('T')[0].split('-');
           if (parts.length === 3) {
@@ -2749,10 +2906,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (companyIsSubscriptionActiveInput) {
-        companyIsSubscriptionActiveInput.checked = isSubActive;
+        companyIsSubscriptionActiveInput.checked = isSuspended;
         companyIsSubscriptionActiveInput.disabled = !isSuperAdmin;
         if (!isSuperAdmin) {
-          companyIsSubscriptionActiveInput.title = "Seul le Super Admin peut modifier le statut de l'abonnement.";
+          companyIsSubscriptionActiveInput.title = "Seul le Super Admin peut suspendre l'accès de l'entreprise.";
           companyIsSubscriptionActiveInput.style.cursor = 'not-allowed';
           companyIsSubscriptionActiveInput.style.opacity = '0.6';
         } else {
@@ -3226,6 +3383,8 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('hashchange', () => {
     renderRoute(window.location.hash);
   });
+
+  setupPasswordToggles();
 
   if (authToken && currentUser) {
     const initialHash = window.location.hash || '#dashboard';
