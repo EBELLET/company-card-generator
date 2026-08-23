@@ -214,11 +214,11 @@
 
         <div class="email-result-box">
           <p style="font-size: 0.95rem; margin-bottom: 0.5rem; color: #e2e8f0; font-weight: 500;">Envoyez un mail à :</p>
-          <a href="mailto:contact@tdconnect.fr" class="email-link">contact@tdconnect.fr</a>
+          <a href="#" id="email-link" class="email-link"></a>
         </div>
 
         <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
-          <a href="mailto:contact@tdconnect.fr" class="btn-submit" style="display: inline-block; text-decoration: none; padding: 0.75rem 1rem; font-size: 0.9rem; text-align: center;">Ouvrir votre messagerie</a>
+          <a href="#" id="btn-open-mail" class="btn-submit" style="display: inline-block; text-decoration: none; padding: 0.75rem 1rem; font-size: 0.9rem; text-align: center;">Ouvrir votre messagerie</a>
           <button type="button" id="btn-copy" class="btn-submit" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); font-size: 0.9rem; padding: 0.75rem 1rem;">Copier le mail</button>
         </div>
       </div>
@@ -229,16 +229,38 @@
     </footer>
 
     <script>
+      let currentSupportEmail = '';
+
       const btnVerify = document.getElementById('btn-verify');
       const chkHuman = document.getElementById('chk-human');
       const errorMsg = document.getElementById('error-msg');
       const stepVerify = document.getElementById('step-verify');
       const stepResult = document.getElementById('step-result');
       const btnCopy = document.getElementById('btn-copy');
+      const emailLink = document.getElementById('email-link');
+      const btnOpenMail = document.getElementById('btn-open-mail');
 
-      btnVerify.addEventListener('click', () => {
+      btnVerify.addEventListener('click', async () => {
         if (chkHuman.checked) {
           errorMsg.classList.add('hidden');
+          try {
+            const res = await fetch('/api/settings');
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.supportEmail) {
+                currentSupportEmail = data.supportEmail;
+              }
+            }
+          } catch(e) {}
+
+          if (emailLink) {
+            emailLink.href = 'mailto:' + currentSupportEmail;
+            emailLink.textContent = currentSupportEmail;
+          }
+          if (btnOpenMail) {
+            btnOpenMail.href = 'mailto:' + currentSupportEmail;
+          }
+
           stepVerify.classList.add('hidden');
           stepResult.classList.remove('hidden');
         } else {
@@ -247,7 +269,8 @@
       });
 
       btnCopy.addEventListener('click', () => {
-        navigator.clipboard.writeText('contact@tdconnect.fr').then(() => {
+        if (!currentSupportEmail) return;
+        navigator.clipboard.writeText(currentSupportEmail).then(() => {
           btnCopy.textContent = 'Copié !';
           setTimeout(() => {
             btnCopy.textContent = 'Copier le mail';

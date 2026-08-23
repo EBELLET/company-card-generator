@@ -168,6 +168,21 @@ async function initializeDatabase() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
+  // 6. Create app_settings table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      setting_key VARCHAR(100) PRIMARY KEY,
+      setting_value TEXT NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  try {
+    await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('inactivity_timeout_minutes', '60')`);
+    await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('vcf_annotation_origin', '1')`);
+    await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('vcf_include_card_url', '1')`);
+    await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('support_email', 'contact@tdconnect.fr')`);
+  } catch (e) {}
+
   console.log("Schéma de la base MySQL initialisé avec succès.");
   await seedSuperAdmin();
 }
@@ -733,6 +748,34 @@ const deletePasswordResetToken = async (token) => {
   await pool.query('DELETE FROM password_reset_tokens WHERE token = ?', [token]);
 };
 
+const getSetting = async (key, defaultValue = null) => {
+  const [rows] = await pool.query('SELECT setting_value FROM app_settings WHERE setting_key = ?', [key]);
+  if (rows.length > 0) {
+    return rows[0].setting_value;
+  }
+  return defaultValue;
+};
+
+const setSetting = async (key, value) => {
+  await pool.query(
+    'INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
+    [key, String(value), String(value)]
+  );
+};
+
+const getAllSettings = async () => {
+  const [rows] = await pool.query('SELECT setting_key, setting_value FROM app_settings');
+  const settings = {
+    inactivity_timeout_minutes: '60',
+    vcf_annotation_origin: '1',
+    vcf_include_card_url: '1'
+  };
+  rows.forEach(r => {
+    settings[r.setting_key] = r.setting_value;
+  });
+  return settings;
+};
+
 module.exports = {
   dbReady,
   getCompanies,
@@ -758,5 +801,8 @@ module.exports = {
   registerUserWithCompany,
   createPasswordResetToken,
   getPasswordResetToken,
-  deletePasswordResetToken
+  deletePasswordResetToken,
+  getSetting,
+  setSetting,
+  getAllSettings
 };

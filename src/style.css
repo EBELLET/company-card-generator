@@ -2206,3 +2206,228 @@ input:checked + .slider:before {
   color: var(--primary-hover) !important;
   text-decoration: underline !important;
 }
+
+/* ==========================================
+   SETTINGS PAGE STYLES
+   ========================================== */
+.settings-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.settings-intro-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: #FFFFFF;
+  border: 1px solid rgba(55, 53, 52, 0.12);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.settings-intro-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(140, 82, 255, 0.12);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.settings-intro-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.settings-intro-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.settings-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(55, 53, 52, 0.12);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.settings-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: rgba(55, 53, 52, 0.02);
+  border-bottom: 1px solid rgba(55, 53, 52, 0.08);
+}
+
+.settings-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.settings-card-icon.color-purple {
+  background: rgba(140, 82, 255, 0.12);
+  color: var(--primary-color);
+}
+
+.settings-card-icon.color-emerald {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--success-color);
+}
+
+.settings-card-header h4 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.15rem;
+}
+
+.settings-card-header p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.settings-card-body {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.setting-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.setting-item-info {
+  flex-grow: 1;
+}
+
+.setting-label {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+}
+
+.setting-help {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.setting-select {
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(55, 53, 52, 0.18);
+  background: #ffffff;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  min-width: 200px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.setting-select:focus {
+  border-color: var(--primary-color);
+}
+
+.setting-divider {
+  border: 0;
+  border-top: 1px solid rgba(55, 53, 52, 0.08);
+  margin: 0;
+}
+
+/* Custom Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #CBD5E1;
+  transition: 0.3s ease;
+  border-radius: 28px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s ease;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--primary-color);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(24px);
+}
+
+.settings-actions-footer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.btn-save-settings {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--primary-color);
+  color: #FFFFFF;
+  border: none;
+  padding: 0.85rem 1.8rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(140, 82, 255, 0.35);
+}
+
+.btn-save-settings:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(140, 82, 255, 0.45);
+}

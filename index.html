@@ -206,6 +206,10 @@
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                   <span>Administrateurs</span>
                 </button>
+                <button type="button" id="btn-settings-panel-show" class="btn-secondary-badge hidden" title="Paramètres Généraux">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                  <span>Paramètres</span>
+                </button>
                 <button type="button" id="btn-add-company-show" class="btn-add-badge">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                   <span>Nouvelle</span>
@@ -359,6 +363,134 @@
                   <button type="button" id="btn-save-admin" class="btn-success-small">Enregistrer</button>
                   <button type="button" id="btn-cancel-admin" class="btn-cancel-small">Annuler</button>
                 </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- VIEW D: GENERAL SETTINGS PANEL (SUPER ADMIN ONLY) -->
+          <div id="view-settings-panel" class="app-view hidden">
+            <!-- Back Navigation bar -->
+            <div class="detail-back-bar">
+              <button type="button" id="btn-back-from-settings" class="btn-back">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <span>Retour aux entreprises</span>
+              </button>
+              <h2>Paramètres Généraux de l'Application</h2>
+            </div>
+
+            <div class="settings-page-container">
+              <form id="settings-form" autocomplete="off" onsubmit="event.preventDefault();">
+                
+                <!-- CARD 1: Sécurité & Session -->
+                <div class="settings-card">
+                  <div class="settings-card-header">
+                    <div class="settings-card-icon color-purple">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </div>
+                    <div>
+                      <h4>Sécurité & Session</h4>
+                      <p>Gestion de la déconnexion automatique des utilisateurs</p>
+                    </div>
+                  </div>
+
+                  <div class="settings-card-body">
+                    <div class="setting-item-row">
+                      <div class="setting-item-info">
+                        <label for="setting-inactivity-timeout" class="setting-label">Délai d'inactivité avant déconnexion</label>
+                        <p class="setting-help">Si aucune action (clic, frappe, scroll) n'est détectée pendant cette durée, la session est automatiquement verrouillée.</p>
+                      </div>
+                      <div class="setting-item-control">
+                        <select id="setting-inactivity-timeout" class="setting-select">
+                          <option value="15">15 minutes</option>
+                          <option value="30">30 minutes</option>
+                          <option value="60" selected>1 heure (par défaut)</option>
+                          <option value="120">2 heures</option>
+                          <option value="0">Désactivé (Aucune déconnexion)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- CARD 2: Options des cartes vCard (.vcf) -->
+                <div class="settings-card">
+                  <div class="settings-card-header">
+                    <div class="settings-card-icon color-emerald">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </div>
+                    <div>
+                      <h4>Exportation vCard (.vcf)</h4>
+                      <p>Contenu des fiches de contacts générées au format .vcf</p>
+                    </div>
+                  </div>
+
+                  <div class="settings-card-body">
+                    <!-- Option 1: Annotation origin -->
+                    <div class="setting-item-row">
+                      <div class="setting-item-info">
+                        <span class="setting-label">Annotation dans la carte vcf de l'origine du contact</span>
+                        <p class="setting-help">Incruste une note <em>"Origine : Carte de visite virtuelle TDConnect"</em> dans le carnet d'adresses du destinataire.</p>
+                      </div>
+                      <div class="setting-item-control">
+                        <label class="toggle-switch">
+                          <input type="checkbox" id="setting-vcf-annotation-origin" checked />
+                          <span class="toggle-slider"></span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <hr class="setting-divider" />
+
+                    <!-- Option 2: Include Card URL -->
+                    <div class="setting-item-row">
+                      <div class="setting-item-info">
+                        <span class="setting-label">Ajout de l'url de la carte virtuelle dans le vcf</span>
+                        <p class="setting-help">Incruste l'adresse de la carte de visite virtuelle mobile du collaborateur parmi les informations du contact enregistré.</p>
+                      </div>
+                      <div class="setting-item-control">
+                        <label class="toggle-switch">
+                          <input type="checkbox" id="setting-vcf-include-card-url" checked />
+                          <span class="toggle-slider"></span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- CARD 3: Email / Support -->
+                <div class="settings-card">
+                  <div class="settings-card-header">
+                    <div class="settings-card-icon color-blue" style="background: rgba(99, 102, 241, 0.12); color: #6366f1;">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    </div>
+                    <div>
+                      <h4>Contact & Support</h4>
+                      <p>Adresse de contact de l'application affichée après vérification (captcha)</p>
+                    </div>
+                  </div>
+
+                  <div class="settings-card-body">
+                    <div class="setting-item-row">
+                      <div class="setting-item-info">
+                        <label for="setting-support-email" class="setting-label">Adresse de support de l'application :</label>
+                        <p class="setting-help">Adresse électronique vers laquelle les utilisateurs sont redirigés lorsqu'ils valident le test de sécurité (captcha).</p>
+                      </div>
+                      <div class="setting-item-control">
+                        <input type="email" id="setting-support-email" class="setting-select" style="min-width: 250px;" placeholder="exemple@domaine.fr" value="" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Footer Save Action -->
+                <div class="settings-actions-footer">
+                  <button type="button" id="btn-save-all-settings" class="btn-save-settings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    <span>Enregistrer la configuration</span>
+                  </button>
+                  <div id="settings-msg" class="form-msg hidden"></div>
+                </div>
+
               </form>
             </div>
           </div>
@@ -1070,7 +1202,7 @@
 
             <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 1rem; margin-bottom: 1rem;">
               <p style="font-size: 0.85rem; color: #373534; margin-bottom: 0.35rem;">Envoyez un mail à :</p>
-              <a href="mailto:contact@tdconnect.fr" target="_blank" rel="noopener noreferrer" style="color: #6366f1; font-size: 1.1rem; font-weight: 700; text-decoration: underline;">contact@tdconnect.fr</a>
+              <a id="encart-support-email-link" href="#" target="_blank" rel="noopener noreferrer" style="color: #6366f1; font-size: 1.1rem; font-weight: 700; text-decoration: underline;"></a>
             </div>
 
             <button type="button" onclick="window.closeContactEncart && window.closeContactEncart();" style="background: rgba(55, 53, 52, 0.08); border: 1px solid rgba(55, 53, 52, 0.15); color: #373534; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.82rem; cursor: pointer; font-weight: 600;">
@@ -1278,13 +1410,31 @@
         }
       };
 
-      window.submitEncartCaptcha = function() {
+      window.submitEncartCaptcha = async function() {
         var chk = document.getElementById('chk-encart-human');
         var err = document.getElementById('encart-error-msg');
         var s1 = document.getElementById('encart-step-verify');
         var s2 = document.getElementById('encart-step-result');
+        var linkEl = document.getElementById('encart-support-email-link');
+
         if (chk && chk.checked) {
           if (err) err.classList.add('hidden');
+          if (linkEl) {
+            linkEl.textContent = 'Chargement...';
+            linkEl.href = '#';
+          }
+          try {
+            var res = await fetch('/api/settings');
+            if (res.ok) {
+              var data = await res.json();
+              if (data && data.supportEmail && linkEl) {
+                linkEl.href = 'mailto:' + data.supportEmail;
+                linkEl.textContent = data.supportEmail;
+              }
+            }
+          } catch (e) {
+            console.warn("Erreur lors de la récupération de l'email de support:", e);
+          }
           if (s1) s1.classList.add('hidden');
           if (s2) s2.classList.remove('hidden');
         } else {

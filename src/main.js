@@ -80,6 +80,105 @@ document.addEventListener('DOMContentLoaded', () => {
   let authToken = localStorage.getItem('tdconnect_token') || '';
   let currentUser = JSON.parse(localStorage.getItem('tdconnect_user')) || null;
 
+  // --- General App Settings Management ---
+  let inactivityTimeoutMinutes = 60; // Valeur par défaut
+  let vcfAnnotationOrigin = true;
+  let vcfIncludeCardUrl = true;
+  let supportEmail = '';
+  let lastActivityTime = parseInt(localStorage.getItem('tdconnect_last_activity') || '0', 10);
+  let inactivityCheckInterval = null;
+  let lastThrottleTime = 0;
+
+  function updateSupportEmailDOM(email) {
+    const linkEl = document.getElementById('encart-support-email-link');
+    if (linkEl && email) {
+      linkEl.href = `mailto:${email}`;
+      linkEl.textContent = email;
+    }
+  }
+
+  async function fetchAllSettings() {
+    try {
+      const res = await fetch(`${API_BASE}/settings`);
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof data.inactivityTimeoutMinutes === 'number') {
+          inactivityTimeoutMinutes = data.inactivityTimeoutMinutes;
+        }
+        if (typeof data.vcfAnnotationOrigin === 'boolean') {
+          vcfAnnotationOrigin = data.vcfAnnotationOrigin;
+        }
+        if (typeof data.vcfIncludeCardUrl === 'boolean') {
+          vcfIncludeCardUrl = data.vcfIncludeCardUrl;
+        }
+        if (typeof data.supportEmail === 'string' && data.supportEmail.trim()) {
+          supportEmail = data.supportEmail.trim();
+          updateSupportEmailDOM(supportEmail);
+        }
+      }
+    } catch (e) {
+      console.warn("Impossible de récupérer les paramètres généraux :", e);
+    }
+  }
+
+  function getInactivityTimeoutMs() {
+    return inactivityTimeoutMinutes * 60 * 1000;
+  }
+
+  function updateLastActivity() {
+    const now = Date.now();
+    if (now - lastThrottleTime < 1000) return;
+    lastThrottleTime = now;
+    lastActivityTime = now;
+    if (authToken && currentUser) {
+      localStorage.setItem('tdconnect_last_activity', now.toString());
+    }
+  }
+
+  function checkInactivity() {
+    if (!authToken || !currentUser) return false;
+    if (inactivityTimeoutMinutes <= 0) return false; // Déconnexion d'inactivité désactivée
+    const timeoutMs = getInactivityTimeoutMs();
+    const storedActivity = parseInt(localStorage.getItem('tdconnect_last_activity') || '0', 10);
+    const effectiveLastActivity = Math.max(lastActivityTime, storedActivity);
+    if (effectiveLastActivity > 0 && Date.now() - effectiveLastActivity >= timeoutMs) {
+      handleInactivityLogout();
+      return true;
+    }
+    return false;
+  }
+
+  function handleInactivityLogout() {
+    logoutUser();
+    let msg = "Vous avez été déconnecté suite à une inactivité prolongée.";
+    if (inactivityTimeoutMinutes >= 60) {
+      const hours = inactivityTimeoutMinutes / 60;
+      msg = `Vous avez été déconnecté suite à ${hours} heure${hours > 1 ? 's' : ''} d'inactivité.`;
+    } else if (inactivityTimeoutMinutes > 0) {
+      msg = `Vous avez été déconnecté suite à ${inactivityTimeoutMinutes} minutes d'inactivité.`;
+    }
+    showLoginModal(msg);
+  }
+
+  function setupInactivityListeners() {
+    fetchAllSettings();
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+    activityEvents.forEach((eventType) => {
+      window.addEventListener(eventType, updateLastActivity, { passive: true });
+    });
+
+    if (!inactivityCheckInterval) {
+      inactivityCheckInterval = setInterval(checkInactivity, 10000);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkInactivity();
+      }
+    });
+    window.addEventListener('focus', checkInactivity);
+  }
+
   async function apiFetch(url, options = {}) {
     options.headers = options.headers || {};
     if (authToken) {
@@ -126,6 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewCompaniesList = document.getElementById('view-companies-list');
   const viewCompanyDetail = document.getElementById('view-company-detail');
   const viewAdminPanel = document.getElementById('view-admin-panel');
+  const viewSettingsPanel = document.getElementById('view-settings-panel');
   const viewRegister = document.getElementById('view-register');
 
   const mainContent = document.querySelector('.main-content');
@@ -157,6 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // View A (Companies List)
   const btnAddCompanyShow = document.getElementById('btn-add-company-show');
   const btnAdminPanelShow = document.getElementById('btn-admin-panel-show');
+  const btnSettingsPanelShow = document.getElementById('btn-settings-panel-show');
   const companiesGrid = document.getElementById('companies-grid');
   const companyAddFormContainer = document.getElementById('company-add-form-container');
   const newCompanyNameInput = document.getElementById('new-company-name');
@@ -405,6 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           viewCompaniesList.classList.add('hidden');
           if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
+          if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
           viewCompanyDetail.classList.remove('hidden');
           updateLayoutMode();
         }
@@ -418,10 +520,30 @@ document.addEventListener('DOMContentLoaded', () => {
           toggleAppView(true);
           viewCompaniesList.classList.add('hidden');
           if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
+          if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
           if (viewAdminPanel) viewAdminPanel.classList.remove('hidden');
           updateLayoutMode();
           closeAdminForm();
           loadAdminsList();
+          return;
+        } else {
+          alert("Accès réservé aux Super Administrateurs.");
+          navigateTo('#dashboard');
+          return;
+        }
+      }
+    }
+
+    if (cleanHash === '#settings') {
+      if (isLoggedIn) {
+        if (currentUser && currentUser.role === 'superadmin') {
+          toggleAppView(true);
+          viewCompaniesList.classList.add('hidden');
+          if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
+          if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
+          if (viewSettingsPanel) viewSettingsPanel.classList.remove('hidden');
+          updateLayoutMode();
+          loadAllSettingsToUI();
           return;
         } else {
           alert("Accès réservé aux Super Administrateurs.");
@@ -436,6 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleAppView(true);
         if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
         if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
+        if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
         viewCompaniesList.classList.remove('hidden');
         updateLayoutMode();
         loadCompaniesList();
@@ -458,12 +581,21 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isLoggedIn) btnMyAccountShow.classList.remove('hidden');
       else btnMyAccountShow.classList.add('hidden');
     }
+    if (btnAdminPanelShow) {
+      if (isLoggedIn && currentUser && currentUser.role === 'superadmin') btnAdminPanelShow.classList.remove('hidden');
+      else btnAdminPanelShow.classList.add('hidden');
+    }
+    if (btnSettingsPanelShow) {
+      if (isLoggedIn && currentUser && currentUser.role === 'superadmin') btnSettingsPanelShow.classList.remove('hidden');
+      else btnSettingsPanelShow.classList.add('hidden');
+    }
 
     if (toDashboard && isLoggedIn) {
       viewLanding.classList.add('hidden');
       if (viewRegister) viewRegister.classList.add('hidden');
       if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
       if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
+      if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
       viewDashboard.classList.remove('hidden');
       updateLayoutMode();
       
@@ -497,10 +629,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function showLoginModal() {
+  function showLoginModal(message = '') {
     if (loginModal) {
       loginModal.classList.remove('hidden');
-      loginErrorMsg.classList.add('hidden');
+      if (message) {
+        loginErrorMsg.textContent = message;
+        loginErrorMsg.classList.remove('hidden');
+      } else {
+        loginErrorMsg.classList.add('hidden');
+      }
       loginForm.reset();
       loginUsernameInput.focus();
     }
@@ -517,11 +654,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function logoutUser() {
     authToken = '';
     currentUser = null;
+    lastActivityTime = 0;
     localStorage.removeItem('tdconnect_token');
     localStorage.removeItem('tdconnect_user');
+    localStorage.removeItem('tdconnect_last_activity');
     
     // Hide admin buttons
     if (btnAdminPanelShow) btnAdminPanelShow.classList.add('hidden');
+    if (btnSettingsPanelShow) btnSettingsPanelShow.classList.add('hidden');
     if (btnMyAccountShow) btnMyAccountShow.classList.add('hidden');
     if (myAccountModal) myAccountModal.classList.add('hidden');
     
@@ -529,6 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
     viewDashboard.classList.add('hidden');
     viewCompanyDetail.classList.add('hidden');
     if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
+    if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
     if (viewRegister) viewRegister.classList.add('hidden');
     viewCompaniesList.classList.remove('hidden');
     viewLanding.classList.remove('hidden');
@@ -593,9 +734,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         authToken = data.token;
         currentUser = data.user;
+        lastActivityTime = Date.now();
         
         localStorage.setItem('tdconnect_token', authToken);
         localStorage.setItem('tdconnect_user', JSON.stringify(currentUser));
+        localStorage.setItem('tdconnect_last_activity', lastActivityTime.toString());
         
         hideLoginModal();
         toggleAppView(true);
@@ -1077,9 +1220,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         authToken = data.token;
         currentUser = data.user;
+        lastActivityTime = Date.now();
 
         localStorage.setItem('tdconnect_token', authToken);
         localStorage.setItem('tdconnect_user', JSON.stringify(currentUser));
+        localStorage.setItem('tdconnect_last_activity', lastActivityTime.toString());
 
         hideMyAccountModal();
         alert("Vos informations de compte ont été mises à jour avec succès !");
@@ -1127,16 +1272,97 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // --- Admin Panel Navigation & Management Logic ---
+  // --- Admin Panel & Settings Navigation & Management Logic ---
   if (btnAdminPanelShow) {
     btnAdminPanelShow.addEventListener('click', () => {
       navigateTo('#admin');
     });
   }
 
+  if (btnSettingsPanelShow) {
+    btnSettingsPanelShow.addEventListener('click', () => {
+      navigateTo('#settings');
+    });
+  }
+
   if (btnBackToCompanies) {
     btnBackToCompanies.addEventListener('click', () => {
       navigateTo('#dashboard');
+    });
+  }
+
+  const btnBackFromSettings = document.getElementById('btn-back-from-settings');
+  if (btnBackFromSettings) {
+    btnBackFromSettings.addEventListener('click', () => {
+      navigateTo('#dashboard');
+    });
+  }
+
+  const settingInactivityTimeoutSelect = document.getElementById('setting-inactivity-timeout');
+  const settingVcfAnnotationOrigin = document.getElementById('setting-vcf-annotation-origin');
+  const settingVcfIncludeCardUrl = document.getElementById('setting-vcf-include-card-url');
+  const settingSupportEmailInput = document.getElementById('setting-support-email');
+  const btnSaveAllSettings = document.getElementById('btn-save-all-settings');
+  const settingsMsg = document.getElementById('settings-msg');
+
+  async function loadAllSettingsToUI() {
+    await fetchAllSettings();
+    if (settingInactivityTimeoutSelect) {
+      settingInactivityTimeoutSelect.value = String(inactivityTimeoutMinutes);
+    }
+    if (settingVcfAnnotationOrigin) {
+      settingVcfAnnotationOrigin.checked = vcfAnnotationOrigin;
+    }
+    if (settingVcfIncludeCardUrl) {
+      settingVcfIncludeCardUrl.checked = vcfIncludeCardUrl;
+    }
+    if (settingSupportEmailInput) {
+      settingSupportEmailInput.value = supportEmail;
+    }
+  }
+
+  if (btnSaveAllSettings) {
+    btnSaveAllSettings.addEventListener('click', async () => {
+      if (!settingInactivityTimeoutSelect) return;
+      const timeoutVal = parseInt(settingInactivityTimeoutSelect.value, 10);
+      const annotationVal = settingVcfAnnotationOrigin ? settingVcfAnnotationOrigin.checked : true;
+      const includeUrlVal = settingVcfIncludeCardUrl ? settingVcfIncludeCardUrl.checked : true;
+      const supportEmailVal = settingSupportEmailInput ? settingSupportEmailInput.value.trim() : supportEmail;
+
+      try {
+        const res = await apiFetch(`${API_BASE}/settings`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            inactivityTimeoutMinutes: timeoutVal,
+            vcfAnnotationOrigin: annotationVal,
+            vcfIncludeCardUrl: includeUrlVal,
+            supportEmail: supportEmailVal
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          inactivityTimeoutMinutes = timeoutVal;
+          vcfAnnotationOrigin = annotationVal;
+          vcfIncludeCardUrl = includeUrlVal;
+          if (data.supportEmail) {
+            supportEmail = data.supportEmail;
+            updateSupportEmailDOM(supportEmail);
+          }
+          if (settingsMsg) {
+            settingsMsg.textContent = "Paramètres enregistrés avec succès !";
+            settingsMsg.style.color = '#10b981';
+            settingsMsg.classList.remove('hidden');
+            setTimeout(() => settingsMsg.classList.add('hidden'), 4000);
+          }
+        }
+      } catch (err) {
+        if (settingsMsg) {
+          settingsMsg.textContent = err.message || "Erreur lors de l'enregistrement.";
+          settingsMsg.style.color = '#f43f5e';
+          settingsMsg.classList.remove('hidden');
+        }
+      }
     });
   }
 
@@ -3385,10 +3611,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   setupPasswordToggles();
+  setupInactivityListeners();
 
   if (authToken && currentUser) {
-    const initialHash = window.location.hash || '#dashboard';
-    navigateTo(initialHash, false);
+    if (checkInactivity()) {
+      const initialHash = window.location.hash || '#home';
+      navigateTo(initialHash, false);
+    } else {
+      const initialHash = window.location.hash || '#dashboard';
+      navigateTo(initialHash, false);
+    }
   } else {
     const initialHash = window.location.hash || '#home';
     navigateTo(initialHash, false);

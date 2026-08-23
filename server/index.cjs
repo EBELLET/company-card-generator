@@ -1356,6 +1356,63 @@ app.put('/api/auth/me', authenticateToken, async (req, res) => {
   }
 });
 
+// App Settings routes
+app.get('/api/settings', async (req, res) => {
+  try {
+    const settings = await db.getAllSettings();
+    res.json({
+      inactivityTimeoutMinutes: parseInt(settings.inactivity_timeout_minutes || '60', 10),
+      vcfAnnotationOrigin: settings.vcf_annotation_origin === '1' || settings.vcf_annotation_origin === 'true',
+      vcfIncludeCardUrl: settings.vcf_include_card_url === '1' || settings.vcf_include_card_url === 'true',
+      supportEmail: settings.support_email || 'contact@tdconnect.fr'
+    });
+  } catch (err) {
+    console.error("Erreur GET /api/settings:", err.message);
+    res.status(500).json({ error: "Erreur lors de la récupération des paramètres." });
+  }
+});
+
+app.get('/api/settings/inactivity-timeout', async (req, res) => {
+  try {
+    const val = await db.getSetting('inactivity_timeout_minutes', '60');
+    res.json({ inactivityTimeoutMinutes: parseInt(val, 10) });
+  } catch (err) {
+    console.error("Erreur GET /api/settings/inactivity-timeout:", err.message);
+    res.status(500).json({ error: "Erreur lors de la récupération du paramètre d'inactivité." });
+  }
+});
+
+app.put('/api/settings', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'superadmin') {
+    return res.status(403).json({ error: "Accès réservé au Super Admin." });
+  }
+  const { inactivityTimeoutMinutes, vcfAnnotationOrigin, vcfIncludeCardUrl, supportEmail } = req.body;
+  try {
+    if (typeof inactivityTimeoutMinutes === 'number' && inactivityTimeoutMinutes >= 0) {
+      await db.setSetting('inactivity_timeout_minutes', inactivityTimeoutMinutes);
+    }
+    if (vcfAnnotationOrigin !== undefined) {
+      await db.setSetting('vcf_annotation_origin', vcfAnnotationOrigin ? '1' : '0');
+    }
+    if (vcfIncludeCardUrl !== undefined) {
+      await db.setSetting('vcf_include_card_url', vcfIncludeCardUrl ? '1' : '0');
+    }
+    if (typeof supportEmail === 'string' && supportEmail.trim().length > 0) {
+      await db.setSetting('support_email', supportEmail.trim());
+    }
+    res.json({
+      success: true,
+      inactivityTimeoutMinutes,
+      vcfAnnotationOrigin: !!vcfAnnotationOrigin,
+      vcfIncludeCardUrl: !!vcfIncludeCardUrl,
+      supportEmail: supportEmail ? supportEmail.trim() : 'contact@tdconnect.fr'
+    });
+  } catch (err) {
+    console.error("Erreur PUT /api/settings:", err.message);
+    res.status(500).json({ error: "Erreur lors de la mise à jour des paramètres." });
+  }
+});
+
 // Admin management routes (Super Admin only)
 app.get('/api/admin/users', authenticateToken, async (req, res) => {
   if (req.user.role !== 'superadmin') {
@@ -1519,6 +1576,118 @@ app.get('/card/:id', async (req, res) => {
   }
 });
 
+async function buildVCardBuffer(collab, company, req = null) {
+  const settings = await db.getAllSettings();
+  const vcfAnnotationOrigin = settings.vcf_annotation_origin === '1' || settings.vcf_annotation_origin === 'true';
+  const vcfIncludeCardUrl = settings.vcf_include_card_url === '1' || settings.vcf_include_card_url === 'true';
+
+  const companyName = (company.name || '').trim();
+  const companyUrl = (company.domain || '').trim();
+  let street = (collab.address || '').trim();
+  let zip = (collab.zip || '').trim();
+  let city = (collab.city || '').trim();
+  let country = (collab.country || '').trim();
+
+  if (!street && !zip && !city && !country) {
+    street = (company.address || '').trim();
+    zip = (company.zip || '').trim();
+    city = (company.city || '').trim();
+    country = (company.country || '').trim();
+  }
+
+  const lastName = (collab.lastName || '').trim();
+  const firstName = (collab.firstName || '').trim();
+  const role = (collab.role || '').trim();
+  const email = (collab.email || '').trim();
+
+  const telLines = [];
+  const cleanMobile = (collab.phoneMobile || '').trim();
+  const cleanWork = (collab.phoneWork || '').trim();
+  const cleanFax = (collab.phoneFax || '').trim();
+  const cleanLegacy = (collab.phone || '').trim();
+
+  if (cleanMobile) {
+    telLines.push(`TEL;TYPE=CELL,VOICE:${cleanMobile}`);
+  }
+  if (cleanWork) {
+    telLines.push(`TEL;TYPE=WORK,VOICE:${cleanWork}`);
+  }
+  if (cleanFax) {
+    telLines.push(`TEL;TYPE=WORK,FAX:${cleanFax}`);
+  }
+  if (cleanLegacy && cleanLegacy !== cleanMobile && cleanLegacy !== cleanWork && cleanLegacy !== cleanFax) {
+    const hasWork = !!cleanWork;
+    telLines.push(`TEL;TYPE=${hasWork ? 'CELL' : 'WORK'},VOICE:${cleanLegacy}`);
+  }
+
+  let cardUrl = '';
+  if (req && req.get('host')) {
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+    const host = req.get('host');
+    const cardPath = collab.customSlug ? `/c/${collab.customSlug}` : `/card/${collab.id}`;
+    cardUrl = `${protocol}://${host}${cardPath}`;
+  } else {
+    const cardPath = collab.customSlug ? `/c/${collab.customSlug}` : `/card/${collab.id}`;
+    cardUrl = `https://tdconnect.fr${cardPath}`;
+  }
+
+  // URL property: Only company website, omit if empty
+  const urlLines = [];
+  if (companyUrl) {
+    const formattedUrl = companyUrl.startsWith('http') ? companyUrl : 'https://' + companyUrl;
+    urlLines.push(`URL;CHARSET=ISO-8859-1:${formattedUrl}`);
+  }
+
+  // Format GMT Date & Time
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const formattedDateGMT = `${pad(now.getUTCDate())}/${pad(now.getUTCMonth() + 1)}/${now.getUTCFullYear()} à ${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())} GMT`;
+
+  // NOTE property: Single NOTE property separated by 3 spaces without \n tag
+  const noteParts = [];
+  if (vcfAnnotationOrigin) {
+    noteParts.push(`Contact généré par tdconnect.fr le ${formattedDateGMT}`);
+  }
+  if (vcfIncludeCardUrl && cardUrl) {
+    noteParts.push(`Lien de la carte virtuelle : ${cardUrl}`);
+  }
+
+  const noteLine = noteParts.length > 0
+    ? `NOTE;CHARSET=ISO-8859-1:${noteParts.join('   ')}`
+    : '';
+
+  // Address property: Only include if at least one field is non-empty
+  const hasAddress = street || city || zip || country;
+  const adrLine = hasAddress
+    ? `ADR;TYPE=WORK;CHARSET=ISO-8859-1:;;${street};${city};;${zip};${country}`
+    : '';
+
+  const vcardArray = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    `N;CHARSET=ISO-8859-1:${lastName};${firstName};;;`,
+    `FN;CHARSET=ISO-8859-1:${firstName} ${lastName}`.trim(),
+    companyName ? `ORG;CHARSET=ISO-8859-1:${companyName}` : '',
+    role ? `TITLE;CHARSET=ISO-8859-1:${role}` : '',
+    ...telLines,
+    email ? `EMAIL;TYPE=WORK,INTERNET:${email}` : '',
+    adrLine,
+    ...urlLines,
+    noteLine,
+    "REV:" + new Date().toISOString(),
+    "END:VCARD"
+  ].filter(line => line && line.trim() !== '');
+
+  const vcardContent = vcardArray.join("\r\n");
+  return Buffer.from(vcardContent, 'latin1');
+}
+
+function sanitizeFilename(str) {
+  if (!str) return '';
+  const unaccented = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return unaccented.trim().replace(/[^a-zA-Z0-9-]/g, '_');
+}
+
 // --- Public Direct VCF vCard download link ---
 
 app.get('/api/collaborators/:id/vcf', async (req, res) => {
@@ -1528,74 +1697,23 @@ app.get('/api/collaborators/:id/vcf', async (req, res) => {
       collab = await db.getCollaboratorBySlug(req.params.id);
     }
     if (!collab) return res.status(404).send('Collaborateur non trouvé');
-    const company = await db.getCompanyById(collab.companyId);
-    if (!company) return res.status(404).send('Entreprise non trouvée');
-    
+
+    let company = await db.getCompanyById(collab.companyId);
+    if (!company) company = { name: '' };
+
     const cardStatus = checkCardStatus(collab, company);
     if (cardStatus.isBlurred) {
       return res.status(403).send(`${cardStatus.messageTitle} : ${cardStatus.messageSubtitle}`);
     }
-    
-    const companyName = company.name || '';
-    const companyUrl = company.domain || '';
-    
-    let street = collab.address ? collab.address.trim() : '';
-    let zip = '';
-    let city = '';
-    let country = '';
 
-    if (!street) {
-      street = company.address || '';
-      zip = company.zip || '';
-      city = company.city || '';
-      country = company.country || '';
-    }
+    const vcardBuffer = await buildVCardBuffer(collab, company, req);
+    const cleanFirst = sanitizeFilename(collab.firstName);
+    const cleanLast = sanitizeFilename(collab.lastName).toUpperCase();
+    const safeFilename = `${cleanFirst}_${cleanLast}.vcf`;
 
-    const telLines = [];
-    const cleanMobile = (collab.phoneMobile || '').trim();
-    const cleanWork = (collab.phoneWork || '').trim();
-    const cleanFax = (collab.phoneFax || '').trim();
-    const cleanLegacy = (collab.phone || '').trim();
-
-    if (cleanMobile) {
-      telLines.push(`TEL;TYPE=CELL,VOICE:${cleanMobile}`);
-    }
-    if (cleanWork) {
-      telLines.push(`TEL;TYPE=WORK,VOICE:${cleanWork}`);
-    }
-    if (cleanFax) {
-      telLines.push(`TEL;TYPE=WORK,FAX:${cleanFax}`);
-    }
-    if (cleanLegacy && cleanLegacy !== cleanMobile && cleanLegacy !== cleanWork && cleanLegacy !== cleanFax) {
-      const hasWork = !!cleanWork;
-      telLines.push(`TEL;TYPE=${hasWork ? 'CELL' : 'WORK'},VOICE:${cleanLegacy}`);
-    }
-
-    const vcardArray = [
-      "BEGIN:VCARD",
-      "VERSION:3.0",
-      `N;CHARSET=ISO-8859-1:${collab.lastName};${collab.firstName};;;`,
-      `FN;CHARSET=ISO-8859-1:${collab.firstName} ${collab.lastName}`,
-      `ORG;CHARSET=ISO-8859-1:${companyName}`,
-      collab.role ? `TITLE;CHARSET=ISO-8859-1:${collab.role}` : '',
-      ...telLines,
-      `EMAIL;TYPE=WORK,INTERNET:${collab.email}`,
-      `ADR;TYPE=WORK;CHARSET=ISO-8859-1:;;${street};${city};;${zip};${country}`,
-      companyUrl ? `URL;CHARSET=ISO-8859-1:${companyUrl.startsWith('http') ? companyUrl : 'https://' + companyUrl}` : '',
-      "REV:" + new Date().toISOString(),
-      "END:VCARD"
-    ].filter(line => line !== '');
-
-    const vcardContent = vcardArray.join("\r\n");
-    // Send as ISO-8859-1 content type for legacy Windows Contacts compatibility
-    const cleanFirst = collab.firstName.trim().replace(/[^a-zA-Z0-9-]/g, '_');
-    const cleanLast = collab.lastName.trim().toUpperCase().replace(/[^a-zA-Z0-9-]/g, '_');
     res.setHeader('Content-Type', 'text/vcard; charset=windows-1252');
-    res.setHeader('Content-Disposition', `attachment; filename="${cleanFirst}_${cleanLast}.vcf"`);
-    
-    // Output ISO-8859-1 directly as single bytes (resolves BOM crash)
-    const vcardBuffer = Buffer.from(vcardContent, 'latin1');
-    res.send(vcardBuffer);
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+    return res.send(vcardBuffer);
   } catch (err) {
     console.error(`Erreur GET VCF pour ${req.params.id}:`, err.message);
     res.status(500).send('Erreur lors du téléchargement de la vCard.');
@@ -1693,61 +1811,9 @@ app.get('/api/collaborators/:id/export', async (req, res) => {
     zip.addFile('index.html', Buffer.from(htmlContent, 'utf-8'));
 
     // 4. Generate contact.vcf
-    const companyName = company.name || '';
-    const companyUrl = company.domain || '';
-    let street = collab.address ? collab.address.trim() : '';
-    let zipCode = '';
-    let city = '';
-    let country = '';
-
-    if (!street) {
-      street = company.address || '';
-      zipCode = company.zip || '';
-      city = company.city || '';
-      country = company.country || '';
-    }
-
-    const telLines = [];
-    const cleanMobile = (collab.phoneMobile || '').trim();
-    const cleanWork = (collab.phoneWork || '').trim();
-    const cleanFax = (collab.phoneFax || '').trim();
-    const cleanLegacy = (collab.phone || '').trim();
-
-    if (cleanMobile) {
-      telLines.push(`TEL;TYPE=CELL,VOICE:${cleanMobile}`);
-    }
-    if (cleanWork) {
-      telLines.push(`TEL;TYPE=WORK,VOICE:${cleanWork}`);
-    }
-    if (cleanFax) {
-      telLines.push(`TEL;TYPE=WORK,FAX:${cleanFax}`);
-    }
-    if (cleanLegacy && cleanLegacy !== cleanMobile && cleanLegacy !== cleanWork && cleanLegacy !== cleanFax) {
-      const hasWork = !!cleanWork;
-      telLines.push(`TEL;TYPE=${hasWork ? 'CELL' : 'WORK'},VOICE:${cleanLegacy}`);
-    }
-
-    const vcardArray = [
-      "BEGIN:VCARD",
-      "VERSION:3.0",
-      `N;CHARSET=ISO-8859-1:${collab.lastName};${collab.firstName};;;`,
-      `FN;CHARSET=ISO-8859-1:${collab.firstName} ${collab.lastName}`,
-      `ORG;CHARSET=ISO-8859-1:${companyName}`,
-      collab.role ? `TITLE;CHARSET=ISO-8859-1:${collab.role}` : '',
-      ...telLines,
-      `EMAIL;TYPE=WORK,INTERNET:${collab.email}`,
-      `ADR;TYPE=WORK;CHARSET=ISO-8859-1:;;${street};${city};;${zipCode};${country}`,
-      companyUrl ? `URL;CHARSET=ISO-8859-1:${companyUrl.startsWith('http') ? companyUrl : 'https://' + companyUrl}` : '',
-      "REV:" + new Date().toISOString(),
-      "END:VCARD"
-    ].filter(line => line !== '');
-
-    const vcardContent = vcardArray.join("\r\n");
-    
-    // Send as ISO-8859-1 content type for Windows Contacts
-    const vcardBuffer = Buffer.from(vcardContent, 'latin1');
-    const cleanFirst = collab.firstName.trim().replace(/[^a-zA-Z0-9-]/g, '_');
-    const cleanLast = collab.lastName.trim().toUpperCase().replace(/[^a-zA-Z0-9-]/g, '_');
+    const vcardBuffer = await buildVCardBuffer(collab, company, req);
+    const cleanFirst = sanitizeFilename(collab.firstName);
+    const cleanLast = sanitizeFilename(collab.lastName).toUpperCase();
     zip.addFile(`${cleanFirst}_${cleanLast}.vcf`, vcardBuffer);
 
     // 5. Send ZIP archive buffer
