@@ -2173,7 +2173,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const prefix = collab.civility ? collab.civility.trim() + ' ' : '';
-      prevCollabName.textContent = `${prefix}${collab.lastName.toUpperCase()} ${collab.firstName}`;
+      prevCollabName.textContent = `${prefix}${collab.firstName} ${collab.lastName.toUpperCase()}`;
       
       prevCollabRole.textContent = collab.role || '';
       if (collab.role) {

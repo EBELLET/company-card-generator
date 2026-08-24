@@ -822,7 +822,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       ${avatarHTML}
     </div>
 
-    <h1 class="collab-name">${collab.lastName ? collab.lastName.toUpperCase() : ''} ${collab.firstName || ''}</h1>
+    <h1 class="collab-name">${collab.firstName || ''} ${collab.lastName ? collab.lastName.toUpperCase() : ''}</h1>
     ${collab.role ? `<p class="collab-role">${collab.role}</p>` : ''}
 
     ${buttonsHTML}

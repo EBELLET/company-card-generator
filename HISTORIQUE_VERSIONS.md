@@ -5,15 +5,23 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.2-securite-abonnements`
-* **Date** : 22 août 2026
+* **Version / Tag** : `v2.3-affichage-carte`
+* **Date** : 24 août 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.2-securite-abonnements` (Dernière version)
+### 🚀 Version `v2.3-affichage-carte` (Dernière version)
+**Thème : Ordre d'affichage Prénom NOM sur les cartes virtuelles**
+* **Affichage des Identités** :
+  * Mise à jour de l'ordre d'affichage au format **Prénom NOM** sur les cartes de visite virtuelles (`/card/:id`) et dans l'aperçu dynamique de droite.
+  * Maintien de la présentation **NOM Prénom** dans la liste de gestion des collaborateurs (panneau de gauche) pour le classement alphabétique.
+
+---
+
+### 🚀 Version `v2.2-securite-abonnements`
 **Thème : Sécurité des mots de passe, Gestion fine des abonnements & Badges synthétiques**
 * **Sécurité des Mots de Passe & Ergonomie** :
   * Renforcement des mots de passe (minimum 8 caractères alphanumériques avec au moins 1 lettre et 1 chiffre).
