@@ -5,15 +5,24 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.3-affichage-carte`
-* **Date** : 24 août 2026
+* **Version / Tag** : `v2.4-affichage-carte-url`
+* **Date** : 25 août 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.3-affichage-carte` (Dernière version)
+### 🚀 Version `v2.4-affichage-carte-url` (Dernière version)
+**Thème : Ajustement de la mise en page des cartes virtuelles autonomes (URL public)**
+* **Espacement supérieur** :
+  * Réduction de 50 % des marges/paddings supérieurs au-dessus du logo sur les cartes virtuelles autonomes pour un rendu plus compact et équilibré.
+* **Dimension du cercle photo** :
+  * Ajustement et réduction de la taille du cercle de photo de profil/initiales du collaborateur sur les cartes virtuelles générées par URL.
+
+---
+
+### 🚀 Version `v2.3-affichage-carte`
 **Thème : Ordre d'affichage Prénom NOM sur les cartes virtuelles**
 * **Affichage des Identités** :
   * Mise à jour de l'ordre d'affichage au format **Prénom NOM** sur les cartes de visite virtuelles (`/card/:id`) et dans l'aperçu dynamique de droite.

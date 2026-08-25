@@ -249,7 +249,8 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   const theme = company.theme || 'theme-glass';
   const fontClass = company.font || 'font-outfit';
   const companyName = company.name || '';
-  const avatarSize = company.avatar_size != null ? company.avatar_size : 100;
+  const baseAvatarSize = company.avatar_size != null ? company.avatar_size : 100;
+  const avatarSize = Math.round(baseAvatarSize * 1.05);
   const logoX = company.logo_x != null ? parseInt(company.logo_x, 10) : 0;
   
   const cleanFirst = collab.firstName.trim().replace(/[^a-zA-Z0-9-]/g, '_');
@@ -480,7 +481,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       flex-direction: column;
       align-items: center;
       justify-content: flex-start; /* Stable top margin alignment */
-      padding: 1.5rem 1rem;
+      padding: 0.75rem 1rem 1.5rem 1rem;
       position: relative;
     }
 
@@ -495,7 +496,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
-      padding: 1.75rem 1.5rem;
+      padding: 0.85rem 1.5rem 1.75rem 1.5rem;
       box-shadow: 
         0 10px 25px -5px rgba(0, 0, 0, 0.05),
         0 8px 10px -6px rgba(0, 0, 0, 0.03);
