@@ -249,8 +249,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   const theme = company.theme || 'theme-minimalist';
   const fontClass = company.font || 'font-outfit';
   const companyName = company.name || '';
-  const baseAvatarSize = company.avatar_size != null ? company.avatar_size : 100;
-  const avatarSize = Math.round(baseAvatarSize * 1.05);
+  const avatarSize = company.avatar_size != null ? parseInt(company.avatar_size, 10) : 100;
   const logoX = company.logo_x != null ? parseInt(company.logo_x, 10) : 0;
   
   const cleanFirst = collab.firstName.trim().replace(/[^a-zA-Z0-9-]/g, '_');
@@ -787,12 +786,12 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
         margin-bottom: 0.55rem;
       }
       .avatar-wrapper {
-        width: ${Math.min(avatarSize, 105)}px !important;
-        height: ${Math.min(avatarSize, 105)}px !important;
+        width: ${avatarSize}px !important;
+        height: ${avatarSize}px !important;
         margin-bottom: 0.55rem !important;
       }
       .initials-avatar {
-        font-size: ${Math.min(avatarSize, 105) * 0.35}px !important;
+        font-size: ${Math.round(avatarSize * 0.35)}px !important;
       }
       .collab-name {
         font-size: 1.4rem;
