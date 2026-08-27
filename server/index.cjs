@@ -489,7 +489,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
-      padding: 0.85rem 1.5rem 1.75rem 1.5rem;
+      padding: 0.5rem 1.25rem 1rem 1.25rem;
       box-shadow: 
         0 10px 25px -5px rgba(0, 0, 0, 0.05),
         0 8px 10px -6px rgba(0, 0, 0, 0.03);
@@ -740,7 +740,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
 
     /* Footer Info */
     .card-footer {
-      margin-top: 1.25rem;
+      margin-top: 0.35rem;
       font-size: 0.72rem;
       color: var(--text-muted);
       opacity: 0.8;
@@ -759,62 +759,71 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
 
     @media (max-width: 480px) {
       body {
-        padding: 0;
-        align-items: stretch;
+        padding: 0.25rem 0.5rem;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        min-height: 100dvh;
       }
       .card-container {
         max-width: 100%;
-        min-height: 100vh;
+        width: 100%;
+        min-height: auto;
         border: none;
-        border-radius: 0;
+        border-radius: 16px;
         box-shadow: none;
-        padding: 1.5rem 1.25rem;
+        padding: 0.35rem 0.85rem 0.5rem 0.85rem;
         display: flex;
         flex-direction: column;
-        justify-content: flex-start;
+        justify-content: space-between;
       }
       .logo-container {
-        transform: translateX(${logoX}px) scale(1.05) !important;
-        margin-bottom: 0.75rem !important;
+        transform: translateX(${logoX}px) !important;
+        margin-top: 0 !important;
+        margin-bottom: 0.25rem !important;
       }
       .company-address {
-        font-size: 0.85rem;
-        margin-bottom: 0.85rem;
+        font-size: 0.75rem;
+        margin-bottom: 0.45rem;
       }
       .avatar-wrapper {
-        width: 110px !important;
-        height: 110px !important;
-        margin-bottom: 0.85rem !important;
+        width: 90px !important;
+        height: 90px !important;
+        margin-bottom: 0.45rem !important;
       }
       .initials-avatar {
-        font-size: 38px !important;
+        font-size: 32px !important;
       }
       .collab-name {
-        font-size: 1.5rem;
-        margin-bottom: 0.25rem;
+        font-size: 1.3rem;
+        margin-bottom: 0.15rem;
       }
       .collab-role {
-        font-size: 1rem;
-        margin-bottom: 1.25rem;
+        font-size: 0.82rem;
+        margin-bottom: 0.55rem;
+      }
+      .share-contact-text {
+        margin: 0.35rem 0 0.25rem 0;
+        font-size: 0.75rem;
       }
       .action-row-btn {
-        font-size: 0.95rem;
-        padding: 0.75rem 1.25rem;
-        border-radius: 12px;
+        font-size: 0.82rem;
+        padding: 0.6rem 0.75rem;
+        border-radius: 10px;
       }
       .actions-list-round .action-row-btn {
-        width: 60px !important;
-        height: 60px !important;
+        width: 50px !important;
+        height: 50px !important;
         padding: 0;
         border-radius: 50%;
       }
       .actions-list-round .action-row-btn svg {
-        width: 24px;
-        height: 24px;
+        width: 20px;
+        height: 20px;
       }
       .card-footer {
-        margin-top: 2.5rem;
-        font-size: 0.9rem;
+        margin-top: 0.35rem !important;
+        font-size: 0.75rem;
       }
     }
     .card-container.is-blurred {
