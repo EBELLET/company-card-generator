@@ -463,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let allCompanies = [];
   let logoFetchedUrl = '';
   let logoCustomUrl = '';
-  let currentTheme = 'theme-glass';
+  let currentTheme = 'theme-minimalist';
   let currentFont = 'font-outfit';
   let currentAccentColor = '#8C52FF';
   let currentButtonStyle = 'rectangle';
@@ -3185,7 +3185,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       logoCustomUrl = companyInfo.logo_custom_url || '';
-      currentTheme = companyInfo.theme || 'theme-glass';
+      currentTheme = companyInfo.theme || 'theme-minimalist';
       currentFont = companyInfo.font || 'font-outfit';
       currentAccentColor = companyInfo.accent_color || '#8C52FF';
 

@@ -246,7 +246,7 @@ function generateUnknownCardHTML() {
 function generateVirtualCardHTML(collab, company, isStandalone = false) {
   const cardStatus = checkCardStatus(collab, company);
   const accentColor = company.accent_color || '#6366f1';
-  const theme = company.theme || 'theme-glass';
+  const theme = company.theme || 'theme-minimalist';
   const fontClass = company.font || 'font-outfit';
   const companyName = company.name || '';
   const baseAvatarSize = company.avatar_size != null ? company.avatar_size : 100;
@@ -759,7 +759,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
 
     @media (max-width: 480px) {
       body {
-        padding: 0.25rem 0.5rem;
+        padding: 0.5rem;
         align-items: center;
         justify-content: center;
         min-height: 100vh;
@@ -768,11 +768,11 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       .card-container {
         max-width: 100%;
         width: 100%;
-        min-height: auto;
+        min-height: calc(100dvh - 1rem);
         border: none;
         border-radius: 16px;
         box-shadow: none;
-        padding: 0.35rem 0.85rem 0.5rem 0.85rem;
+        padding: 0.65rem 1rem 0.85rem 1rem;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -780,49 +780,49 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       .logo-container {
         transform: translateX(${logoX}px) !important;
         margin-top: 0 !important;
-        margin-bottom: 0.25rem !important;
+        margin-bottom: 0.35rem !important;
       }
       .company-address {
-        font-size: 0.75rem;
-        margin-bottom: 0.45rem;
-      }
-      .avatar-wrapper {
-        width: 90px !important;
-        height: 90px !important;
-        margin-bottom: 0.45rem !important;
-      }
-      .initials-avatar {
-        font-size: 32px !important;
-      }
-      .collab-name {
-        font-size: 1.3rem;
-        margin-bottom: 0.15rem;
-      }
-      .collab-role {
-        font-size: 0.82rem;
+        font-size: 0.8rem;
         margin-bottom: 0.55rem;
       }
+      .avatar-wrapper {
+        width: ${Math.min(avatarSize, 105)}px !important;
+        height: ${Math.min(avatarSize, 105)}px !important;
+        margin-bottom: 0.55rem !important;
+      }
+      .initials-avatar {
+        font-size: ${Math.min(avatarSize, 105) * 0.35}px !important;
+      }
+      .collab-name {
+        font-size: 1.4rem;
+        margin-bottom: 0.2rem;
+      }
+      .collab-role {
+        font-size: 0.88rem;
+        margin-bottom: 0.65rem;
+      }
       .share-contact-text {
-        margin: 0.35rem 0 0.25rem 0;
-        font-size: 0.75rem;
+        margin: 0.45rem 0 0.3rem 0;
+        font-size: 0.78rem;
       }
       .action-row-btn {
-        font-size: 0.82rem;
-        padding: 0.6rem 0.75rem;
+        font-size: 0.85rem;
+        padding: 0.68rem 0.8rem;
         border-radius: 10px;
       }
       .actions-list-round .action-row-btn {
-        width: 50px !important;
-        height: 50px !important;
+        width: 52px !important;
+        height: 52px !important;
         padding: 0;
         border-radius: 50%;
       }
       .actions-list-round .action-row-btn svg {
-        width: 20px;
-        height: 20px;
+        width: 22px;
+        height: 22px;
       }
       .card-footer {
-        margin-top: 0.35rem !important;
+        margin-top: 0.45rem !important;
         font-size: 0.75rem;
       }
     }

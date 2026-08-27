@@ -68,7 +68,7 @@ async function initializeDatabase() {
       city VARCHAR(100),
       country VARCHAR(100),
       logo_custom_url LONGTEXT,
-      theme VARCHAR(50) DEFAULT 'theme-glass',
+      theme VARCHAR(50) DEFAULT 'theme-minimalist',
       font VARCHAR(50) DEFAULT 'font-outfit',
       accent_color VARCHAR(7) DEFAULT '#6366f1',
       logo_size INT DEFAULT 72,
@@ -683,7 +683,7 @@ const registerUserWithCompany = async (userData, companyData) => {
         const defaultSubEnd = getOneMonthFromNowDateString();
         const [companyResult] = await connection.query(`
           INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, subscription_end_date)
-          VALUES (?, ?, 'theme-glass', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 0, '', ?)
+          VALUES (?, ?, 'theme-minimalist', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 0, '', ?)
         `, [trimmedName, trimmedDomain, defaultSubEnd]);
         
         companyId = companyResult.insertId;
