@@ -377,49 +377,42 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     activePhoneLabel = 'Mobile';
   }
 
+  const mailSubject = encodeURIComponent("Échange de coordonnées");
+  const mailBody = encodeURIComponent("Bonjour. Pour faire suite à notre rencontre je vous adresse mes coordonnées");
   const phoneHref = cardStatus.isBlurred ? 'javascript:void(0)' : `tel:${activePhone}`;
-  const emailHref = cardStatus.isBlurred ? 'javascript:void(0)' : `mailto:${collab.email}`;
+  const emailHref = cardStatus.isBlurred ? 'javascript:void(0)' : `mailto:${collab.email}?subject=${mailSubject}&body=${mailBody}`;
   const vcfHref = cardStatus.isBlurred ? 'javascript:void(0)' : (isStandalone ? `./${vcfFilename}` : `/api/collaborators/${collab.id}/vcf`);
 
   const buttonStyle = company.button_style || 'rectangle';
-  let buttonsHTML = '';
-  if (buttonStyle === 'round') {
-    buttonsHTML = `
-    <div class="actions-list-round">
-      ${activePhone ? `
-      <a href="${phoneHref}" class="action-row-btn" title="${activePhoneLabel} : ${activePhone}">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-      </a>` : ''}
+  const isRound = buttonStyle === 'round';
 
-      ${collab.email ? `
-      <a href="${emailHref}" class="action-row-btn" title="Email : ${collab.email}">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-      </a>` : ''}
+  const buttonsHTML = `
+  <div class="actions-list-stacked ${isRound ? 'round' : ''}">
+    <!-- 1. Download vCard / Contact Card -->
+    <a href="${vcfHref}" class="action-row-btn btn-vcard" title="Télécharger la fiche contact">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: ${isRound ? '0' : '0.4rem'};"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      <span>Télécharger la fiche contact</span>
+    </a>
 
-      <a href="${vcfHref}" class="action-row-btn" title="vCard">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-      </a>
-    </div>
-    `;
-  } else {
-    buttonsHTML = `
-    <div class="actions-list-stacked">
+    <!-- 2. Share contact text -->
+    <p class="share-contact-text">Partagez vos coordonnées avec votre nouveau contact</p>
+
+    <!-- 3. Phone & Email buttons row -->
+    <div class="contact-buttons-row">
       ${activePhone ? `
-      <a href="${phoneHref}" class="action-row-btn">
+      <a href="${phoneHref}" class="action-row-btn btn-phone" title="${activePhoneLabel} : ${activePhone}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: ${isRound ? '0' : '0.35rem'};"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
         <span>${activePhoneLabel} : ${activePhone}</span>
       </a>` : ''}
 
       ${collab.email ? `
-      <a href="${emailHref}" class="action-row-btn">
-        <span>Email : ${collab.email}</span>
+      <a href="${emailHref}" class="action-row-btn btn-email" title="Email : ${collab.email}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: ${isRound ? '0' : '0.35rem'};"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+        <span>Email</span>
       </a>` : ''}
-
-      <a href="${vcfHref}" class="action-row-btn">
-        <span>Téléchargez ma vCard</span>
-      </a>
     </div>
-    `;
-  }
+  </div>
+  `;
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -624,30 +617,92 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     .actions-list-stacked {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.35rem;
       width: 100%;
       margin-top: 0.5rem;
     }
 
-    /* Horizontal Circular Buttons Layout */
-    .actions-list-round {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      gap: 1.25rem;
-      width: 100%;
-      margin-top: 0.75rem;
+    .share-contact-text {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin: 0.65rem 0 0.4rem 0;
+      text-align: center;
+      font-weight: 500;
+      line-height: 1.3;
     }
 
-    .actions-list-round .action-row-btn {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      padding: 0;
+    body.theme-aurora .share-contact-text {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    body.theme-obsidian .share-contact-text {
+      color: #9ca3af;
+    }
+
+    .contact-buttons-row {
       display: flex;
+      gap: 0.5rem;
+      width: 100%;
+      margin-top: 0.25rem;
+    }
+
+    .contact-buttons-row .action-row-btn {
+      flex: 1;
+      min-width: 0;
+      padding: 0.65rem 0.5rem;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Round buttons layout styles */
+    .actions-list-stacked.round {
       align-items: center;
+    }
+
+    .actions-list-stacked.round .btn-vcard {
+      width: 50px !important;
+      height: 50px !important;
+      border-radius: 50% !important;
+      padding: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex: 0 0 50px !important;
+      margin: 0 auto;
+    }
+
+    .actions-list-stacked.round .btn-vcard span {
+      display: none !important;
+    }
+
+    .actions-list-stacked.round .btn-vcard svg {
+      margin-right: 0 !important;
+    }
+
+    .actions-list-stacked.round .contact-buttons-row {
       justify-content: center;
-      flex-shrink: 0;
+      gap: 1.25rem;
+    }
+
+    .actions-list-stacked.round .contact-buttons-row .action-row-btn {
+      width: 50px !important;
+      height: 50px !important;
+      border-radius: 50% !important;
+      padding: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex: 0 0 50px !important;
+    }
+
+    .actions-list-stacked.round .contact-buttons-row .action-row-btn span {
+      display: none !important;
+    }
+
+    .actions-list-stacked.round .contact-buttons-row .action-row-btn svg {
+      margin-right: 0 !important;
     }
 
     .action-row-btn {
@@ -829,7 +884,6 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     ${buttonsHTML}
 
     <div class="card-footer">
-      <div>Carte de visite virtuelle</div>
       ${customMsgHTML}
     </div>
   </div>

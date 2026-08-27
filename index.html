@@ -1070,29 +1070,34 @@
                     <h2 id="prev-collab-name" class="prev-collab-name">Prénom Nom</h2>
                     <p id="prev-collab-role" class="prev-collab-role">Fonction</p>
 
-                    <!-- Tactical Mobile Action Buttons (Stacked Wide like Estimancy) -->
+                    <!-- Tactical Mobile Action Buttons -->
                     <div id="prev-actions-container" class="preview-actions-list-stacked">
-                      <!-- Telephone Call -->
-                      <a id="prev-action-phone" href="#" class="preview-action-row-btn" title="Téléphone">
-                        <svg class="preview-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                        <span id="prev-btn-phone-text">Mobile : +33 6 00 00 00 00</span>
+                      <!-- 1. Download vCard (VCF link) -->
+                      <a id="prev-action-vcard" href="#" class="preview-action-row-btn vcard-btn" title="Fiche Contact">
+                        <svg class="preview-icon-always" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.4rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>Télécharger la fiche contact</span>
                       </a>
-                      
-                      <!-- Email Mailto -->
-                      <a id="prev-action-email" href="#" class="preview-action-row-btn" title="E-mail">
-                        <svg class="preview-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                        <span id="prev-btn-email-text">Email : collaborateur@exemple.com</span>
-                      </a>
-                      
-                      <!-- Download vCard (VCF link) -->
-                      <a id="prev-action-vcard" href="#" class="preview-action-row-btn vcard-btn" title="vCard">
-                        <svg class="preview-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        <span>Téléchargez ma vCard</span>
-                      </a>
+
+                      <!-- 2. Share contact text -->
+                      <p id="prev-share-contact-text" class="preview-share-contact-text">Partagez vos coordonnées avec votre nouveau contact</p>
+
+                      <!-- 3. Phone & Email buttons row -->
+                      <div class="preview-contact-buttons-row">
+                        <!-- Telephone Call -->
+                        <a id="prev-action-phone" href="#" class="preview-action-row-btn btn-phone" title="Téléphone">
+                          <svg class="preview-icon-always" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.35rem;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                          <span id="prev-btn-phone-text">Mobile : +33 6 00 00 00 00</span>
+                        </a>
+                        
+                        <!-- Email Mailto -->
+                        <a id="prev-action-email" href="#" class="preview-action-row-btn btn-email" title="E-mail">
+                          <svg class="preview-icon-always" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.35rem;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                          <span id="prev-btn-email-text">Email</span>
+                        </a>
+                      </div>
                     </div>
                     
                     <div class="preview-card-footer">
-                      <div>Carte de visite virtuelle</div>
                       <div id="prev-company-message-under-footer" class="hidden" style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.8; margin-top: 0.35rem; font-weight: 500; text-align: center; width: 100%;"></div>
                     </div>
 

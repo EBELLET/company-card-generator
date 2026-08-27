@@ -2261,8 +2261,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (collab.email) {
-        prevActionEmail.href = `mailto:${collab.email}`;
-        prevBtnEmailText.textContent = `Email : ${collab.email}`;
+        const mailSubject = encodeURIComponent("Échange de coordonnées");
+        const mailBody = encodeURIComponent("Bonjour. Pour faire suite à notre rencontre je vous adresse mes coordonnées");
+        prevActionEmail.href = `mailto:${collab.email}?subject=${mailSubject}&body=${mailBody}`;
+        prevBtnEmailText.textContent = `Email`;
         prevActionEmail.classList.remove('hidden');
       } else {
         prevActionEmail.classList.add('hidden');
