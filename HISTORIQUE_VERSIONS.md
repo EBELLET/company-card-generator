@@ -5,15 +5,31 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.4-affichage-carte-url`
-* **Date** : 25 août 2026
+* **Version / Tag** : `v2.5-reorganisation-boutons`
+* **Date** : 27 août 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.4-affichage-carte-url` (Dernière version)
+### 🚀 Version `v2.5-reorganisation-boutons` (Dernière version)
+**Thème : Réorganisation des boutons d'action, mailto prérempli, aperçu dynamique & support styles de boutons**
+* **Réorganisation des boutons d'action** :
+  * 1er : Bouton *"Télécharger la fiche contact"* (vCard).
+  * 2ème : Texte d'explication centré *"Partagez vos coordonnées avec votre nouveau contact"*.
+  * 3ème : Boutons Téléphone et Email positionnés côte à côte sous le texte.
+* **Email prérempli** :
+  * Objet du mail : `Échange de coordonnées`.
+  * Corps du mail : `Bonjour. Pour faire suite à notre rencontre je vous adresse mes coordonnées`.
+* **Rendu & Maquette** :
+  * Respect du style de boutons choisi par l'entreprise (`Boutons Rectangulaires` vs `Boutons Ronds`) sur les cartes publiques (`/card/:id`).
+  * Suppression du texte *"Carte de visite virtuelle"* des bas de cartes.
+  * Hauteur dynamique du smartphone d'aperçu dans l'administration pour afficher la carte complète sans défilement.
+
+---
+
+### 🚀 Version `v2.4-affichage-carte-url`
 **Thème : Ajustement de la mise en page des cartes virtuelles autonomes (URL public)**
 * **Espacement supérieur** :
   * Réduction de 50 % des marges/paddings supérieurs au-dessus du logo sur les cartes virtuelles autonomes pour un rendu plus compact et équilibré.
