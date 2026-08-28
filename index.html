@@ -1377,9 +1377,30 @@
           </button>
           <button type="button" id="btn-cancel-my-account" class="btn-submit-full" style="margin-top: 0.5rem; background: transparent; border: 1px solid rgba(255, 255, 255, 0.15); color: var(--text-secondary);">
             Annuler
-          </button>
-        </form>
       </div>
+    </div>
+
+    <!-- UNSAVED CHANGES CONFIRMATION MODAL -->
+    <div id="unsaved-changes-modal" class="modal-overlay hidden" style="z-index: 10000;">
+      <div class="modal-card glass-panel" style="max-width: 460px; padding: 2rem; border-radius: 24px; text-align: center;">
+        <div style="width: 56px; height: 56px; margin: 0 auto 1.25rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ef4444;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </div>
+        <h3 style="margin-top: 0; margin-bottom: 0.75rem; font-size: 1.25rem; color: #ffffff;">Modifications non enregistrées</h3>
+        <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1.75rem; line-height: 1.5;">
+          Les modifications n'ont pas été enregistrées. Souhaitez-vous les abandonner ?
+        </p>
+        <div style="display: flex; gap: 0.85rem; justify-content: center;">
+          <button type="button" id="btn-unsaved-no" class="action-btn" style="flex: 1; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #ffffff; padding: 0.75rem 1rem; border-radius: 12px; font-weight: 600; cursor: pointer;">
+            Non
+          </button>
+          <button type="button" id="btn-unsaved-yes" class="action-btn" style="flex: 1; background: #ef4444; border: none; color: #ffffff; padding: 0.75rem 1rem; border-radius: 12px; font-weight: 600; cursor: pointer;">
+            Oui
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Encart Contact Controller Global Script -->
     <script>
       window.openContactEncart = function() {

@@ -5,7 +5,7 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.6-correctifs-ergonomie-securite`
+* **Version / Tag** : `v2.7-avertissement-modifications-non-enregistrees`
 * **Date** : 28 août 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
@@ -13,7 +13,17 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.6-correctifs-ergonomie-securite` (Dernière version)
+### 🚀 Version `v2.7-avertissement-modifications-non-enregistrees` (Dernière version)
+**Thème : Détection et pop-up de confirmation pour les modifications non enregistrées**
+* **Confirmation d'abandon des modifications** :
+  * Affichage d'une fenêtre de confirmation lors des tentatives de sortie sans enregistrer ("Les modifications n'ont pas été enregistrées. Souhaitez-vous les abandonner ?").
+  * **Bouton Oui** : abandonne les modifications et poursuit l'action ou la navigation.
+  * **Bouton Non** : ferme la pop-up et conserve l'utilisateur sur la page avec ses modifications en attente.
+  * Protection appliquée aux formulaires Entreprise et Collaborateur (navigation d'onglet, bouton retour, fermeture de formulaire, changement de collaborateur, déconnexion et fermeture de l'onglet du navigateur).
+
+---
+
+### 🚀 Version `v2.6-correctifs-ergonomie-securite`
 **Thème : Correctifs d'ergonomie, gestion des identifiants, sécurité des inscriptions & réinitialisation par e-mail**
 * **Boutons de Téléphone sur Cartes** :
   * Affichage uniquement du type (*Mobile*, *Fixe*, *Fax*) sans afficher le numéro de téléphone dans le libellé du bouton.

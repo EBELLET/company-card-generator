@@ -473,19 +473,81 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedCollabId = null;
   let currentCollabPhotoUrl = '';
 
+  // --- Unsaved Changes (Form Dirty) Protection ---
+  let isCompanyFormDirty = false;
+  let isCollabFormDirty = false;
+  let pendingUnsavedAction = null;
+
+  const unsavedChangesModal = document.getElementById('unsaved-changes-modal');
+  const btnUnsavedYes = document.getElementById('btn-unsaved-yes');
+  const btnUnsavedNo = document.getElementById('btn-unsaved-no');
+
+  function hasUnsavedChanges() {
+    return isCompanyFormDirty || isCollabFormDirty;
+  }
+
+  function confirmUnsavedChanges(onConfirm) {
+    if (hasUnsavedChanges()) {
+      pendingUnsavedAction = onConfirm;
+      if (unsavedChangesModal) {
+        unsavedChangesModal.classList.remove('hidden');
+      } else {
+        if (confirm("Les modifications n'ont pas été enregistrées. Souhaitez-vous les abandonner ?")) {
+          isCompanyFormDirty = false;
+          isCollabFormDirty = false;
+          onConfirm();
+        }
+      }
+    } else {
+      onConfirm();
+    }
+  }
+
+  if (btnUnsavedYes) {
+    btnUnsavedYes.addEventListener('click', () => {
+      isCompanyFormDirty = false;
+      isCollabFormDirty = false;
+      if (unsavedChangesModal) unsavedChangesModal.classList.add('hidden');
+      if (typeof pendingUnsavedAction === 'function') {
+        const action = pendingUnsavedAction;
+        pendingUnsavedAction = null;
+        action();
+      }
+    });
+  }
+
+  if (btnUnsavedNo) {
+    btnUnsavedNo.addEventListener('click', () => {
+      pendingUnsavedAction = null;
+      if (unsavedChangesModal) unsavedChangesModal.classList.add('hidden');
+    });
+  }
+
+  window.addEventListener('beforeunload', (e) => {
+    if (hasUnsavedChanges()) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
   // --- Navigation & Router SPA System ---
   function navigateTo(hash, pushHistory = true) {
     const cleanHash = hash.startsWith('#') ? hash : '#' + hash;
-    if (pushHistory) {
-      if (window.location.hash !== cleanHash) {
-        history.pushState({ hash: cleanHash }, '', cleanHash);
-      }
-    } else {
-      if (window.location.hash !== cleanHash) {
-        history.replaceState({ hash: cleanHash }, '', cleanHash);
-      }
+    if (window.location.hash === cleanHash && !hasUnsavedChanges()) {
+      return;
     }
-    renderRoute(cleanHash);
+    confirmUnsavedChanges(() => {
+      if (pushHistory) {
+        if (window.location.hash !== cleanHash) {
+          history.pushState({ hash: cleanHash }, '', cleanHash);
+        }
+      } else {
+        if (window.location.hash !== cleanHash) {
+          history.replaceState({ hash: cleanHash }, '', cleanHash);
+        }
+      }
+      renderRoute(cleanHash);
+    });
   }
 
   function renderRoute(hash) {
@@ -1786,18 +1848,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (companyShowNameInput) {
     companyShowNameInput.addEventListener('change', () => {
+      isCompanyFormDirty = true;
       updateCompanyPreview();
     });
   }
 
   if (companyShowMessageInput) {
     companyShowMessageInput.addEventListener('change', () => {
+      isCompanyFormDirty = true;
       updateCompanyPreview();
     });
   }
 
   if (companyIsSubscriptionActiveInput) {
     companyIsSubscriptionActiveInput.addEventListener('change', () => {
+      isCompanyFormDirty = true;
       const testBanner = document.getElementById('company-test-banner');
       if (testBanner) {
         if (companyIsSubscriptionActiveInput.checked) {
@@ -1810,10 +1875,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  [companyNameInput, companyAddressInput, companyZipInput, companyCityInput, companyCountryInput, companyDomainInput, companySubscriptionEndInput, companyAvatarSizeInput, companyMessageTextInput, companyMessageUrlInput].filter(Boolean).forEach(input => {
+  [companyNameInput, companyAddressInput, companyZipInput, companyCityInput, companyCountryInput, companyDomainInput, companySubscriptionEndInput, companyAvatarSizeInput, companyMessageTextInput, companyMessageUrlInput, companyLogoSizeInput, companyLogoXInput, customColorInput].filter(Boolean).forEach(input => {
     input.addEventListener('input', () => {
+      isCompanyFormDirty = true;
       updateCompanyPreview();
       updateMockupPreview();
+    });
+    input.addEventListener('change', () => {
+      isCompanyFormDirty = true;
     });
   });
 
@@ -1923,6 +1992,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnRemoveLogo.addEventListener('click', (e) => {
     e.stopPropagation();
+    isCompanyFormDirty = true;
     logoCustomUrl = '';
     logoFileInput.value = '';
     logoPreviewThumb.classList.add('hidden');
@@ -1941,6 +2011,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   themeRadios.forEach(radio => {
     radio.addEventListener('change', (e) => {
+      isCompanyFormDirty = true;
       const themeValue = e.target.value;
       cardElement.classList.remove(currentTheme);
       cardElement.classList.add(themeValue);
@@ -1949,10 +2020,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  companyBtnStyleRadios.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      isCompanyFormDirty = true;
+      currentButtonStyle = e.target.value;
+      updateMockupPreview();
+    });
+  });
+
   // --- Fonts Customization ---
 
   fontButtons.forEach(btn => {
     btn.addEventListener('click', () => {
+      isCompanyFormDirty = true;
       fontButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const font = btn.dataset.font;
@@ -1974,6 +2054,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   colorSwatches.forEach(swatch => {
     swatch.addEventListener('click', () => {
+      isCompanyFormDirty = true;
       colorSwatches.forEach(s => s.classList.remove('active'));
       swatch.classList.add('active');
       const color = swatch.dataset.color;
@@ -1983,6 +2064,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   customColorInput.addEventListener('input', (e) => {
+    isCompanyFormDirty = true;
     colorSwatches.forEach(s => s.classList.remove('active'));
     const color = e.target.value;
     applyAccentColor(color);
@@ -2642,6 +2724,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Form toggling
   function openCollabForm(collab = null) {
+    isCollabFormDirty = false;
     if (collab) {
       selectedCollabId = collab.id;
       const searchVal = searchCollab ? searchCollab.value : '';
@@ -2739,6 +2822,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeCollabForm() {
+    isCollabFormDirty = false;
     collabFormContainer.classList.add('hidden');
     collabForm.reset();
     collabPhotoClickUrlInput.value = '';
@@ -2749,8 +2833,30 @@ document.addEventListener('DOMContentLoaded', () => {
     photoFramingControls.classList.add('hidden');
   }
 
-  btnAddCollab.addEventListener('click', () => openCollabForm());
-  btnCancelCollab.addEventListener('click', closeCollabForm);
+  btnAddCollab.addEventListener('click', () => {
+    confirmUnsavedChanges(() => openCollabForm());
+  });
+  
+  btnCancelCollab.addEventListener('click', () => {
+    confirmUnsavedChanges(() => closeCollabForm());
+  });
+
+  const collabFormInputsList = [
+    collabFirstnameInput, collabLastnameInput, collabTitleInput, collabRoleInput,
+    collabPhoneInput, collabPhoneMobileInput, collabPhoneWorkInput, collabPhoneFaxInput,
+    collabPhoneDefaultInput, collabEmailInput, collabAddressInput, collabPhotoClickUrlInput,
+    collabPhotoZoomInput, collabPhotoXInput, collabPhotoYInput, collabCustomSlugInput,
+    collabConnectionCountInput, collabActiveToggle, collabPhotoFileInput
+  ].filter(Boolean);
+
+  collabFormInputsList.forEach(input => {
+    input.addEventListener('input', () => { isCollabFormDirty = true; });
+    input.addEventListener('change', () => { isCollabFormDirty = true; });
+  });
+
+  if (btnRemovePhoto) {
+    btnRemovePhoto.addEventListener('click', () => { isCollabFormDirty = true; });
+  }
 
   btnSaveCollab.addEventListener('click', async () => {
     const id = collabIdInput.value;
@@ -2823,6 +2929,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         collaborators.push(collabData);
       }
+      isCollabFormDirty = false;
       closeCollabForm();
       selectCollaborator(id);
     } catch (err) {
@@ -3231,6 +3338,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       updateCompanyPreview();
+      isCompanyFormDirty = false;
+      isCollabFormDirty = false;
 
       // 2. Fetch Company Collaborators
       const collabRes = await apiFetch(`${API_BASE}/companies/${companyId}/collaborators`);
