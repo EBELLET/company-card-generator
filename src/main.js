@@ -580,24 +580,9 @@ document.addEventListener('DOMContentLoaded', () => {
           viewCompaniesList.classList.add('hidden');
           if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
           if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
-          if (viewOrderCard) viewOrderCard.classList.add('hidden');
           viewCompanyDetail.classList.remove('hidden');
           updateLayoutMode();
         }
-        return;
-      }
-    }
-
-    if (cleanHash === '#order-card') {
-      if (isLoggedIn) {
-        toggleAppView(true);
-        viewCompaniesList.classList.add('hidden');
-        if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
-        if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
-        if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
-        if (viewOrderCard) viewOrderCard.classList.remove('hidden');
-        updateLayoutMode();
-        initOrderWorkflow();
         return;
       }
     }
@@ -609,7 +594,6 @@ document.addEventListener('DOMContentLoaded', () => {
           viewCompaniesList.classList.add('hidden');
           if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
           if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
-          if (viewOrderCard) viewOrderCard.classList.add('hidden');
           if (viewAdminPanel) viewAdminPanel.classList.remove('hidden');
           updateLayoutMode();
           closeAdminForm();
@@ -630,7 +614,6 @@ document.addEventListener('DOMContentLoaded', () => {
           viewCompaniesList.classList.add('hidden');
           if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
           if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
-          if (viewOrderCard) viewOrderCard.classList.add('hidden');
           if (viewSettingsPanel) viewSettingsPanel.classList.remove('hidden');
           updateLayoutMode();
           loadAllSettingsToUI();
@@ -649,7 +632,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
         if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
         if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
-        if (viewOrderCard) viewOrderCard.classList.add('hidden');
         viewCompaniesList.classList.remove('hidden');
         updateLayoutMode();
         loadCompaniesList();
@@ -687,7 +669,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
       if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
       if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
-      if (viewOrderCard) viewOrderCard.classList.add('hidden');
       viewDashboard.classList.remove('hidden');
       updateLayoutMode();
       
@@ -3764,266 +3745,6 @@ document.addEventListener('DOMContentLoaded', () => {
           console.error("Erreur vérification slug:", err);
         }
       }, 350);
-    });
-  }
-
-  // --- Physical Card Order Workflow Logic ---
-  const viewOrderCard = document.getElementById('view-order-card');
-  const btnOrderPhysicalCard = document.getElementById('btn-order-physical-card');
-  const btnBackFromOrder = document.getElementById('btn-back-from-order');
-
-  const orderStepIndicator1 = document.getElementById('order-step-indicator-1');
-  const orderStepIndicator2 = document.getElementById('order-step-indicator-2');
-  const orderStepIndicator3 = document.getElementById('order-step-indicator-3');
-  const stepLine1 = document.getElementById('step-line-1');
-  const stepLine2 = document.getElementById('step-line-2');
-
-  const orderStepContent1 = document.getElementById('order-step-content-1');
-  const orderStepContent2 = document.getElementById('order-step-content-2');
-  const orderStepContent3 = document.getElementById('order-step-content-3');
-
-  const btnOrderNext1 = document.getElementById('btn-order-next-1');
-  const btnOrderPrev2 = document.getElementById('btn-order-prev-2');
-  const btnOrderNext2 = document.getElementById('btn-order-next-2');
-  const btnOrderPrev3 = document.getElementById('btn-order-prev-3');
-
-  const cardTypeOptions = document.querySelectorAll('.card-type-option');
-  const graphicStyleOptions = document.querySelectorAll('.graphic-style-option');
-
-  const physicalCardLogoPreview = document.getElementById('physical-card-logo-preview');
-  const physicalCardCollabName = document.getElementById('physical-card-collab-name');
-  const physicalCardCollabRole = document.getElementById('physical-card-collab-role');
-  const physicalCardCompanyName = document.getElementById('physical-card-company-name');
-  const physicalCardMockupFront = document.getElementById('physical-card-mockup-front');
-
-  const orderCollabsSelectorList = document.getElementById('order-collabs-selector-list');
-  const orderQuantityInput = document.getElementById('order-quantity-input');
-  const orderDeliveryName = document.getElementById('order-delivery-name');
-  const orderDeliveryAddress = document.getElementById('order-delivery-address');
-  const orderDeliveryZip = document.getElementById('order-delivery-zip');
-  const orderDeliveryCity = document.getElementById('order-delivery-city');
-  const orderContactEmail = document.getElementById('order-contact-email');
-
-  const orderSummaryType = document.getElementById('order-summary-type');
-  const orderSummaryStyle = document.getElementById('order-summary-style');
-  const orderCardForm = document.getElementById('order-card-form');
-  const orderMsg = document.getElementById('order-msg');
-
-  let selectedOrderCardType = 'PVC Premium NFC/QR';
-  let selectedOrderGraphicStyle = 'Charte Entreprise';
-  let currentOrderStep = 1;
-
-  if (btnOrderPhysicalCard) {
-    btnOrderPhysicalCard.addEventListener('click', () => {
-      confirmUnsavedChanges(() => {
-        navigateTo('#order-card');
-      });
-    });
-  }
-
-  if (btnBackFromOrder) {
-    btnBackFromOrder.addEventListener('click', () => {
-      if (currentCompanyId) {
-        navigateTo(`#company/${currentCompanyId}`);
-      } else {
-        navigateTo('#dashboard');
-      }
-    });
-  }
-
-  function goToOrderStep(step) {
-    currentOrderStep = step;
-    [orderStepContent1, orderStepContent2, orderStepContent3].forEach((el, idx) => {
-      if (el) {
-        if (idx + 1 === step) el.classList.remove('hidden');
-        else el.classList.add('hidden');
-      }
-    });
-
-    // Update Indicators
-    if (orderStepIndicator1) {
-      orderStepIndicator1.style.color = step >= 1 ? '#6366f1' : 'var(--text-muted)';
-      const span1 = orderStepIndicator1.querySelector('span:first-child');
-      if (span1) span1.style.background = step >= 1 ? '#6366f1' : 'rgba(255,255,255,0.1)';
-    }
-    if (stepLine1) stepLine1.style.background = step >= 2 ? '#6366f1' : 'rgba(255, 255, 255, 0.15)';
-
-    if (orderStepIndicator2) {
-      orderStepIndicator2.style.color = step >= 2 ? '#6366f1' : 'var(--text-muted)';
-      const span2 = orderStepIndicator2.querySelector('span:first-child');
-      if (span2) span2.style.background = step >= 2 ? '#6366f1' : 'rgba(255,255,255,0.1)';
-    }
-    if (stepLine2) stepLine2.style.background = step >= 3 ? '#6366f1' : 'rgba(255, 255, 255, 0.15)';
-
-    if (orderStepIndicator3) {
-      orderStepIndicator3.style.color = step >= 3 ? '#6366f1' : 'var(--text-muted)';
-      const span3 = orderStepIndicator3.querySelector('span:first-child');
-      if (span3) span3.style.background = step >= 3 ? '#6366f1' : 'rgba(255,255,255,0.1)';
-    }
-
-    if (orderSummaryType) orderSummaryType.textContent = `Carte : ${selectedOrderCardType}`;
-    if (orderSummaryStyle) orderSummaryStyle.textContent = `Graphisme : ${selectedOrderGraphicStyle}`;
-  }
-
-  cardTypeOptions.forEach(opt => {
-    opt.addEventListener('click', () => {
-      cardTypeOptions.forEach(o => {
-        o.classList.remove('selected');
-        o.style.border = '1px solid rgba(255, 255, 255, 0.15)';
-        o.style.background = 'rgba(255, 255, 255, 0.05)';
-      });
-      opt.classList.add('selected');
-      opt.style.border = '2px solid #6366f1';
-      opt.style.background = 'rgba(99, 102, 241, 0.1)';
-      selectedOrderCardType = opt.dataset.cardType;
-      if (orderSummaryType) orderSummaryType.textContent = `Carte : ${selectedOrderCardType}`;
-    });
-  });
-
-  graphicStyleOptions.forEach(opt => {
-    opt.addEventListener('click', () => {
-      graphicStyleOptions.forEach(o => {
-        o.classList.remove('selected');
-        o.style.border = '1px solid rgba(255, 255, 255, 0.15)';
-        o.style.background = 'rgba(255, 255, 255, 0.05)';
-      });
-      opt.classList.add('selected');
-      opt.style.border = '2px solid #6366f1';
-      opt.style.background = 'rgba(99, 102, 241, 0.1)';
-      selectedOrderGraphicStyle = opt.dataset.style;
-      if (orderSummaryStyle) orderSummaryStyle.textContent = `Graphisme : ${selectedOrderGraphicStyle}`;
-      updatePhysicalCardPreviewMockup();
-    });
-  });
-
-  if (btnOrderNext1) btnOrderNext1.addEventListener('click', () => goToOrderStep(2));
-  if (btnOrderPrev2) btnOrderPrev2.addEventListener('click', () => goToOrderStep(1));
-  if (btnOrderNext2) btnOrderNext2.addEventListener('click', () => goToOrderStep(3));
-  if (btnOrderPrev3) btnOrderPrev3.addEventListener('click', () => goToOrderStep(2));
-
-  function updatePhysicalCardPreviewMockup() {
-    if (physicalCardLogoPreview) {
-      physicalCardLogoPreview.src = logoCustomUrl || logoFetchedUrl || getFallbackLogoSVG(companyNameInput ? companyNameInput.value.trim() : '');
-    }
-    if (physicalCardCompanyName) {
-      physicalCardCompanyName.textContent = companyNameInput ? (companyNameInput.value.trim() || 'Entreprise') : 'Entreprise';
-    }
-
-    const activeCollab = collaborators.find(c => c.id === selectedCollabId) || collaborators[0];
-    if (activeCollab) {
-      if (physicalCardCollabName) physicalCardCollabName.textContent = `${activeCollab.firstName} ${activeCollab.lastName}`;
-      if (physicalCardCollabRole) physicalCardCollabRole.textContent = activeCollab.role || 'Collaborateur';
-    }
-
-    if (physicalCardMockupFront) {
-      if (selectedOrderGraphicStyle === 'Minimaliste Épuré') {
-        physicalCardMockupFront.style.background = '#090d16';
-        physicalCardMockupFront.style.borderColor = 'rgba(255,255,255,0.1)';
-      } else if (selectedOrderGraphicStyle === 'Design Sur Mesure') {
-        physicalCardMockupFront.style.background = 'linear-gradient(135deg, #1e1b4b, #311b92)';
-        physicalCardMockupFront.style.borderColor = '#818cf8';
-      } else {
-        // Charte Entreprise
-        physicalCardMockupFront.style.background = 'linear-gradient(135deg, #1e293b, #0f172a)';
-        physicalCardMockupFront.style.borderColor = currentAccentColor || '#6366f1';
-      }
-    }
-  }
-
-  function initOrderWorkflow() {
-    goToOrderStep(1);
-    
-    // Pre-fill delivery details from company info
-    if (orderDeliveryName) orderDeliveryName.value = companyNameInput ? companyNameInput.value : '';
-    if (orderDeliveryAddress) orderDeliveryAddress.value = companyAddressInput ? companyAddressInput.value : '';
-    if (orderDeliveryZip) orderDeliveryZip.value = companyZipInput ? companyZipInput.value : '';
-    if (orderDeliveryCity) orderDeliveryCity.value = companyCityInput ? companyCityInput.value : '';
-    if (orderContactEmail) orderContactEmail.value = currentUser ? currentUser.email : '';
-
-    // Render Collaborators Selection Checklist for Step 3
-    if (orderCollabsSelectorList) {
-      if (collaborators.length === 0) {
-        orderCollabsSelectorList.innerHTML = '<p style="font-size:0.85rem; color:var(--text-muted);">Aucun collaborateur enregistré.</p>';
-      } else {
-        orderCollabsSelectorList.innerHTML = collaborators.map(c => `
-          <label style="display:flex; align-items:center; gap:0.6rem; cursor:pointer; font-size:0.85rem; color:#ffffff;">
-            <input type="checkbox" class="order-collab-chk" value="${c.id}" ${c.id === selectedCollabId ? 'checked' : ''} style="width:16px; height:16px; accent-color:#6366f1;" />
-            <span>${c.lastName.toUpperCase()} ${c.firstName} (${c.role || 'Collaborateur'})</span>
-          </label>
-        `).join('');
-
-        const updateQty = () => {
-          const chks = orderCollabsSelectorList.querySelectorAll('.order-collab-chk:checked');
-          if (orderQuantityInput) orderQuantityInput.value = Math.max(1, chks.length);
-        };
-
-        orderCollabsSelectorList.querySelectorAll('.order-collab-chk').forEach(chk => {
-          chk.addEventListener('change', updateQty);
-        });
-        updateQty();
-      }
-    }
-
-    updatePhysicalCardPreviewMockup();
-  }
-
-  if (orderCardForm) {
-    orderCardForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!currentCompanyId) {
-        alert("Veuillez sélectionner une entreprise.");
-        return;
-      }
-
-      const selectedCollabIds = Array.from(document.querySelectorAll('.order-collab-chk:checked')).map(el => el.value);
-      const selectedCollabsList = collaborators.filter(c => selectedCollabIds.includes(c.id)).map(c => `${c.firstName} ${c.lastName}`);
-
-      const btn = document.getElementById('btn-submit-order');
-      if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement de la commande...'; }
-
-      try {
-        const payload = {
-          companyId: currentCompanyId,
-          cardType: selectedOrderCardType,
-          graphicStyle: selectedOrderGraphicStyle,
-          recipientCollaborators: selectedCollabsList,
-          quantity: parseInt(orderQuantityInput.value || '1', 10),
-          deliveryName: orderDeliveryName.value.trim(),
-          deliveryAddress: orderDeliveryAddress.value.trim(),
-          deliveryZip: orderDeliveryZip.value.trim(),
-          deliveryCity: orderDeliveryCity.value.trim(),
-          contactEmail: orderContactEmail.value.trim()
-        };
-
-        const res = await apiFetch(`${API_BASE}/orders`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-
-        if (orderMsg) {
-          orderMsg.innerHTML = `🎉 <strong>Commande validée !</strong> Référence : <strong style="font-family:monospace; font-size:1.1rem; color:#818cf8;">${data.orderRef}</strong>.<br/>Un e-mail de confirmation vous a été envoyé.`;
-          orderMsg.className = 'form-msg success';
-          orderMsg.classList.remove('hidden');
-        }
-
-        setTimeout(() => {
-          if (currentCompanyId) navigateTo(`#company/${currentCompanyId}`);
-          else navigateTo('#dashboard');
-        }, 3500);
-      } catch (err) {
-        console.error("Erreur commande:", err);
-        if (orderMsg) {
-          orderMsg.textContent = err.message || "Erreur lors de la validation de la commande.";
-          orderMsg.className = 'form-msg error';
-          orderMsg.classList.remove('hidden');
-        }
-      } finally {
-        if (btn) { btn.disabled = false; btn.textContent = '🚀 Valider la commande de cartes physiques'; }
-      }
     });
   }
 

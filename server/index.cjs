@@ -1419,56 +1419,6 @@ app.put('/api/auth/me', authenticateToken, async (req, res) => {
   }
 });
 
-// --- Physical Card Orders API ---
-app.post('/api/orders', authenticateToken, async (req, res) => {
-  try {
-    const { companyId, cardType, graphicStyle, recipientCollaborators, quantity, deliveryName, deliveryAddress, deliveryZip, deliveryCity, deliveryCountry, contactEmail, contactPhone } = req.body;
-    
-    if (!companyId || !cardType || !graphicStyle) {
-      return res.status(400).json({ error: "Les informations de commande (Entreprise, Type de carte, Graphisme) sont obligatoires." });
-    }
-
-    const orderRecord = await db.createPhysicalCardOrder({
-      companyId: parseInt(companyId, 10),
-      userId: req.user.id,
-      cardType,
-      graphicStyle,
-      recipientCollaborators: recipientCollaborators || [],
-      quantity: quantity || 1,
-      deliveryName,
-      deliveryAddress,
-      deliveryZip,
-      deliveryCity,
-      deliveryCountry: deliveryCountry || 'France',
-      contactEmail: contactEmail || req.user.email,
-      contactPhone
-    });
-
-    console.log(`[Order] Nouvel ordre de carte physique créé : Ref ${orderRecord.orderRef}`);
-
-    res.status(201).json({
-      success: true,
-      message: "Commande enregistrée avec succès !",
-      orderRef: orderRecord.orderRef,
-      order: orderRecord
-    });
-  } catch (err) {
-    console.error("Erreur POST /api/orders:", err.message);
-    res.status(500).json({ error: "Erreur lors de l'enregistrement de la commande de cartes physiques." });
-  }
-});
-
-app.get('/api/companies/:id/orders', authenticateToken, async (req, res) => {
-  try {
-    const companyId = parseInt(req.params.id, 10);
-    const orders = await db.getPhysicalCardOrdersByCompany(companyId);
-    res.json(orders);
-  } catch (err) {
-    console.error("Erreur GET /api/companies/:id/orders:", err.message);
-    res.status(500).json({ error: "Erreur lors de la récupération des commandes." });
-  }
-});
-
 // App Settings routes
 app.get('/api/settings', async (req, res) => {
   try {

@@ -183,29 +183,6 @@ async function initializeDatabase() {
     await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('support_email', 'contact@tdconnect.fr')`);
   } catch (e) {}
 
-  // Create physical_card_orders table
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS physical_card_orders (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      order_ref VARCHAR(50) NOT NULL UNIQUE,
-      company_id INT NOT NULL,
-      user_id VARCHAR(100),
-      card_type VARCHAR(100) NOT NULL,
-      graphic_style VARCHAR(100) NOT NULL,
-      recipient_collaborators JSON,
-      quantity INT NOT NULL DEFAULT 1,
-      delivery_name VARCHAR(255),
-      delivery_address TEXT,
-      delivery_zip VARCHAR(20),
-      delivery_city VARCHAR(100),
-      delivery_country VARCHAR(100),
-      contact_email VARCHAR(255),
-      contact_phone VARCHAR(50),
-      order_status VARCHAR(50) DEFAULT 'en_attente',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  `);
-
   console.log("Schéma de la base MySQL initialisé avec succès.");
   await seedSuperAdmin();
 }
@@ -798,40 +775,6 @@ const getAllSettings = async () => {
   return settings;
 };
 
-// --- Physical Card Order Queries ---
-
-const createPhysicalCardOrder = async (orderData) => {
-  const orderRef = 'CMD-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(Math.random() * 1000);
-  const [result] = await pool.query(
-    `INSERT INTO physical_card_orders 
-     (order_ref, company_id, user_id, card_type, graphic_style, recipient_collaborators, quantity, delivery_name, delivery_address, delivery_zip, delivery_city, delivery_country, contact_email, contact_phone, order_status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      orderRef,
-      orderData.companyId,
-      orderData.userId || null,
-      orderData.cardType || 'PVC Premium NFC/QR',
-      orderData.graphicStyle || 'Charte Entreprise',
-      JSON.stringify(orderData.recipientCollaborators || []),
-      orderData.quantity || 1,
-      orderData.deliveryName || '',
-      orderData.deliveryAddress || '',
-      orderData.deliveryZip || '',
-      orderData.deliveryCity || '',
-      orderData.deliveryCountry || 'France',
-      orderData.contactEmail || '',
-      orderData.contactPhone || '',
-      'en_attente'
-    ]
-  );
-  return { id: result.insertId, orderRef, ...orderData, orderStatus: 'en_attente' };
-};
-
-const getPhysicalCardOrdersByCompany = async (companyId) => {
-  const [rows] = await pool.query('SELECT * FROM physical_card_orders WHERE company_id = ? ORDER BY created_at DESC', [companyId]);
-  return rows;
-};
-
 module.exports = {
   dbReady,
   getCompanies,
@@ -860,7 +803,5 @@ module.exports = {
   deletePasswordResetToken,
   getSetting,
   setSetting,
-  getAllSettings,
-  createPhysicalCardOrder,
-  getPhysicalCardOrdersByCompany
+  getAllSettings
 };
