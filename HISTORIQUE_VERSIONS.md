@@ -5,7 +5,7 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.7-avertissement-modifications-non-enregistrees`
+* **Version / Tag** : `v2.7.1-correctif-visibilite-bouton-non-et-onglets`
 * **Date** : 28 août 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
@@ -13,7 +13,17 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.7-avertissement-modifications-non-enregistrees` (Dernière version)
+### 🚀 Version `v2.7.1-correctif-visibilite-bouton-non-et-onglets` (Dernière version)
+**Thème : Correctif de la visibilité du bouton "Non" et protection lors du basculement d'onglets Entreprise/Collaborateurs**
+* **Visibilité du bouton "Non"** :
+  * Refonte du contraste de la pop-up de confirmation avec un fond blanc solide et des boutons à fort contraste (`#f1f5f9` / texte `#0f172a` pour le bouton Non).
+* **Protection au changement d'onglets** :
+  * Interception du clic sur les onglets *"Informations Entreprise"* et *"Collaborateurs"* (`.tab-btn`) en cas de modifications non enregistrées sur l'un ou l'autre formulaire.
+  * Interception de la sélection d'un collaborateur dans la liste de gauche (`collabItem`) en cas de modifications en cours.
+
+---
+
+### 🚀 Version `v2.7-avertissement-modifications-non-enregistrees`
 **Thème : Détection et pop-up de confirmation pour les modifications non enregistrées**
 * **Confirmation d'abandon des modifications** :
   * Affichage d'une fenêtre de confirmation lors des tentatives de sortie sans enregistrer ("Les modifications n'ont pas été enregistrées. Souhaitez-vous les abandonner ?").

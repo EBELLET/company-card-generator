@@ -1325,12 +1325,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      tabButtons.forEach(b => b.classList.remove('active'));
-      tabContents.forEach(c => c.classList.add('hidden'));
+      if (btn.classList.contains('active')) return;
+      confirmUnsavedChanges(() => {
+        tabButtons.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.add('hidden'));
 
-      btn.classList.add('active');
-      const targetTab = btn.dataset.tab;
-      document.getElementById(targetTab).classList.remove('hidden');
+        btn.classList.add('active');
+        const targetTab = btn.dataset.tab;
+        const targetEl = document.getElementById(targetTab);
+        if (targetEl) targetEl.classList.remove('hidden');
+      });
     });
   });
 
@@ -2650,44 +2654,49 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.closest('.btn-item-edit') || e.target.closest('.btn-item-status') || e.target.closest('.btn-item-delete')) {
           return;
         }
-        selectCollaborator(collab.id);
+        if (selectedCollabId === collab.id && collabFormContainer.classList.contains('hidden')) return;
+        confirmUnsavedChanges(() => {
+          selectCollaborator(collab.id);
+        });
       });
 
       collabItem.querySelector('.btn-item-edit').addEventListener('click', (e) => {
         e.stopPropagation();
-        openCollabForm(collab);
+        if (selectedCollabId === collab.id && !collabFormContainer.classList.contains('hidden')) return;
+        confirmUnsavedChanges(() => {
+          openCollabForm(collab);
+        });
       });
 
-      collabItem.querySelector('.btn-item-status').addEventListener('click', async (e) => {
+      collabItem.querySelector('.btn-item-status').addEventListener('click', (e) => {
         e.stopPropagation();
-        const nextActive = collab.isActive !== 0 ? 0 : 1;
-        
-        // Prepare data with all necessary properties to avoid database errors
-        const updatedCollab = { ...collab, isActive: nextActive };
-        
-        try {
-          await apiFetch(`${API_BASE}/collaborators/${collab.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedCollab)
-          });
-          
-          collab.isActive = nextActive;
-          const searchVal = searchCollab ? searchCollab.value : '';
-          renderCollaboratorsList(searchVal);
-          
-          if (selectedCollabId === collab.id) {
-            updateMockupPreview();
+        confirmUnsavedChanges(async () => {
+          const nextActive = collab.isActive !== 0 ? 0 : 1;
+          const updatedCollab = { ...collab, isActive: nextActive };
+          try {
+            await apiFetch(`${API_BASE}/collaborators/${collab.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updatedCollab)
+            });
+            collab.isActive = nextActive;
+            const searchVal = searchCollab ? searchCollab.value : '';
+            renderCollaboratorsList(searchVal);
+            if (selectedCollabId === collab.id) {
+              updateMockupPreview();
+            }
+          } catch (err) {
+            console.error("Erreur mise à jour statut:", err);
+            alert("Erreur lors de la modification du statut.");
           }
-        } catch (err) {
-          console.error("Erreur mise à jour statut:", err);
-          alert("Erreur lors de la modification du statut.");
-        }
+        });
       });
 
       collabItem.querySelector('.btn-item-delete').addEventListener('click', (e) => {
         e.stopPropagation();
-        deleteCollaborator(collab.id);
+        confirmUnsavedChanges(() => {
+          deleteCollaborator(collab.id);
+        });
       });
 
       collabListContainer.appendChild(collabItem);
