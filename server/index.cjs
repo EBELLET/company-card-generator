@@ -401,7 +401,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       ${activePhone ? `
       <a href="${phoneHref}" class="action-row-btn btn-phone" title="${activePhoneLabel} : ${activePhone}">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: ${isRound ? '0' : '0.35rem'};"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-        <span>${activePhoneLabel} : ${activePhone}</span>
+        <span>${activePhoneLabel}</span>
       </a>` : ''}
 
       ${collab.email ? `
@@ -954,7 +954,7 @@ app.post('/api/companies', authenticateToken, async (req, res) => {
     res.status(201).json(newCompany);
   } catch (err) {
     console.error('Erreur POST /api/companies:', err.message);
-    res.status(500).json({ error: 'Erreur lors de la création de l\'entreprise.' });
+    res.status(400).json({ error: err.message || "Erreur lors de la création de l'entreprise." });
   }
 });
 
@@ -1136,8 +1136,8 @@ app.get('/api/network-ip', (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
-  if (!username || username.trim().length !== 8) {
-    return res.status(400).json({ error: "L'identifiant doit comporter exactement 8 caractères." });
+  if (!username || username.trim().length < 6) {
+    return res.status(400).json({ error: "L'identifiant doit comporter au moins 6 caractères." });
   }
   
   try {
@@ -1191,8 +1191,8 @@ app.post('/api/auth/login', async (req, res) => {
 app.post('/api/auth/register', async (req, res) => {
   const { companyName, companyDomain, userId, firstName, lastName, email } = req.body;
 
-  if (!userId || userId.trim().length !== 8) {
-    return res.status(400).json({ error: "L'identifiant doit comporter exactement 8 caractères." });
+  if (!userId || userId.trim().length < 6) {
+    return res.status(400).json({ error: "L'identifiant doit comporter au moins 6 caractères." });
   }
   if (!firstName || !firstName.trim() || !lastName || !lastName.trim() || !email || !email.trim()) {
     return res.status(400).json({ error: "Veuillez remplir tous les champs obligatoires de l'administrateur." });
@@ -1495,8 +1495,8 @@ app.post('/api/admin/users', authenticateToken, async (req, res) => {
     return res.status(403).json({ error: "Accès réservé au Super Admin." });
   }
   const { id, firstName, lastName, email, role, password, managedCompanies } = req.body;
-  if (!id || id.trim().length !== 8) {
-    return res.status(400).json({ error: "L'identifiant doit comporter exactement 8 caractères." });
+  if (!id || id.trim().length < 6) {
+    return res.status(400).json({ error: "L'identifiant doit comporter au moins 6 caractères." });
   }
   const passError = validatePasswordRules(password);
   if (passError) {

@@ -659,31 +659,14 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('tdconnect_user');
     localStorage.removeItem('tdconnect_last_activity');
     
-    // Hide admin buttons
-    if (btnAdminPanelShow) btnAdminPanelShow.classList.add('hidden');
-    if (btnSettingsPanelShow) btnSettingsPanelShow.classList.add('hidden');
-    if (btnMyAccountShow) btnMyAccountShow.classList.add('hidden');
     if (myAccountModal) myAccountModal.classList.add('hidden');
-    
-    // Reset Views
-    viewDashboard.classList.add('hidden');
-    viewCompanyDetail.classList.add('hidden');
-    if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
-    if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
-    if (viewRegister) viewRegister.classList.add('hidden');
-    viewCompaniesList.classList.remove('hidden');
-    viewLanding.classList.remove('hidden');
-    
-    updateLayoutMode();
+    if (viewCompaniesList) viewCompaniesList.classList.remove('hidden');
 
     if (window.location.hash) {
       history.replaceState(null, '', window.location.pathname);
     }
     
-    // Update login button to "Connexion"
-    if (btnLoginText) btnLoginText.textContent = 'Connexion';
-    if (iconLogin) iconLogin.classList.remove('hidden');
-    if (iconLogout) iconLogout.classList.add('hidden');
+    toggleAppView(false);
   }
 
   if (btnLoginToggle) {
@@ -713,8 +696,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const username = loginUsernameInput.value.trim();
       const password = loginPasswordInput.value;
       
-      if (username.length !== 8) {
-        loginErrorMsg.textContent = "L'identifiant doit comporter exactement 8 caractères.";
+      if (username.length < 6) {
+        loginErrorMsg.textContent = "L'identifiant doit comporter au moins 6 caractères.";
         loginErrorMsg.classList.remove('hidden');
         return;
       }
@@ -877,6 +860,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- Détection automatique du jeton de réinitialisation de mot de passe dans l'URL ---
+  (function checkResetTokenInURL() {
+    let token = '';
+    const urlParams = new URLSearchParams(window.location.search);
+    token = urlParams.get('token') || urlParams.get('resetToken') || '';
+    
+    if (!token && window.location.hash) {
+      const hash = window.location.hash.substring(1);
+      const hashParams = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : hash);
+      token = hashParams.get('token') || hashParams.get('resetToken') || '';
+    }
+    
+    if (token) {
+      openResetModal(token);
+    }
+  })();
+
   // Detect public card URL in path: /card/xxx
   (function detectPublicCardRoute() {
     const pathname = window.location.pathname;
@@ -964,8 +964,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const firstName = regAdminFirstnameInput.value.trim();
       const lastName = regAdminLastnameInput.value.trim();
 
-      if (userId.length !== 8) {
-        regErrorMsg.textContent = "L'identifiant doit comporter exactement 8 caractères.";
+      if (userId.length < 6) {
+        regErrorMsg.textContent = "L'identifiant doit comporter au moins 6 caractères.";
         regErrorMsg.classList.remove('hidden');
         return;
       }
@@ -1603,8 +1603,8 @@ document.addEventListener('DOMContentLoaded', () => {
         : (adminRoleInput ? adminRoleInput.value : 'admin');
       const password = adminPasswordInput.value;
 
-      if (!id || id.length !== 8) {
-        alert("L'identifiant doit comporter exactement 8 caractères.");
+      if (!id || id.length < 6) {
+        alert("L'identifiant doit comporter au moins 6 caractères.");
         return;
       }
       if (!firstName || !lastName || !email) {
@@ -2236,24 +2236,29 @@ document.addEventListener('DOMContentLoaded', () => {
         prevAvatarImg.classList.add('hidden');
       }
 
-      // Determine active phone number based on select inputs
-      const defaultPhoneType = collabPhoneDefaultInput.value;
+      // Determine active phone number based on select inputs (or saved collab object when form is closed)
+      const isFormOpen = collabFormContainer && !collabFormContainer.classList.contains('hidden');
+      const defaultPhoneType = isFormOpen ? collabPhoneDefaultInput.value : (collab.phoneDefault || 'mobile');
+      const phoneMobile = (isFormOpen ? collabPhoneMobileInput.value.trim() : (collab.phoneMobile || '')).trim();
+      const phoneWork = (isFormOpen ? collabPhoneWorkInput.value.trim() : (collab.phoneWork || '')).trim();
+      const phoneFax = (isFormOpen ? collabPhoneFaxInput.value.trim() : (collab.phoneFax || '')).trim();
+
       let activePhone = '';
       let activeLabel = 'Mobile';
       if (defaultPhoneType === 'work') {
-        activePhone = collabPhoneWorkInput.value.trim() || collabPhoneMobileInput.value.trim() || collab.phone || '';
+        activePhone = phoneWork || phoneMobile || collab.phone || '';
         activeLabel = 'Fixe';
       } else if (defaultPhoneType === 'fax') {
-        activePhone = collabPhoneFaxInput.value.trim() || collabPhoneMobileInput.value.trim() || collab.phone || '';
+        activePhone = phoneFax || phoneMobile || collab.phone || '';
         activeLabel = 'Fax';
       } else {
-        activePhone = collabPhoneMobileInput.value.trim() || collab.phone || '';
+        activePhone = phoneMobile || collab.phone || '';
         activeLabel = 'Mobile';
       }
 
       // Action Button links
       if (activePhone) {
-        prevBtnPhoneText.textContent = `${activeLabel} : ${activePhone}`;
+        prevBtnPhoneText.textContent = activeLabel;
         prevActionPhone.href = `tel:${activePhone}`;
         prevActionPhone.classList.remove('hidden');
       } else {

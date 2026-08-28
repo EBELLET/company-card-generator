@@ -348,7 +348,7 @@ const addCompany = async (c) => {
   }
 
   if (existingRows.length > 0) {
-    return formatCompany(existingRows[0]);
+    throw new Error(`L'entreprise "${existingRows[0].name || trimmedName}" existe déjà dans le système.`);
   }
 
   const isSubActiveVal = c.is_subscription_active !== undefined ? (c.is_subscription_active ? 1 : 0) : (c.isSubscriptionActive !== undefined ? (c.isSubscriptionActive ? 1 : 0) : 0);
@@ -666,29 +666,28 @@ const registerUserWithCompany = async (userData, companyData) => {
       let existingRows = [];
       if (trimmedDomain) {
         [existingRows] = await connection.query(
-          'SELECT id FROM company_info WHERE LOWER(name) = LOWER(?) OR (domain IS NOT NULL AND domain != "" AND LOWER(domain) = LOWER(?)) LIMIT 1',
+          'SELECT id, name FROM company_info WHERE LOWER(name) = LOWER(?) OR (domain IS NOT NULL AND domain != "" AND LOWER(domain) = LOWER(?)) LIMIT 1',
           [trimmedName, trimmedDomain]
         );
       } else {
         [existingRows] = await connection.query(
-          'SELECT id FROM company_info WHERE LOWER(name) = LOWER(?) LIMIT 1',
+          'SELECT id, name FROM company_info WHERE LOWER(name) = LOWER(?) LIMIT 1',
           [trimmedName]
         );
       }
 
       if (existingRows.length > 0) {
-        companyId = existingRows[0].id;
-        console.log(`[DB] Entreprise existante "${trimmedName}" trouvée (ID ${companyId}). Rattachement de l'utilisateur ${userData.id}...`);
-      } else {
-        const defaultSubEnd = getOneMonthFromNowDateString();
-        const [companyResult] = await connection.query(`
-          INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, subscription_end_date)
-          VALUES (?, ?, 'theme-minimalist', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 0, '', ?)
-        `, [trimmedName, trimmedDomain, defaultSubEnd]);
-        
-        companyId = companyResult.insertId;
-        console.log(`[DB] Nouvelle entreprise "${trimmedName}" créée (ID ${companyId}). Date d'abonnement : ${defaultSubEnd}.`);
+        throw new Error(`L'entreprise "${existingRows[0].name || trimmedName}" existe déjà. Impossible de créer un compte avec une entreprise déjà existante.`);
       }
+
+      const defaultSubEnd = getOneMonthFromNowDateString();
+      const [companyResult] = await connection.query(`
+        INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, subscription_end_date)
+        VALUES (?, ?, 'theme-minimalist', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 0, '', ?)
+      `, [trimmedName, trimmedDomain, defaultSubEnd]);
+      
+      companyId = companyResult.insertId;
+      console.log(`[DB] Nouvelle entreprise "${trimmedName}" créée (ID ${companyId}). Date d'abonnement : ${defaultSubEnd}.`);
     }
     
     await connection.query(`

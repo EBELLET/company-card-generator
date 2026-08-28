@@ -5,15 +5,31 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.5-reorganisation-boutons`
-* **Date** : 27 août 2026
+* **Version / Tag** : `v2.6-correctifs-ergonomie-securite`
+* **Date** : 28 août 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.5-reorganisation-boutons` (Dernière version)
+### 🚀 Version `v2.6-correctifs-ergonomie-securite` (Dernière version)
+**Thème : Correctifs d'ergonomie, gestion des identifiants, sécurité des inscriptions & réinitialisation par e-mail**
+* **Boutons de Téléphone sur Cartes** :
+  * Affichage uniquement du type (*Mobile*, *Fixe*, *Fax*) sans afficher le numéro de téléphone dans le libellé du bouton.
+  * Correction du rafraîchissement du libellé d'aperçu dans l'administration après enregistrement d'un collaborateur.
+* **Sécurité des Inscriptions** :
+  * Refus et annulation de la création de compte si l'entreprise spécifiée existe déjà (nom ou nom de domaine en doublon).
+* **Flexibilité des Identifiants** :
+  * Ajustement de la règle de validation des identifiants utilisateurs/administrateurs à un minimum de 6 caractères (au lieu d'exactement 8).
+* **Réinitialisation de Mot de Passe par E-mail** :
+  * Détection automatique du paramètre `token` dans l'URL lors du clic sur le lien d'e-mail pour ouvrir immédiatement la fenêtre de saisie du nouveau mot de passe.
+* **Déconnexion & Bouton CTA** :
+  * Remise à jour automatique du bouton CTA principal *"Essayez, créez votre carte"* dès la déconnexion d'un compte.
+
+---
+
+### 🚀 Version `v2.5-reorganisation-boutons`
 **Thème : Réorganisation des boutons d'action, mailto prérempli, aperçu dynamique & support styles de boutons**
 * **Réorganisation des boutons d'action** :
   * 1er : Bouton *"Télécharger la fiche contact"* (vCard).
