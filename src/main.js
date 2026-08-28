@@ -1776,6 +1776,7 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify(data)
         });
         console.log(`Entreprise ${currentCompanyId} enregistrée.`);
+        isCompanyFormDirty = false;
         activeCompanyTitle.textContent = data.name;
 
         // Visual success confirmation on button
@@ -1979,6 +1980,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const reader = new FileReader();
     reader.onload = (e) => {
+      isCompanyFormDirty = true;
       logoCustomUrl = e.target.result;
       thumbImg.src = logoCustomUrl;
       document.querySelector('.thumb-name').textContent = file.name;

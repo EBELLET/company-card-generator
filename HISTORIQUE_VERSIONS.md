@@ -5,7 +5,7 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.7.2-remise-a-zéro-champs-et-aperçu-abandon`
+* **Version / Tag** : `v2.7.3-correctif-sauvegarde-flag-dirty`
 * **Date** : 28 août 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
@@ -13,7 +13,15 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.7.2-remise-a-zéro-champs-et-aperçu-abandon` (Dernière version)
+### 🚀 Version `v2.7.3-correctif-sauvegarde-flag-dirty` (Dernière version)
+**Thème : Correctif de la réinitialisation de l'état de modification lors de la sauvegarde**
+* **Réinitialisation du flag de modifications** :
+  * Correction du bug où `isCompanyFormDirty` n'était pas remis à `false` lors du clic sur le bouton *"Valider les modifications"*.
+  * Désormais, après un clic réussi sur *"Valider les modifications"*, la pop-up de modifications non enregistrées ne se réaffiche plus de manière intempestive lors du changement d'onglet ou de page.
+
+---
+
+### 🚀 Version `v2.7.2-remise-a-zéro-champs-et-aperçu-abandon`
 **Thème : Réinitialisation automatique des champs et de l'image d'aperçu lors de l'abandon des modifications**
 * **Rétablissement du paramétrage enregistré** :
   * Lors de la confirmation d'abandon (bouton *"Oui"*), les champs de formulaire et l'image d'aperçu virtuelle sont automatiquement rechargés à partir des données enregistrées en BDD (`loadCompanyDetail` et `closeCollabForm`).
