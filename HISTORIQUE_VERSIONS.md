@@ -5,7 +5,7 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.7.2-remise-a-zéro-champs-et-aperçu-abandon`
+* **Version / Tag** : `v2.8.0-workflow-commande-cartes-physiques`
 * **Date** : 28 août 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
@@ -13,7 +13,18 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.7.2-remise-a-zéro-champs-et-aperçu-abandon` (Dernière version)
+### 🚀 Version `v2.8.0-workflow-commande-cartes-physiques` (Dernière version)
+**Thème : Ajout du bouton "Commander la carte physique" et workflow de commande en 3 étapes**
+* **Avertissement modifications non enregistrées** : Protection du bouton *"Commander la carte physique"* via la pop-up de confirmation.
+* **Workflow en 3 étapes (`#order-card`)** :
+  1. *Choisir la carte* : PVC Premium RFID/NFC, Métal Brossé Laser, Bois Éco-Responsable.
+  2. *Choisir le graphisme* : Charte Entreprise, Minimaliste Épuré, Design Sur Mesure avec aperçu physique interactif.
+  3. *Commander* : Choix des destinataires, adresse de livraison préremplie et génération de référence unique de commande.
+* **Backend API & BDD** : Création de la table MySQL `physical_card_orders` et de l'endpoint `POST /api/orders`.
+
+---
+
+### 🚀 Version `v2.7.2-remise-a-zéro-champs-et-aperçu-abandon`
 **Thème : Réinitialisation automatique des champs et de l'image d'aperçu lors de l'abandon des modifications**
 * **Rétablissement du paramétrage enregistré** :
   * Lors de la confirmation d'abandon (bouton *"Oui"*), les champs de formulaire et l'image d'aperçu virtuelle sont automatiquement rechargés à partir des données enregistrées en BDD (`loadCompanyDetail` et `closeCollabForm`).
