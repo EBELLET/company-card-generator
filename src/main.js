@@ -505,9 +505,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnUnsavedYes) {
     btnUnsavedYes.addEventListener('click', () => {
+      const wasCompanyDirty = isCompanyFormDirty;
+      const wasCollabDirty = isCollabFormDirty;
+
       isCompanyFormDirty = false;
       isCollabFormDirty = false;
       if (unsavedChangesModal) unsavedChangesModal.classList.add('hidden');
+
+      if (wasCompanyDirty && currentCompanyId) {
+        loadCompanyDetail(currentCompanyId);
+      }
+      if (wasCollabDirty) {
+        closeCollabForm();
+      }
+
       if (typeof pendingUnsavedAction === 'function') {
         const action = pendingUnsavedAction;
         pendingUnsavedAction = null;
@@ -1784,6 +1795,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const btnCancelCompany = document.getElementById('btn-cancel-company');
+  if (btnCancelCompany) {
+    btnCancelCompany.addEventListener('click', () => {
+      confirmUnsavedChanges(() => {
+        if (currentCompanyId) {
+          loadCompanyDetail(currentCompanyId);
+        }
+      });
+    });
+  }
+
   // --- Real-time Saisie Synchro (Company Preview updates) ---
   
   function updateCompanyPreview() {
@@ -2840,6 +2862,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentCollabPhotoUrl = '';
     collabPhotoThumb.classList.add('hidden');
     photoFramingControls.classList.add('hidden');
+    updateMockupPreview();
   }
 
   btnAddCollab.addEventListener('click', () => {

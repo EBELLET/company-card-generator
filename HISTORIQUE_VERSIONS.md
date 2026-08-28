@@ -5,7 +5,7 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.7.1-correctif-visibilite-bouton-non-et-onglets`
+* **Version / Tag** : `v2.7.2-remise-a-zéro-champs-et-aperçu-abandon`
 * **Date** : 28 août 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
@@ -13,7 +13,15 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.7.1-correctif-visibilite-bouton-non-et-onglets` (Dernière version)
+### 🚀 Version `v2.7.2-remise-a-zéro-champs-et-aperçu-abandon` (Dernière version)
+**Thème : Réinitialisation automatique des champs et de l'image d'aperçu lors de l'abandon des modifications**
+* **Rétablissement du paramétrage enregistré** :
+  * Lors de la confirmation d'abandon (bouton *"Oui"*), les champs de formulaire et l'image d'aperçu virtuelle sont automatiquement rechargés à partir des données enregistrées en BDD (`loadCompanyDetail` et `closeCollabForm`).
+  * Ajout d'un bouton *"Annuler"* (`#btn-cancel-company`) à côté du bouton *"Valider les modifications"* sur le formulaire Entreprise.
+
+---
+
+### 🚀 Version `v2.7.1-correctif-visibilite-bouton-non-et-onglets`
 **Thème : Correctif de la visibilité du bouton "Non" et protection lors du basculement d'onglets Entreprise/Collaborateurs**
 * **Visibilité du bouton "Non"** :
   * Refonte du contraste de la pop-up de confirmation avec un fond blanc solide et des boutons à fort contraste (`#f1f5f9` / texte `#0f172a` pour le bouton Non).
