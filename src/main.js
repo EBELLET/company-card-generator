@@ -2377,7 +2377,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (collab.email) {
         const mailSubject = encodeURIComponent("Échange de coordonnées");
-        const mailBody = encodeURIComponent("Bonjour. Pour faire suite à notre rencontre je vous adresse mes coordonnées");
+        const mailBody = encodeURIComponent("Bonjour,\r\n\r\nPour faire suite à notre rencontre je vous adresse mes coordonnées.\r\n\r\nBonne réception.");
         prevActionEmail.href = `mailto:${collab.email}?subject=${mailSubject}&body=${mailBody}`;
         prevBtnEmailText.textContent = `Email`;
         prevActionEmail.classList.remove('hidden');

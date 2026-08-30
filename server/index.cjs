@@ -377,7 +377,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   }
 
   const mailSubject = encodeURIComponent("Échange de coordonnées");
-  const mailBody = encodeURIComponent("Bonjour. Pour faire suite à notre rencontre je vous adresse mes coordonnées");
+  const mailBody = encodeURIComponent("Bonjour,\r\n\r\nPour faire suite à notre rencontre je vous adresse mes coordonnées.\r\n\r\nBonne réception.");
   const phoneHref = cardStatus.isBlurred ? 'javascript:void(0)' : `tel:${activePhone}`;
   const emailHref = cardStatus.isBlurred ? 'javascript:void(0)' : `mailto:${collab.email}?subject=${mailSubject}&body=${mailBody}`;
   const vcfHref = cardStatus.isBlurred ? 'javascript:void(0)' : (isStandalone ? `./${vcfFilename}` : `/api/collaborators/${collab.id}/vcf`);
@@ -394,7 +394,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     </a>
 
     <!-- 2. Share contact text -->
-    <p class="share-contact-text">Partagez vos coordonnées avec votre nouveau contact</p>
+    <p class="share-contact-text">Partagez vos coordonnées avec votre nouveau contact :</p>
 
     <!-- 3. Phone & Email buttons row -->
     <div class="contact-buttons-row">
@@ -460,6 +460,10 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       --card-border: transparent;
       --text: #000000;
       --text-muted: #71717a;
+    }
+
+    html {
+      font-size: 16px;
     }
 
     /* Assign variables dynamically */
@@ -531,7 +535,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     }
 
     .company-logo-text {
-      font-size: 1.35rem;
+      font-size: 1.45rem;
       font-weight: 800;
       letter-spacing: -0.01em;
       opacity: 0.9;
@@ -539,7 +543,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
 
     /* Company Address underneath Logo */
     .company-address {
-      font-size: 0.78rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
       margin-bottom: 0.85rem;
       line-height: 1.35;
@@ -576,7 +580,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     }
 
     .initials-avatar {
-      font-size: ${avatarSize * 0.35}px;
+      font-size: ${avatarSize * 0.38}px;
       font-weight: 700;
       color: var(--accent);
       background: rgba(99, 102, 241, 0.05);
@@ -599,14 +603,14 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
 
     /* Collaborator Identity Names */
     .collab-name {
-      font-size: 1.35rem;
+      font-size: 1.45rem;
       font-weight: 700;
       letter-spacing: -0.015em;
       margin-bottom: 0.25rem;
     }
 
     .collab-role {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 600;
       color: var(--text-muted);
       margin-bottom: 1.25rem;
@@ -622,9 +626,9 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     }
 
     .share-contact-text {
-      font-size: 0.78rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
-      margin: 0.65rem 0 0.4rem 0;
+      margin: 1.5rem 0 0.05rem 0;
       text-align: center;
       font-weight: 500;
       line-height: 1.3;
@@ -642,14 +646,14 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       display: flex;
       gap: 0.5rem;
       width: 100%;
-      margin-top: 0.25rem;
+      margin-top: 0.05rem;
     }
 
     .contact-buttons-row .action-row-btn {
       flex: 1;
       min-width: 0;
       padding: 0.65rem 0.5rem;
-      font-size: 0.78rem;
+      font-size: 0.85rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -709,7 +713,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       background: var(--accent);
       color: #ffffff !important;
       font-weight: 600;
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       padding: 0.75rem 1rem;
       border-radius: 8px;
       display: flex;
@@ -740,7 +744,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     /* Footer Info */
     .card-footer {
       margin-top: 0.35rem;
-      font-size: 0.72rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       opacity: 0.8;
       display: flex;
@@ -791,22 +795,22 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
         margin-bottom: 0.55rem !important;
       }
       .initials-avatar {
-        font-size: ${Math.round(avatarSize * 0.35)}px !important;
+        font-size: ${Math.round(avatarSize * 0.38)}px !important;
       }
       .collab-name {
-        font-size: 1.4rem;
+        font-size: 1.45rem;
         margin-bottom: 0.2rem;
       }
       .collab-role {
-        font-size: 0.88rem;
+        font-size: 0.9rem;
         margin-bottom: 0.65rem;
       }
       .share-contact-text {
-        margin: 0.45rem 0 0.3rem 0;
-        font-size: 0.78rem;
+        margin: 1.25rem 0 0.05rem 0;
+        font-size: 0.85rem;
       }
       .action-row-btn {
-        font-size: 0.85rem;
+        font-size: 0.88rem;
         padding: 0.68rem 0.8rem;
         border-radius: 10px;
       }
@@ -822,7 +826,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       }
       .card-footer {
         margin-top: 0.45rem !important;
-        font-size: 0.75rem;
+        font-size: 0.78rem;
       }
     }
     .card-container.is-blurred {
@@ -1694,11 +1698,14 @@ async function buildVCardBuffer(collab, company, req = null) {
     cardUrl = `https://tdconnect.fr${cardPath}`;
   }
 
-  // URL property: Only company website, omit if empty
+  // URL property: Include company website and virtual card URL if enabled
   const urlLines = [];
   if (companyUrl) {
     const formattedUrl = companyUrl.startsWith('http') ? companyUrl : 'https://' + companyUrl;
     urlLines.push(`URL;CHARSET=ISO-8859-1:${formattedUrl}`);
+  }
+  if (vcfIncludeCardUrl && cardUrl) {
+    urlLines.push(`URL;CHARSET=ISO-8859-1:${cardUrl}`);
   }
 
   // Format GMT Date & Time
@@ -1706,17 +1713,14 @@ async function buildVCardBuffer(collab, company, req = null) {
   const pad = (n) => String(n).padStart(2, '0');
   const formattedDateGMT = `${pad(now.getUTCDate())}/${pad(now.getUTCMonth() + 1)}/${now.getUTCFullYear()} à ${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())} GMT`;
 
-  // NOTE property: Single NOTE property separated by 3 spaces without \n tag
+  // NOTE property: Origin annotation if enabled
   const noteParts = [];
   if (vcfAnnotationOrigin) {
     noteParts.push(`Contact généré par tdconnect.fr le ${formattedDateGMT}`);
   }
-  if (vcfIncludeCardUrl && cardUrl) {
-    noteParts.push(`Lien de la carte virtuelle : ${cardUrl}`);
-  }
 
   const noteLine = noteParts.length > 0
-    ? `NOTE;CHARSET=ISO-8859-1:${noteParts.join('   ')}`
+    ? `NOTE;CHARSET=ISO-8859-1:${noteParts.join('\\n')}`
     : '';
 
   // Address property: Only include if at least one field is non-empty

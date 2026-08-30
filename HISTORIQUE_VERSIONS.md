@@ -5,15 +5,29 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.7.3-correctif-sauvegarde-flag-dirty`
-* **Date** : 28 août 2026
+* **Version / Tag** : `v2.7.4-ajustements-textes-vcf-et-mail`
+* **Date** : 30 août 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.7.3-correctif-sauvegarde-flag-dirty` (Dernière version)
+### 🚀 Version `v2.7.4-ajustements-textes-vcf-et-mail` (Dernière version)
+**Thème : Ajustements visuels et de mise en page (phrase d'explication, vcf cliquable, template mail)**
+* **Phrase d'explication de carte virtuelle** :
+  * Ajout des deux-points à la fin : *"Partagez vos coordonnées avec votre nouveau contact :"*.
+  * Ajustement des espacements (ligne d'espace ajoutée au-dessus, espace supprimé en dessous pour coller aux boutons).
+* **Lien et Note dans la vCard (.vcf)** :
+  * Le champ `NOTE` contient uniquement l'annotation d'origine (*"Contact généré par tdconnect.fr le..."*).
+  * L'URL de la carte virtuelle est intégrée dans le champ standard `URL` du fichier `.vcf`.
+* **Taille des polices de la carte virtuelle (URL publique & Aperçu)** :
+  * Agrandissement léger des polices de caractères sur la carte publique (`1.45rem` pour le nom, `0.9rem` pour la fonction, `0.85rem` pour l'adresse et le texte de partage, `0.88rem` pour les boutons d'action).
+  * Harmonisation parfaite entre l'aperçu de la carte dans l'espace collaborateur et le rendu final de l'URL publique.
+
+---
+
+### 🚀 Version `v2.7.3-correctif-sauvegarde-flag-dirty`
 **Thème : Correctif de la réinitialisation de l'état de modification lors de la sauvegarde**
 * **Réinitialisation du flag de modifications** :
   * Correction du bug où `isCompanyFormDirty` n'était pas remis à `false` lors du clic sur le bouton *"Valider les modifications"*.
