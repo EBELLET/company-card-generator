@@ -1030,12 +1030,13 @@ label {
 .collab-item-actions {
   display: flex;
   gap: 0.5rem;
+  align-items: center;
 }
 
-.btn-item-edit, .btn-item-delete {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
+.btn-item-delete {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1044,12 +1045,6 @@ label {
   color: var(--text-secondary);
   transition: all 0.2s ease;
   cursor: pointer;
-}
-
-.btn-item-edit:hover {
-  background: rgba(2, 132, 199, 0.2);
-  border-color: rgba(2, 132, 199, 0.3);
-  color: #38bdf8;
 }
 
 .btn-item-delete:hover {
@@ -2008,9 +2003,9 @@ input:checked + .slider:before {
 }
 
 .btn-item-status {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;

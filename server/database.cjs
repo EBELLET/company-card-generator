@@ -80,7 +80,7 @@ async function initializeDatabase() {
       tdconnect_url TEXT,
       logo_x INT DEFAULT 0,
       subscription_end_date DATE NULL,
-      is_subscription_active INT DEFAULT 0
+      is_subscription_active INT DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
@@ -89,7 +89,11 @@ async function initializeDatabase() {
   } catch (e) {}
 
   try {
-    await pool.query(`ALTER TABLE company_info ADD COLUMN is_subscription_active INT DEFAULT 0`);
+    await pool.query(`ALTER TABLE company_info ADD COLUMN is_subscription_active INT DEFAULT 1`);
+  } catch (e) {}
+
+  try {
+    await pool.query(`ALTER TABLE company_info ALTER COLUMN is_subscription_active SET DEFAULT 1`);
   } catch (e) {}
 
   try {
@@ -351,7 +355,7 @@ const addCompany = async (c) => {
     throw new Error(`L'entreprise "${existingRows[0].name || trimmedName}" existe déjà dans le système.`);
   }
 
-  const isSubActiveVal = c.is_subscription_active !== undefined ? (c.is_subscription_active ? 1 : 0) : (c.isSubscriptionActive !== undefined ? (c.isSubscriptionActive ? 1 : 0) : 0);
+  const isSubActiveVal = c.is_subscription_active !== undefined ? (c.is_subscription_active ? 1 : 0) : (c.isSubscriptionActive !== undefined ? (c.isSubscriptionActive ? 1 : 0) : 1);
 
   const [result] = await pool.query(`
     INSERT INTO company_info (
@@ -393,7 +397,7 @@ const updateCompany = async (id, c) => {
     subEndDate = c.subscriptionEndDate || null;
   }
 
-  const isSubActiveVal = c.is_subscription_active !== undefined ? (c.is_subscription_active ? 1 : 0) : (c.isSubscriptionActive !== undefined ? (c.isSubscriptionActive ? 1 : 0) : 0);
+  const isSubActiveVal = c.is_subscription_active !== undefined ? (c.is_subscription_active ? 1 : 0) : (c.isSubscriptionActive !== undefined ? (c.isSubscriptionActive ? 1 : 0) : 1);
 
   await pool.query(`
     UPDATE company_info SET
@@ -682,8 +686,8 @@ const registerUserWithCompany = async (userData, companyData) => {
 
       const defaultSubEnd = getOneMonthFromNowDateString();
       const [companyResult] = await connection.query(`
-        INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, subscription_end_date)
-        VALUES (?, ?, 'theme-minimalist', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 0, '', ?)
+        INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, subscription_end_date, is_subscription_active)
+        VALUES (?, ?, 'theme-minimalist', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 0, '', ?, 1)
       `, [trimmedName, trimmedDomain, defaultSubEnd]);
       
       companyId = companyResult.insertId;

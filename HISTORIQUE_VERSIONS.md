@@ -5,16 +5,44 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.7.4-ajustements-textes-vcf-et-mail`
-* **Date** : 30 août 2026
+* **Version / Tag** : `v2.7.7-correctifs-routeur-et-liste-collaborateurs`
+* **Date** : 2 septembre 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.7.4-ajustements-textes-vcf-et-mail` (Dernière version)
-**Thème : Ajustements visuels et de mise en page (phrase d'explication, vcf cliquable, template mail)**
+### 🚀 Version `v2.7.7-correctifs-routeur-et-liste-collaborateurs` (Dernière version)
+**Thème : Correctifs du routeur SPA au rafraîchissement (F5), isolation multi-comptes et refonte UX de la liste des collaborateurs**
+* **Stabilité du routeur SPA & Session F5** :
+  * Correction du problème de déconnexion/retour au landing page lors d'un rafraîchissement (F5) en réexécutant le rendu de route (`renderRoute`) directement au démarrage.
+  * Réinitialisation de `lastActivityTime` à `Date.now()` au chargement pour éviter tout faux délai d'inactivité lors du rechargement de page.
+  * Isolation de session par onglet grâce à `sessionStorage` combiné à `localStorage` (permettant aux administrateurs concurrents de travailler simultanément sans conflits).
+* **Refonte UX de la Liste des Collaborateurs** :
+  * Clic direct sur n'importe quel encart de collaborateur pour ouvrir ses détails et son formulaire de modification.
+  * Suppression de l'icône "stylo" de la liste des collaborateurs.
+  * Agrandissement des icônes d'action (statut et suppression) pour un confort visuel et tactile accru.
+  * Le formulaire "Modifier le collaborateur" reste fermé par défaut à l'ouverture de l'onglet collaborateurs (affichage unique de la liste).
+* **Correctif Accès Suspendu Entreprise d'Essai** :
+  * Correction de la valeur par défaut de `is_subscription_active` à `1` lors de l'enregistrement de compte et création d'entreprise d'essai.
+
+---
+
+### 🚀 Version `v2.7.6-isolation-sessions-multicomptes-sessionstorage`
+**Thème : Isolation des sessions multi-comptes et accès concurrents via `sessionStorage`**
+**Thème : Isolation des sessions multi-comptes et accès concurrents via `sessionStorage`**
+* **Isolation par onglet / fenêtre** :
+  * Migration des jetons et de l'état d'authentification (`tdconnect_token`, `tdconnect_user`, `tdconnect_last_activity`) de `localStorage` vers `sessionStorage`.
+  * Permet la connexion simultanée de plusieurs administrateurs ou du Super Admin dans des onglets différents du même navigateur sans écrasement de session ni déconnexion intempestive.
+
+---
+
+### 🚀 Version `v2.7.5-correctif-statut-acces-suspendu-creation-compte`
+**Thème : Correctif du statut d'accès suspendu lors de la création d'entreprise d'essai**
+* **Statut de l'entreprise d'essai** :
+  * Correction du bug où la création d'un compte et d'une entreprise pour une période d'essai définissait la colonne `is_subscription_active` à `0` par défaut.
+  * L'accès n'est plus suspendu ("Accès suspendu" décoché, valeur par défaut `1`) à la création d'une entreprise.
 * **Phrase d'explication de carte virtuelle** :
   * Ajout des deux-points à la fin : *"Partagez vos coordonnées avec votre nouveau contact :"*.
   * Ajustement des espacements (ligne d'espace ajoutée au-dessus, espace supprimé en dessous pour coller aux boutons).

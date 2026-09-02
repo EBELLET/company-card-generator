@@ -77,15 +77,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Authentication State & Fetch Wrapper ---
-  let authToken = localStorage.getItem('tdconnect_token') || '';
-  let currentUser = JSON.parse(localStorage.getItem('tdconnect_user')) || null;
+  let authToken = sessionStorage.getItem('tdconnect_token') || localStorage.getItem('tdconnect_token') || '';
+  let currentUser = JSON.parse(sessionStorage.getItem('tdconnect_user') || localStorage.getItem('tdconnect_user') || 'null');
+
+  if (authToken && currentUser) {
+    sessionStorage.setItem('tdconnect_token', authToken);
+    sessionStorage.setItem('tdconnect_user', JSON.stringify(currentUser));
+  }
 
   // --- General App Settings Management ---
   let inactivityTimeoutMinutes = 60; // Valeur par défaut
   let vcfAnnotationOrigin = true;
   let vcfIncludeCardUrl = true;
   let supportEmail = '';
-  let lastActivityTime = parseInt(localStorage.getItem('tdconnect_last_activity') || '0', 10);
+  let lastActivityTime = Date.now();
+  if (authToken && currentUser) {
+    sessionStorage.setItem('tdconnect_last_activity', lastActivityTime.toString());
+  }
   let inactivityCheckInterval = null;
   let lastThrottleTime = 0;
 
@@ -131,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     lastThrottleTime = now;
     lastActivityTime = now;
     if (authToken && currentUser) {
-      localStorage.setItem('tdconnect_last_activity', now.toString());
+      sessionStorage.setItem('tdconnect_last_activity', now.toString());
     }
   }
 
@@ -139,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!authToken || !currentUser) return false;
     if (inactivityTimeoutMinutes <= 0) return false; // Déconnexion d'inactivité désactivée
     const timeoutMs = getInactivityTimeoutMs();
-    const storedActivity = parseInt(localStorage.getItem('tdconnect_last_activity') || '0', 10);
+    const storedActivity = parseInt(sessionStorage.getItem('tdconnect_last_activity') || '0', 10);
     const effectiveLastActivity = Math.max(lastActivityTime, storedActivity);
     if (effectiveLastActivity > 0 && Date.now() - effectiveLastActivity >= timeoutMs) {
       handleInactivityLogout();
@@ -544,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Navigation & Router SPA System ---
   function navigateTo(hash, pushHistory = true) {
     const cleanHash = hash.startsWith('#') ? hash : '#' + hash;
-    if (window.location.hash === cleanHash && !hasUnsavedChanges()) {
+    if (pushHistory && window.location.hash === cleanHash && !hasUnsavedChanges()) {
       return;
     }
     confirmUnsavedChanges(() => {
@@ -728,6 +736,9 @@ document.addEventListener('DOMContentLoaded', () => {
     authToken = '';
     currentUser = null;
     lastActivityTime = 0;
+    sessionStorage.removeItem('tdconnect_token');
+    sessionStorage.removeItem('tdconnect_user');
+    sessionStorage.removeItem('tdconnect_last_activity');
     localStorage.removeItem('tdconnect_token');
     localStorage.removeItem('tdconnect_user');
     localStorage.removeItem('tdconnect_last_activity');
@@ -792,6 +803,9 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUser = data.user;
         lastActivityTime = Date.now();
         
+        sessionStorage.setItem('tdconnect_token', authToken);
+        sessionStorage.setItem('tdconnect_user', JSON.stringify(currentUser));
+        sessionStorage.setItem('tdconnect_last_activity', lastActivityTime.toString());
         localStorage.setItem('tdconnect_token', authToken);
         localStorage.setItem('tdconnect_user', JSON.stringify(currentUser));
         localStorage.setItem('tdconnect_last_activity', lastActivityTime.toString());
@@ -1295,6 +1309,9 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUser = data.user;
         lastActivityTime = Date.now();
 
+        sessionStorage.setItem('tdconnect_token', authToken);
+        sessionStorage.setItem('tdconnect_user', JSON.stringify(currentUser));
+        sessionStorage.setItem('tdconnect_last_activity', lastActivityTime.toString());
         localStorage.setItem('tdconnect_token', authToken);
         localStorage.setItem('tdconnect_user', JSON.stringify(currentUser));
         localStorage.setItem('tdconnect_last_activity', lastActivityTime.toString());
@@ -1345,6 +1362,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetTab = btn.dataset.tab;
         const targetEl = document.getElementById(targetTab);
         if (targetEl) targetEl.classList.remove('hidden');
+        if (currentCompanyId && targetTab) {
+          sessionStorage.setItem(`active_company_tab_${currentCompanyId}`, targetTab);
+        }
+        if (targetTab === 'tab-collaborators') {
+          closeCollabForm();
+        }
       });
     });
   });
@@ -2640,8 +2663,8 @@ document.addEventListener('DOMContentLoaded', () => {
       collabItem.className = `collab-item ${isSelected ? 'active' : ''} ${collab.isActive === 0 ? 'inactive' : ''}`;
       
       const statusIcon = collab.isActive !== 0 
-        ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` 
-        : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+        ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` 
+        : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 
       const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
       const connectionCountVal = collab.connectionCount != null ? collab.connectionCount : 0;
@@ -2662,30 +2685,19 @@ document.addEventListener('DOMContentLoaded', () => {
           ${connBadgeHTML}
         </div>
         <div class="collab-item-actions">
-          <button type="button" class="btn-item-edit" title="Modifier">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
-          </button>
           <button type="button" class="btn-item-status ${collab.isActive !== 0 ? 'active' : 'inactive'}" title="${collab.isActive !== 0 ? 'Désactiver' : 'Activer'}">
             ${statusIcon}
           </button>
           <button type="button" class="btn-item-delete" title="Supprimer">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
           </button>
         </div>
       `;
 
       collabItem.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-item-edit') || e.target.closest('.btn-item-status') || e.target.closest('.btn-item-delete')) {
+        if (e.target.closest('.btn-item-status') || e.target.closest('.btn-item-delete')) {
           return;
         }
-        if (selectedCollabId === collab.id && collabFormContainer.classList.contains('hidden')) return;
-        confirmUnsavedChanges(() => {
-          selectCollaborator(collab.id);
-        });
-      });
-
-      collabItem.querySelector('.btn-item-edit').addEventListener('click', (e) => {
-        e.stopPropagation();
         if (selectedCollabId === collab.id && !collabFormContainer.classList.contains('hidden')) return;
         confirmUnsavedChanges(() => {
           openCollabForm(collab);
@@ -2729,6 +2741,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function selectCollaborator(id) {
     selectedCollabId = id;
+    if (currentCompanyId && id) {
+      sessionStorage.setItem(`selected_collab_id_${currentCompanyId}`, id);
+    }
     closeCollabForm();
     const searchVal = searchCollab ? searchCollab.value : '';
     renderCollaboratorsList(searchVal);
@@ -2760,6 +2775,9 @@ document.addEventListener('DOMContentLoaded', () => {
     isCollabFormDirty = false;
     if (collab) {
       selectedCollabId = collab.id;
+      if (currentCompanyId) {
+        sessionStorage.setItem(`selected_collab_id_${currentCompanyId}`, collab.id);
+      }
       const searchVal = searchCollab ? searchCollab.value : '';
       renderCollaboratorsList(searchVal);
       updateMockupPreview();
@@ -3379,7 +3397,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const collabRes = await apiFetch(`${API_BASE}/companies/${companyId}/collaborators`);
       collaborators = await collabRes.json();
       
-      if (collaborators.length > 0) {
+      const savedSelectedId = sessionStorage.getItem(`selected_collab_id_${companyId}`);
+      if (savedSelectedId && collaborators.some(c => c.id === savedSelectedId)) {
+        selectedCollabId = savedSelectedId;
+      } else if (collaborators.length > 0) {
         selectedCollabId = collaborators[0].id;
       } else {
         selectedCollabId = null;
@@ -3394,9 +3415,20 @@ document.addEventListener('DOMContentLoaded', () => {
       viewCompanyDetail.classList.remove('hidden');
       updateLayoutMode();
       
-      // Default tab to company on detail entry
-      const tabBtnCompany = document.querySelector('.tab-btn[data-tab="tab-company"]');
-      if (tabBtnCompany) tabBtnCompany.click();
+      // Restore tab and collaborator form state
+      const savedTab = sessionStorage.getItem(`active_company_tab_${companyId}`) || 'tab-company';
+      const tabButtons = document.querySelectorAll('.tab-btn');
+      const tabContents = document.querySelectorAll('.tab-content');
+      const tabBtnToClick = document.querySelector(`.tab-btn[data-tab="${savedTab}"]`) || document.querySelector('.tab-btn[data-tab="tab-company"]');
+      if (tabBtnToClick) {
+        tabButtons.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.add('hidden'));
+        tabBtnToClick.classList.add('active');
+        const targetEl = document.getElementById(savedTab);
+        if (targetEl) targetEl.classList.remove('hidden');
+      }
+
+      closeCollabForm();
 
     } catch (err) {
       console.error("Erreur de chargement des détails de l'entreprise:", err);
@@ -3766,13 +3798,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (authToken && currentUser) {
     if (checkInactivity()) {
       const initialHash = window.location.hash || '#home';
-      navigateTo(initialHash, false);
+      renderRoute(initialHash);
     } else {
       const initialHash = window.location.hash || '#dashboard';
-      navigateTo(initialHash, false);
+      renderRoute(initialHash);
     }
   } else {
     const initialHash = window.location.hash || '#home';
-    navigateTo(initialHash, false);
+    renderRoute(initialHash);
   }
 });
