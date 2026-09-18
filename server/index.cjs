@@ -1750,11 +1750,8 @@ async function buildVCardBuffer(collab, company, req = null) {
   const pad = (n) => String(n).padStart(2, '0');
   const formattedDateGMT = `${pad(now.getUTCDate())}/${pad(now.getUTCMonth() + 1)}/${now.getUTCFullYear()} à ${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())} GMT`;
 
-  // NOTE property: Virtual card link and Origin annotation if enabled
+  // NOTE property: Origin annotation if enabled
   const noteParts = [];
-  if (vcfIncludeCardUrl && cardUrl) {
-    noteParts.push(`Carte de visite en ligne : ${cardUrl}`);
-  }
   if (vcfAnnotationOrigin) {
     noteParts.push(`Contact généré par tdconnect.fr le ${formattedDateGMT}`);
   }
