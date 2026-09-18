@@ -242,6 +242,23 @@ function generateUnknownCardHTML() {
 </html>`;
 }
 
+// --- Br line-break helpers ---
+function stripBr(text) {
+  if (!text) return '';
+  return String(text).replace(/<\s*br\s*\/?>/gi, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function renderWithBr(text) {
+  if (!text) return '';
+  const escaped = String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+  return escaped.replace(/&lt;\s*br\s*\/?&gt;/gi, '<br/>');
+}
+
 // --- HTML Template for Virtual Business Card ---
 function generateVirtualCardHTML(collab, company, isStandalone = false) {
   const cardStatus = checkCardStatus(collab, company);
@@ -252,8 +269,8 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   const avatarSize = company.avatar_size != null ? parseInt(company.avatar_size, 10) : 100;
   const logoX = company.logo_x != null ? parseInt(company.logo_x, 10) : 0;
   
-  const cleanFirst = collab.firstName.trim().replace(/[^a-zA-Z0-9-]/g, '_');
-  const cleanLast = collab.lastName.trim().toUpperCase().replace(/[^a-zA-Z0-9-]/g, '_');
+  const cleanFirst = stripBr(collab.firstName || '').trim().replace(/[^a-zA-Z0-9-]/g, '_');
+  const cleanLast = stripBr(collab.lastName || '').trim().toUpperCase().replace(/[^a-zA-Z0-9-]/g, '_');
   const vcfFilename = `${cleanFirst}_${cleanLast}.vcf`;
   
   const showCustomMsg = company.show_tdconnect_message !== 0;
@@ -269,6 +286,10 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   
   // Resolve profile picture with alignment properties
   let avatarHTML = '';
+  const cleanFirstDisplay = stripBr(collab.firstName || '');
+  const cleanLastDisplay = stripBr(collab.lastName || '');
+  const initials = getCollaboratorInitials(cleanFirstDisplay, cleanLastDisplay);
+
   if (collab.photoUrl && collab.photoUrl !== '[Photo Base64]') {
     const zoom = collab.photoZoom != null ? parseFloat(collab.photoZoom) : 1.0;
     const x = collab.photoX != null ? parseFloat(collab.photoX) : 50;
@@ -284,9 +305,8 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       photoSrc = `./photo.${photoExt}`;
     }
     
-    avatarHTML = `<img src="${photoSrc}" style="transform: scale(${zoom}); transform-origin: ${x}% ${y}%; object-fit: cover; width: 100%; height: 100%;" alt="${collab.firstName} ${collab.lastName}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'initials-avatar\\'>${getCollaboratorInitials(collab.firstName, collab.lastName)}</div>';" />`;
+    avatarHTML = `<img src="${photoSrc}" style="transform: scale(${zoom}); transform-origin: ${x}% ${y}%; object-fit: cover; width: 100%; height: 100%;" alt="${cleanFirstDisplay} ${cleanLastDisplay}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'initials-avatar\\'>${initials}</div>';" />`;
   } else {
-    const initials = getCollaboratorInitials(collab.firstName, collab.lastName);
     avatarHTML = `<div class="initials-avatar">${initials}</div>`;
   }
 
@@ -332,11 +352,11 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   if (collab.address && collab.address.trim()) {
     const rawCollab = collab.address.trim();
     if (rawCollab.includes('\n')) {
-      formattedAddress = rawCollab.replace(/\r\n|\r|\n/g, '<br/>');
+      formattedAddress = renderWithBr(rawCollab.replace(/\r\n|\r|\n/g, '<br/>'));
     } else if (rawCollab.includes(',')) {
-      formattedAddress = rawCollab.split(',').map(s => s.trim()).filter(Boolean).join('<br/>');
+      formattedAddress = rawCollab.split(',').map(s => renderWithBr(s.trim())).filter(Boolean).join('<br/>');
     } else {
-      formattedAddress = rawCollab;
+      formattedAddress = renderWithBr(rawCollab);
     }
   } else {
     const mainStreet = (company.address || '').trim();
@@ -345,10 +365,10 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     const mainCountry = (company.country || '').trim();
     
     const lines = [];
-    if (mainStreet) lines.push(mainStreet);
+    if (mainStreet) lines.push(renderWithBr(mainStreet));
     const zipCity = [mainZip, mainCity].filter(Boolean).join(' ');
-    if (zipCity) lines.push(zipCity);
-    if (mainCountry) lines.push(mainCountry);
+    if (zipCity) lines.push(renderWithBr(zipCity));
+    if (mainCountry) lines.push(renderWithBr(mainCountry));
 
     formattedAddress = lines.join('<br/>');
   }
@@ -418,7 +438,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${collab.firstName} ${collab.lastName} - Carte de Visite Virtuelle</title>
+  <title>${stripBr(collab.firstName)} ${stripBr(collab.lastName)} - Carte de Visite Virtuelle</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -607,6 +627,8 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       font-weight: 700;
       letter-spacing: -0.015em;
       margin-bottom: 0.25rem;
+      line-height: 1.25;
+      word-break: break-word;
     }
 
     .collab-role {
@@ -614,6 +636,8 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       font-weight: 600;
       color: var(--text-muted);
       margin-bottom: 1.25rem;
+      line-height: 1.35;
+      word-break: break-word;
     }
 
     /* Stacked Wide Action Buttons */
@@ -890,8 +914,12 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       ${avatarHTML}
     </div>
 
-    <h1 class="collab-name">${collab.firstName || ''} ${collab.lastName ? collab.lastName.toUpperCase() : ''}</h1>
-    ${collab.role ? `<p class="collab-role">${collab.role}</p>` : ''}
+    ${(() => {
+      const civilityPrefix = collab.civility ? collab.civility.trim() + ' ' : '';
+      const collabFullName = `${civilityPrefix}${collab.firstName || ''} ${collab.lastName ? collab.lastName.toUpperCase() : ''}`.trim();
+      return `<h1 class="collab-name">${renderWithBr(collabFullName)}</h1>`;
+    })()}
+    ${collab.role ? `<p class="collab-role">${renderWithBr(collab.role)}</p>` : ''}
 
     ${buttonsHTML}
 
@@ -1648,24 +1676,25 @@ async function buildVCardBuffer(collab, company, req = null) {
   const vcfAnnotationOrigin = settings.vcf_annotation_origin === '1' || settings.vcf_annotation_origin === 'true';
   const vcfIncludeCardUrl = settings.vcf_include_card_url === '1' || settings.vcf_include_card_url === 'true';
 
-  const companyName = (company.name || '').trim();
+  const companyName = stripBr(company.name || '').trim();
   const companyUrl = (company.domain || '').trim();
-  let street = (collab.address || '').trim();
-  let zip = (collab.zip || '').trim();
-  let city = (collab.city || '').trim();
-  let country = (collab.country || '').trim();
+  let street = stripBr(collab.address || '').trim();
+  let zip = stripBr(collab.zip || '').trim();
+  let city = stripBr(collab.city || '').trim();
+  let country = stripBr(collab.country || '').trim();
 
   if (!street && !zip && !city && !country) {
-    street = (company.address || '').trim();
-    zip = (company.zip || '').trim();
-    city = (company.city || '').trim();
-    country = (company.country || '').trim();
+    street = stripBr(company.address || '').trim();
+    zip = stripBr(company.zip || '').trim();
+    city = stripBr(company.city || '').trim();
+    country = stripBr(company.country || '').trim();
   }
 
-  const lastName = (collab.lastName || '').trim();
-  const firstName = (collab.firstName || '').trim();
-  const role = (collab.role || '').trim();
-  const email = (collab.email || '').trim();
+  const lastName = stripBr(collab.lastName || '').trim();
+  const firstName = stripBr(collab.firstName || '').trim();
+  const civility = stripBr(collab.civility || '').trim();
+  const role = stripBr(collab.role || '').trim();
+  const email = stripBr(collab.email || '').trim();
 
   const telLines = [];
   const cleanMobile = (collab.phoneMobile || '').trim();
@@ -1729,11 +1758,13 @@ async function buildVCardBuffer(collab, company, req = null) {
     ? `ADR;TYPE=WORK;CHARSET=ISO-8859-1:;;${street};${city};;${zip};${country}`
     : '';
 
+  const fnDisplay = `${civility ? civility + ' ' : ''}${firstName} ${lastName}`.trim();
+
   const vcardArray = [
     "BEGIN:VCARD",
     "VERSION:3.0",
-    `N;CHARSET=ISO-8859-1:${lastName};${firstName};;;`,
-    `FN;CHARSET=ISO-8859-1:${firstName} ${lastName}`.trim(),
+    `N;CHARSET=ISO-8859-1:${lastName};${firstName};;${civility};`,
+    `FN;CHARSET=ISO-8859-1:${fnDisplay}`,
     companyName ? `ORG;CHARSET=ISO-8859-1:${companyName}` : '',
     role ? `TITLE;CHARSET=ISO-8859-1:${role}` : '',
     ...telLines,
@@ -1751,7 +1782,8 @@ async function buildVCardBuffer(collab, company, req = null) {
 
 function sanitizeFilename(str) {
   if (!str) return '';
-  const unaccented = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const stripped = stripBr(str);
+  const unaccented = stripped.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   return unaccented.trim().replace(/[^a-zA-Z0-9-]/g, '_');
 }
 

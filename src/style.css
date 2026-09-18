@@ -1331,7 +1331,8 @@ label {
   font-size: 1.45rem;
   font-weight: 700;
   color: #0f172a;
-  line-height: 1.2;
+  line-height: 1.25;
+  word-break: break-word;
 }
 
 .prev-collab-role {
@@ -1340,6 +1341,8 @@ label {
   color: #64748b;
   margin-top: 0.2rem;
   margin-bottom: 0.85rem;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 /* Stacked Wide Action Buttons (Estimancy style) */

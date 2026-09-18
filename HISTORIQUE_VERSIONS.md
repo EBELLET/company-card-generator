@@ -5,15 +5,42 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.7.7-correctifs-routeur-et-liste-collaborateurs`
-* **Date** : 2 septembre 2026
+* **Version / Tag** : `v2.7.9-saut-de-ligne-br-champs-collaborateur`
+* **Date** : 18 septembre 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.7.7-correctifs-routeur-et-liste-collaborateurs` (Dernière version)
+### 🚀 Version `v2.7.9-saut-de-ligne-br-champs-collaborateur` (Dernière version)
+**Thème : Prise en charge des sauts de ligne via le code `<br>` dans les champs texte des collaborateurs**
+* **Aperçu mobile et Carte virtuelle HTML publique** :
+  * Interprétation du code `<br>` (ainsi que `<br/>`, `<br />`, `<BR>`) pour créer un véritable retour à la ligne dans tous les champs texte de la fiche collaborateur (*Fonction / Poste*, *Civilité*, *Prénom*, *Nom*, *Adresse*).
+  * Traitement sécurisé anti-XSS via `renderWithBr()` pour empêcher toute injection HTML malveillante.
+  * Ajustement du `line-height` et du retour à la ligne (`word-break: break-word`) pour une présentation nette et aérée des intitulés multilignes.
+* **Effacement automatique dans le fichier .vcf (vCard)** :
+  * Nettoyage systématique via `stripBr()` de tous les champs injectés dans la vCard (`TITLE`, `FN`, `N`, `ADR`, `ORG`).
+  * Les codes `<br>` sont effacés et remplacés par un espace propre, préservant la netteté du carnet d'adresses des smartphones.
+* **Liste latérale des collaborateurs** :
+  * Rendu compact et net sans balise `<br>` apparente dans la liste sommaire d'administration.
+
+---
+
+### 🚀 Version `v2.7.8-correctif-timeout-inactivite-mobile`
+**Thème : Respect strict du délai d'inactivité (Timeout) sur mobile et à la reprise d'écran**
+* **Persistance & Non-écrasement de l'horodatage au rechargement** :
+  * Préservation de l'horodatage de la dernière activité (`tdconnect_last_activity`) au démarrage de l'application sans écrasement automatique avec `Date.now()`.
+  * Synchronisation conjointe du timestamp dans `sessionStorage` et `localStorage`.
+  * Mise en cache locale du délai configuré (`tdconnect_inactivity_timeout`) pour une évaluation synchrone immédiate dès le chargement de la page.
+* **Neutralisation du premier contact tactile au réveil (`touchstart`)** :
+  * Contrôle préalable de l'état d'expiration de la session avant d'accepter de rafraîchir l'horodatage lors d'un événement utilisateur (toucher tactile, clic, saisie).
+* **Interception des événements de reprise système** :
+  * Écoute conjointe de `visibilitychange`, `pageshow` et `focus` pour déconnecter immédiatement dès la sortie de veille ou le retour sur l'onglet mobile.
+
+---
+
+### 🚀 Version `v2.7.7-correctifs-routeur-et-liste-collaborateurs`
 **Thème : Correctifs du routeur SPA au rafraîchissement (F5), isolation multi-comptes et refonte UX de la liste des collaborateurs**
 * **Stabilité du routeur SPA & Session F5** :
   * Correction du problème de déconnexion/retour au landing page lors d'un rafraîchissement (F5) en réexécutant le rendu de route (`renderRoute`) directement au démarrage.

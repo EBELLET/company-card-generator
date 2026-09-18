@@ -86,13 +86,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- General App Settings Management ---
-  let inactivityTimeoutMinutes = 60; // Valeur par défaut
+  const cachedTimeout = parseInt(localStorage.getItem('tdconnect_inactivity_timeout') || '60', 10);
+  let inactivityTimeoutMinutes = isNaN(cachedTimeout) ? 60 : cachedTimeout;
   let vcfAnnotationOrigin = true;
   let vcfIncludeCardUrl = true;
   let supportEmail = '';
-  let lastActivityTime = Date.now();
-  if (authToken && currentUser) {
+  const rawStoredActivity = sessionStorage.getItem('tdconnect_last_activity') || localStorage.getItem('tdconnect_last_activity') || null;
+  let lastActivityTime = rawStoredActivity ? parseInt(rawStoredActivity, 10) : Date.now();
+  if (!rawStoredActivity && authToken && currentUser) {
     sessionStorage.setItem('tdconnect_last_activity', lastActivityTime.toString());
+    localStorage.setItem('tdconnect_last_activity', lastActivityTime.toString());
   }
   let inactivityCheckInterval = null;
   let lastThrottleTime = 0;
@@ -112,6 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         if (typeof data.inactivityTimeoutMinutes === 'number') {
           inactivityTimeoutMinutes = data.inactivityTimeoutMinutes;
+          localStorage.setItem('tdconnect_inactivity_timeout', data.inactivityTimeoutMinutes.toString());
+          checkInactivity();
         }
         if (typeof data.vcfAnnotationOrigin === 'boolean') {
           vcfAnnotationOrigin = data.vcfAnnotationOrigin;
@@ -136,10 +141,18 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateLastActivity() {
     const now = Date.now();
     if (now - lastThrottleTime < 1000) return;
+
+    // Si la session est déjà expirée (ex: réveil d'un smartphone),
+    // on ne renouvelle surtout pas le timestamp : on déclenche la déconnexion !
+    if (checkInactivity()) {
+      return;
+    }
+
     lastThrottleTime = now;
     lastActivityTime = now;
     if (authToken && currentUser) {
       sessionStorage.setItem('tdconnect_last_activity', now.toString());
+      localStorage.setItem('tdconnect_last_activity', now.toString());
     }
   }
 
@@ -147,8 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!authToken || !currentUser) return false;
     if (inactivityTimeoutMinutes <= 0) return false; // Déconnexion d'inactivité désactivée
     const timeoutMs = getInactivityTimeoutMs();
-    const storedActivity = parseInt(sessionStorage.getItem('tdconnect_last_activity') || '0', 10);
-    const effectiveLastActivity = Math.max(lastActivityTime, storedActivity);
+    const storedActivity = parseInt(sessionStorage.getItem('tdconnect_last_activity') || localStorage.getItem('tdconnect_last_activity') || '0', 10);
+    const effectiveLastActivity = Math.max(lastActivityTime || 0, storedActivity || 0);
     if (effectiveLastActivity > 0 && Date.now() - effectiveLastActivity >= timeoutMs) {
       handleInactivityLogout();
       return true;
@@ -185,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     window.addEventListener('focus', checkInactivity);
+    window.addEventListener('pageshow', checkInactivity);
   }
 
   async function apiFetch(url, options = {}) {
@@ -1443,6 +1457,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         if (data.success) {
           inactivityTimeoutMinutes = timeoutVal;
+          localStorage.setItem('tdconnect_inactivity_timeout', timeoutVal.toString());
           vcfAnnotationOrigin = annotationVal;
           vcfIncludeCardUrl = includeUrlVal;
           if (data.supportEmail) {
@@ -1948,9 +1963,26 @@ document.addEventListener('DOMContentLoaded', () => {
     return clean.substring(0, 2).toUpperCase();
   }
 
+  // --- Br line-break helpers ---
+  function stripBr(text) {
+    if (!text) return '';
+    return String(text).replace(/<\s*br\s*\/?>/gi, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function renderWithBr(text) {
+    if (!text) return '';
+    const escaped = String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+    return escaped.replace(/&lt;\s*br\s*\/?&gt;/gi, '<br/>');
+  }
+
   function getCollaboratorInitials(firstName, lastName) {
-    const f = (firstName || '').trim();
-    const l = (lastName || '').trim();
+    const f = stripBr(firstName || '').trim();
+    const l = stripBr(lastName || '').trim();
     const fInit = f ? f[0].toUpperCase() : '';
     const lInit = l ? l[0].toUpperCase() : '';
     return (fInit + lInit) || 'C';
@@ -2218,11 +2250,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (collabAddr && collabAddr.trim()) {
       const raw = collabAddr.trim();
       if (raw.includes('\n')) {
-        return raw.replace(/\r\n|\r|\n/g, '<br/>');
+        return renderWithBr(raw.replace(/\r\n|\r|\n/g, '<br/>'));
       } else if (raw.includes(',')) {
-        return raw.split(',').map(s => s.trim()).filter(Boolean).join('<br/>');
+        return raw.split(',').map(s => renderWithBr(s.trim())).filter(Boolean).join('<br/>');
       }
-      return raw;
+      return renderWithBr(raw);
     }
 
     const street = (companyStreet || '').trim();
@@ -2231,10 +2263,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const country = (companyCountry || '').trim();
 
     const lines = [];
-    if (street) lines.push(street);
+    if (street) lines.push(renderWithBr(street));
     const zipCity = [zip, city].filter(Boolean).join(' ');
-    if (zipCity) lines.push(zipCity);
-    if (country) lines.push(country);
+    if (zipCity) lines.push(renderWithBr(zipCity));
+    if (country) lines.push(renderWithBr(country));
 
     return lines.join('<br/>');
   }
@@ -2306,9 +2338,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const prefix = collab.civility ? collab.civility.trim() + ' ' : '';
-      prevCollabName.textContent = `${prefix}${collab.firstName} ${collab.lastName.toUpperCase()}`;
+      const fullName = `${prefix}${collab.firstName || ''} ${collab.lastName ? collab.lastName.toUpperCase() : ''}`.trim();
+      prevCollabName.innerHTML = renderWithBr(fullName);
       
-      prevCollabRole.textContent = collab.role || '';
+      prevCollabRole.innerHTML = renderWithBr(collab.role || '');
       if (collab.role) {
         prevCollabRole.classList.remove('hidden');
       } else {
@@ -2680,8 +2713,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       collabItem.innerHTML = `
         <div class="collab-item-info">
-          <span class="collab-item-name">${indexBadgeHTML}${collab.lastName.toUpperCase()} ${collab.firstName}</span>
-          <span class="collab-item-role">${collab.role || 'Collaborateur'}</span>
+          <span class="collab-item-name">${indexBadgeHTML}${stripBr(collab.lastName).toUpperCase()} ${stripBr(collab.firstName)}</span>
+          <span class="collab-item-role">${stripBr(collab.role) || 'Collaborateur'}</span>
           ${connBadgeHTML}
         </div>
         <div class="collab-item-actions">
