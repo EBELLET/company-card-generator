@@ -1732,14 +1732,19 @@ async function buildVCardBuffer(collab, company, req = null) {
     cardUrl = `https://tdconnect.fr${cardPath}`;
   }
 
-  // URL property: Include company website and virtual card URL if enabled
+  // URL properties: Company website (Work) and Virtual card URL (Carte de visite)
   const urlLines = [];
+  let itemIndex = 1;
   if (companyUrl) {
     const formattedUrl = companyUrl.startsWith('http') ? companyUrl : 'https://' + companyUrl;
-    urlLines.push(`URL;CHARSET=ISO-8859-1:${formattedUrl}`);
+    urlLines.push(`item${itemIndex}.URL;type=pref:${formattedUrl}`);
+    urlLines.push(`item${itemIndex}.X-ABLabel:_$!<Work>!$_`);
+    itemIndex++;
   }
   if (vcfIncludeCardUrl && cardUrl) {
-    urlLines.push(`URL;CHARSET=ISO-8859-1:${cardUrl}`);
+    urlLines.push(`item${itemIndex}.URL:${cardUrl}`);
+    urlLines.push(`item${itemIndex}.X-ABLabel:Carte de visite`);
+    itemIndex++;
   }
 
   // Format GMT Date & Time
@@ -1747,8 +1752,11 @@ async function buildVCardBuffer(collab, company, req = null) {
   const pad = (n) => String(n).padStart(2, '0');
   const formattedDateGMT = `${pad(now.getUTCDate())}/${pad(now.getUTCMonth() + 1)}/${now.getUTCFullYear()} à ${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())} GMT`;
 
-  // NOTE property: Origin annotation if enabled
+  // NOTE property: Virtual card link and Origin annotation if enabled
   const noteParts = [];
+  if (vcfIncludeCardUrl && cardUrl) {
+    noteParts.push(`Carte de visite en ligne : ${cardUrl}`);
+  }
   if (vcfAnnotationOrigin) {
     noteParts.push(`Contact généré par tdconnect.fr le ${formattedDateGMT}`);
   }

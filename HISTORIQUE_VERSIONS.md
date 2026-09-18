@@ -22,8 +22,13 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 * **Effacement automatique dans le fichier .vcf (vCard)** :
   * Nettoyage systématique via `stripBr()` de tous les champs injectés dans la vCard (`TITLE`, `FN`, `N`, `ADR`, `ORG`).
   * Les codes `<br>` sont effacés et remplacés par un espace propre, préservant la netteté du carnet d'adresses des smartphones.
-* **Contraste de l'encart Réinitialisation de mot de passe** :
+* **Contraste & gestion d'erreur de l'encart Réinitialisation de mot de passe** :
   * Remplacement de la couleur blanche par du noir/gris foncé (`#0f172a` et `#334155`) sur l'identifiant et le titulaire du compte concerné dans la modale de réinitialisation de mot de passe, garantissant une lisibilité optimale sur fond clair.
+  * Positionnement du bloc de message d'état hors du formulaire pour afficher immédiatement un message d'alerte explicite si le lien est invalide ou expiré, avec bouton de réémission rapide.
+* **Structuration multi-URLs et enrichissement du fichier .vcf (vCard)** :
+  * **Site web de l'entreprise** : déclaré sous l'étiquette standard `bureau` (`item1.URL` + `X-ABLabel:_$!<Work>!$_`).
+  * **Carte de visite virtuelle** : déclarée sous l'étiquette explicite personnalisée `Carte de visite` (`item2.URL` + `X-ABLabel:Carte de visite`), offrant un affichage dédié et propre sur iPhone et Android.
+  * **Section Notes** : ajout systématique de l'URL directe de la carte de visite en tête de la note (`Carte de visite en ligne : https://...`), cliquable d'un simple toucher sur tous les carnets d'adresses mobiles.
 * **Liste latérale des collaborateurs** :
   * Rendu compact et net sans balise `<br>` apparente dans la liste sommaire d'administration.
 
