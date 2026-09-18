@@ -895,27 +895,58 @@ document.addEventListener('DOMContentLoaded', () => {
     if (resetModal) resetModal.classList.add('hidden');
   });
 
+  const resetRetryBox = document.getElementById('reset-retry-box');
+  const btnGotoForgotAgain = document.getElementById('btn-goto-forgot-again');
+  if (btnGotoForgotAgain) {
+    btnGotoForgotAgain.addEventListener('click', () => {
+      if (resetModal) resetModal.classList.add('hidden');
+      const forgotModal = document.getElementById('forgot-password-modal');
+      if (forgotModal) forgotModal.classList.remove('hidden');
+    });
+  }
+
   async function openResetModal(token) {
     if (!resetModal) return;
     resetModal.classList.remove('hidden');
     resetModal.dataset.resetToken = token;
-    if (resetMsg) { resetMsg.textContent = 'Vérification du lien en cours...'; resetMsg.className = 'form-msg'; }
-    if (resetForm) { resetForm.reset(); resetForm.style.display = 'block'; }
+    if (resetRetryBox) resetRetryBox.classList.add('hidden');
+    if (resetMsg) {
+      resetMsg.textContent = 'Vérification du lien en cours...';
+      resetMsg.className = 'form-msg';
+      resetMsg.style.display = 'block';
+    }
+    if (resetForm) {
+      resetForm.reset();
+      resetForm.style.display = 'none';
+    }
     if (resetAccountInfo) resetAccountInfo.classList.add('hidden');
 
     try {
-      const res = await fetch(`${API_BASE}/auth/verify-reset-token/${token}`);
+      const res = await fetch(`${API_BASE}/auth/verify-reset-token/${encodeURIComponent(token)}`);
       const data = await res.json();
       if (!res.ok || !data.valid) {
         throw new Error(data.error || "Ce lien de réinitialisation est invalide ou a expiré.");
       }
-      if (resetMsg) resetMsg.textContent = '';
-      if (resetInfoId) resetInfoId.textContent = data.userId;
-      if (resetInfoName) resetInfoName.textContent = `${data.firstName} ${data.lastName} (${data.email})`;
+      if (resetMsg) {
+        resetMsg.textContent = '';
+        resetMsg.className = 'form-msg';
+        resetMsg.style.display = 'none';
+      }
+      if (resetInfoId) resetInfoId.textContent = data.userId || '-';
+      if (resetInfoName) resetInfoName.textContent = `${data.firstName || ''} ${data.lastName || ''} (${data.email || ''})`.trim();
       if (resetAccountInfo) resetAccountInfo.classList.remove('hidden');
+      if (resetForm) resetForm.style.display = 'block';
+      if (resetRetryBox) resetRetryBox.classList.add('hidden');
     } catch (err) {
-      if (resetMsg) { resetMsg.textContent = err.message; resetMsg.className = 'form-msg error'; }
+      console.error('[ResetPassword] Erreur vérification:', err);
+      if (resetMsg) {
+        resetMsg.textContent = err.message || "Ce lien de réinitialisation est invalide ou a expiré.";
+        resetMsg.className = 'form-msg error';
+        resetMsg.style.display = 'block';
+      }
       if (resetForm) resetForm.style.display = 'none';
+      if (resetAccountInfo) resetAccountInfo.classList.add('hidden');
+      if (resetRetryBox) resetRetryBox.classList.remove('hidden');
     }
   }
 

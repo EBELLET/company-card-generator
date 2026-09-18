@@ -1288,14 +1288,19 @@ app.post('/api/auth/register', async (req, res) => {
 // Verify password reset token and return account info
 app.get('/api/auth/verify-reset-token/:token', async (req, res) => {
   try {
-    const record = await db.getPasswordResetToken(req.params.token);
+    const rawToken = req.params.token ? req.params.token.trim() : '';
+    console.log(`[Mail] Vérification demandée pour le token : "${rawToken.substring(0, 12)}..."`);
+    const record = await db.getPasswordResetToken(rawToken);
     if (!record) {
+      console.warn(`[Mail] ⚠️ Token de réinitialisation introuvable ou expiré : "${rawToken.substring(0, 12)}..."`);
       return res.status(400).json({ valid: false, error: "Ce lien de réinitialisation est invalide ou a expiré." });
     }
     const user = await db.getUserById(record.user_id);
     if (!user) {
+      console.warn(`[Mail] ⚠️ Utilisateur introuvable pour le token : ${record.user_id}`);
       return res.status(404).json({ valid: false, error: "Compte utilisateur non trouvé." });
     }
+    console.log(`[Mail] ✔ Token valide pour le compte "${user.id}" (${user.email})`);
     res.json({
       valid: true,
       userId: user.id,
