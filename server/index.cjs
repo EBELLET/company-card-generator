@@ -1722,13 +1722,11 @@ async function buildVCardBuffer(collab, company, req = null) {
   }
 
   let cardUrl = '';
+  const cardPath = collab.customSlug ? `/c/${collab.customSlug}` : `/card/${collab.id}`;
   if (req && req.get('host')) {
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
     const host = req.get('host');
-    const cardPath = collab.customSlug ? `/c/${collab.customSlug}` : `/card/${collab.id}`;
-    cardUrl = `${protocol}://${host}${cardPath}`;
+    cardUrl = `https://${host}${cardPath}`;
   } else {
-    const cardPath = collab.customSlug ? `/c/${collab.customSlug}` : `/card/${collab.id}`;
     cardUrl = `https://tdconnect.fr${cardPath}`;
   }
 
