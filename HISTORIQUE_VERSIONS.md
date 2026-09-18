@@ -22,6 +22,8 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 * **Effacement automatique dans le fichier .vcf (vCard)** :
   * Nettoyage systématique via `stripBr()` de tous les champs injectés dans la vCard (`TITLE`, `FN`, `N`, `ADR`, `ORG`).
   * Les codes `<br>` sont effacés et remplacés par un espace propre, préservant la netteté du carnet d'adresses des smartphones.
+* **Contraste de l'encart Réinitialisation de mot de passe** :
+  * Remplacement de la couleur blanche par du noir/gris foncé (`#0f172a` et `#334155`) sur l'identifiant et le titulaire du compte concerné dans la modale de réinitialisation de mot de passe, garantissant une lisibilité optimale sur fond clair.
 * **Liste latérale des collaborateurs** :
   * Rendu compact et net sans balise `<br>` apparente dans la liste sommaire d'administration.
 
