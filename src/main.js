@@ -1812,11 +1812,30 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSaveCompany.addEventListener('click', async () => {
       if (!currentCompanyId) return;
 
+      const companyName = companyNameInput.value.trim();
+      if (!companyName) {
+        alert("Le nom de l'entreprise ne peut pas être vide.");
+        return;
+      }
+
+      // Pré-validation côté client : vérifier les doublons insensibles à la casse dans la liste locale
+      if (Array.isArray(allCompanies)) {
+        const duplicate = allCompanies.find(c =>
+          Number(c.id) !== Number(currentCompanyId) &&
+          c.name &&
+          c.name.trim().toLowerCase() === companyName.toLowerCase()
+        );
+        if (duplicate) {
+          alert(`L'entreprise "${duplicate.name}" existe déjà dans le système.`);
+          return;
+        }
+      }
+
       btnSaveCompany.disabled = true;
       btnSaveCompany.textContent = 'Enregistrement...';
 
       const data = {
-        name: companyNameInput.value.trim(),
+        name: companyName,
         domain: companyDomainInput.value.trim(),
         address: companyAddressInput.value.trim(),
         zip: companyZipInput.value.trim(),
@@ -1848,6 +1867,14 @@ document.addEventListener('DOMContentLoaded', () => {
         isCompanyFormDirty = false;
         activeCompanyTitle.textContent = data.name;
 
+        // Synchroniser le nom dans la liste locale allCompanies
+        if (Array.isArray(allCompanies)) {
+          const localComp = allCompanies.find(c => Number(c.id) === Number(currentCompanyId));
+          if (localComp) {
+            Object.assign(localComp, data);
+          }
+        }
+
         // Visual success confirmation on button
         btnSaveCompany.textContent = 'Enregistré !';
         btnSaveCompany.style.backgroundColor = 'var(--success-color)';
@@ -1858,7 +1885,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 2000);
       } catch (err) {
         console.error("Échec de la sauvegarde de l'entreprise:", err);
-        alert("Erreur lors de la sauvegarde de l'entreprise.");
+        alert(err.message || "Erreur lors de la sauvegarde de l'entreprise.");
         btnSaveCompany.disabled = false;
         btnSaveCompany.textContent = 'Valider les modifications';
       }
@@ -2158,9 +2185,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Accent Colors ---
 
+  function getButtonContrastColor(hexColor) {
+    if (!hexColor || typeof hexColor !== 'string') return { textColor: '#ffffff', isLight: false };
+    let hex = hexColor.replace('#', '').trim();
+    if (hex.length === 3) {
+      hex = hex.split('').map(c => c + c).join('');
+    }
+    if (hex.length !== 6) return { textColor: '#ffffff', isLight: false };
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    const isLight = brightness > 165;
+    return {
+      textColor: isLight ? '#0f172a' : '#ffffff',
+      isLight
+    };
+  }
+
   function applyAccentColor(color) {
     currentAccentColor = color;
     cardElement.style.setProperty('--accent-color', color);
+    const { textColor, isLight } = getButtonContrastColor(color);
+    cardElement.style.setProperty('--accent-contrast', textColor);
+    if (isLight) {
+      cardElement.classList.add('light-accent');
+    } else {
+      cardElement.classList.remove('light-accent');
+    }
     if (!logoCustomUrl && !logoFetchedUrl) {
       setFallbackLogo();
     }
@@ -3120,6 +3172,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    if (Array.isArray(allCompanies)) {
+      const duplicate = allCompanies.find(c =>
+        c.name && c.name.trim().toLowerCase() === name.toLowerCase()
+      );
+      if (duplicate) {
+        alert(`L'entreprise "${duplicate.name}" existe déjà dans le système.`);
+        return;
+      }
+    }
+
     try {
       const res = await apiFetch(`${API_BASE}/companies`, {
         method: 'POST',
@@ -3142,7 +3204,7 @@ document.addEventListener('DOMContentLoaded', () => {
       loadCompanyDetail(newCompany.id);
     } catch (err) {
       console.error("Erreur lors de la création de l'entreprise:", err);
-      alert("Erreur réseau lors de la création de l'entreprise.");
+      alert(err.message || "Erreur réseau lors de la création de l'entreprise.");
     }
   });
 
@@ -3441,7 +3503,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update mockup elements classes
       cardElement.className = `virtual-card-preview ${currentTheme} ${currentFont}`;
-      cardElement.style.setProperty('--accent-color', currentAccentColor);
+      applyAccentColor(currentAccentColor);
 
       // Handle custom logo preview thumb
       if (logoCustomUrl) {

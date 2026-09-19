@@ -1391,7 +1391,7 @@ body.theme-obsidian .preview-share-contact-text {
 .preview-action-row-btn {
   text-decoration: none;
   background: var(--accent-color);
-  color: #ffffff !important;
+  color: var(--accent-contrast, #ffffff) !important;
   font-weight: 600;
   font-size: 0.88rem;
   padding: 0.65rem 0.85rem;
@@ -1403,6 +1403,10 @@ body.theme-obsidian .preview-share-contact-text {
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.virtual-card-preview.light-accent .preview-action-row-btn {
+  border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .preview-action-row-btn:hover {
@@ -1647,6 +1651,7 @@ body.theme-obsidian .preview-share-contact-text {
 .virtual-card-preview.theme-aurora .preview-company-address { color: rgba(255, 255, 255, 0.8) !important; }
 .virtual-card-preview.theme-aurora .preview-card-footer { color: rgba(255, 255, 255, 0.7) !important; }
 .virtual-card-preview.theme-aurora .preview-action-row-btn { background: #ffffff !important; color: var(--accent-color) !important; }
+.virtual-card-preview.theme-aurora.light-accent .preview-action-row-btn { color: #0f172a !important; border: 1px solid rgba(0, 0, 0, 0.12); }
 .virtual-card-preview.theme-aurora .preview-action-row-btn:hover { background: rgba(255, 255, 255, 0.9) !important; }
 .virtual-card-preview.theme-aurora .prev-avatar-initials { background: rgba(255, 255, 255, 0.15) !important; color: #ffffff !important; }
 .virtual-card-preview.theme-aurora .preview-avatar-wrapper { border-color: #ffffff !important; }

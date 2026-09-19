@@ -259,10 +259,29 @@ function renderWithBr(text) {
   return escaped.replace(/&lt;\s*br\s*\/?&gt;/gi, '<br/>');
 }
 
+function getButtonContrastColor(hexColor) {
+  if (!hexColor || typeof hexColor !== 'string') return { textColor: '#ffffff', isLight: false };
+  let hex = hexColor.replace('#', '').trim();
+  if (hex.length === 3) {
+    hex = hex.split('').map(c => c + c).join('');
+  }
+  if (hex.length !== 6) return { textColor: '#ffffff', isLight: false };
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  const isLight = brightness > 165;
+  return {
+    textColor: isLight ? '#0f172a' : '#ffffff',
+    isLight
+  };
+}
+
 // --- HTML Template for Virtual Business Card ---
 function generateVirtualCardHTML(collab, company, isStandalone = false) {
   const cardStatus = checkCardStatus(collab, company);
   const accentColor = company.accent_color || '#6366f1';
+  const { textColor: btnTextColor, isLight: isLightAccent } = getButtonContrastColor(accentColor);
   const theme = company.theme || 'theme-minimalist';
   const fontClass = company.font || 'font-outfit';
   const companyName = company.name || '';
@@ -282,7 +301,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     const targetUrl = customMsgUrl.startsWith('http') ? customMsgUrl : 'https://' + customMsgUrl;
     customMsgContentHTML = `<a href="${targetUrl}" target="_blank" style="color: inherit; text-decoration: underline; opacity: 0.9;">${customMsgText}</a>`;
   }
-  const customMsgHTML = (showCustomMsg && customMsgText) ? `<div class="tdconnect-custom-message" style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.8; margin-top: 0.35rem; font-weight: 500; text-align: center; width: 100%;">${customMsgContentHTML}</div>` : '';
+  const customMsgHTML = (showCustomMsg && customMsgText) ? `<div class="tdconnect-custom-message" style="font-size: 0.8rem; color: var(--text-muted); opacity: 0.85; margin-top: 0.45rem; font-weight: 500; text-align: center; width: 100%;">${customMsgContentHTML}</div>` : '';
   
   // Resolve profile picture with alignment properties
   let avatarHTML = '';
@@ -290,22 +309,26 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   const cleanLastDisplay = stripBr(collab.lastName || '');
   const initials = getCollaboratorInitials(cleanFirstDisplay, cleanLastDisplay);
 
-  if (collab.photoUrl && collab.photoUrl !== '[Photo Base64]') {
+  const rawPhoto = (collab.photoUrl || collab.photo_url || '').trim();
+  const hasPhoto = rawPhoto && rawPhoto !== '[Photo Base64]' && rawPhoto !== 'null' && rawPhoto !== 'undefined';
+
+  if (hasPhoto) {
     const zoom = collab.photoZoom != null ? parseFloat(collab.photoZoom) : 1.0;
     const x = collab.photoX != null ? parseFloat(collab.photoX) : 50;
     const y = collab.photoY != null ? parseFloat(collab.photoY) : 50;
     
-    let photoSrc = collab.photoUrl;
+    let photoSrc = rawPhoto;
     if (isStandalone) {
       let photoExt = 'png';
-      if (collab.photoUrl.startsWith('data:image/')) {
-        const mime = collab.photoUrl.split(';')[0].split(':')[1];
+      if (rawPhoto.startsWith('data:image/')) {
+        const mime = rawPhoto.split(';')[0].split(':')[1];
         photoExt = mime.split('/')[1] || 'png';
       }
       photoSrc = `./photo.${photoExt}`;
     }
     
-    avatarHTML = `<img src="${photoSrc}" style="transform: scale(${zoom}); transform-origin: ${x}% ${y}%; object-fit: cover; width: 100%; height: 100%;" alt="${cleanFirstDisplay} ${cleanLastDisplay}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'initials-avatar\\'>${initials}</div>';" />`;
+    avatarHTML = `<img src="${photoSrc}" style="transform: scale(${zoom}); transform-origin: ${x}% ${y}%; object-fit: cover; width: 100%; height: 100%; border-radius: 50%;" alt="${cleanFirstDisplay} ${cleanLastDisplay}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
+    <div class="initials-avatar" style="display: none;">${initials}</div>`;
   } else {
     avatarHTML = `<div class="initials-avatar">${initials}</div>`;
   }
@@ -334,7 +357,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   }
   
   const showNameUnderLogo = company.show_name_under_logo !== 0;
-  const nameSubtext = showNameUnderLogo ? `<div class="company-logo-subtext" style="font-size: 0.85rem; font-weight: 700; margin-top: 0.35rem; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); text-align: center;">${companyName}</div>` : '';
+  const nameSubtext = showNameUnderLogo ? `<div class="company-logo-subtext" style="font-size: 0.95rem; font-weight: 700; margin-top: 0.45rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); text-align: center;">${companyName}</div>` : '';
 
   if (logoSrc) {
     logoHTML = `<a href="${logoTargetUrl}" target="_blank" style="display:flex; flex-direction:column; align-items:center; text-decoration:none; color:inherit;"><img class="company-logo" src="${logoSrc}" alt="${companyName} Logo" />${nameSubtext}</a>`;
@@ -447,6 +470,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
   <style>
     :root {
       --accent: ${accentColor};
+      --accent-contrast: ${btnTextColor};
     }
 
     /* THEME STYLING RULES */
@@ -555,18 +579,18 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     }
 
     .company-logo-text {
-      font-size: 1.45rem;
+      font-size: 1.6rem;
       font-weight: 800;
       letter-spacing: -0.01em;
-      opacity: 0.9;
+      opacity: 0.95;
     }
 
     /* Company Address underneath Logo */
     .company-address {
-      font-size: 0.85rem;
+      font-size: 0.98rem;
       color: var(--text-muted);
-      margin-bottom: 0.85rem;
-      line-height: 1.35;
+      margin-bottom: 0.95rem;
+      line-height: 1.4;
       letter-spacing: 0.02em;
       text-align: center;
       word-break: normal;
@@ -600,15 +624,33 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     }
 
     .initials-avatar {
-      font-size: ${avatarSize * 0.38}px;
+      font-size: ${avatarSize * 0.35}px;
       font-weight: 700;
-      color: var(--accent);
-      background: rgba(99, 102, 241, 0.05);
+      color: #334155;
+      background: #e2e8f0;
       width: 100%;
       height: 100%;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    body.theme-minimalist .initials-avatar {
+      background: #f4f4f5;
+      color: #18181b;
+    }
+
+    body.theme-glass .initials-avatar {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    body.theme-obsidian .initials-avatar {
+      color: #f9fafb;
+      background: rgba(255, 255, 255, 0.05);
     }
 
     body.theme-aurora .initials-avatar {
@@ -616,26 +658,21 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       background: rgba(255, 255, 255, 0.15);
     }
 
-    body.theme-obsidian .initials-avatar {
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.05);
-    }
-
     /* Collaborator Identity Names */
     .collab-name {
-      font-size: 1.45rem;
+      font-size: 1.7rem;
       font-weight: 700;
       letter-spacing: -0.015em;
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.3rem;
       line-height: 1.25;
       word-break: break-word;
     }
 
     .collab-role {
-      font-size: 0.9rem;
+      font-size: 1.05rem;
       font-weight: 600;
       color: var(--text-muted);
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.35rem;
       line-height: 1.35;
       word-break: break-word;
     }
@@ -650,12 +687,12 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     }
 
     .share-contact-text {
-      font-size: 0.85rem;
+      font-size: 0.95rem;
       color: var(--text-muted);
-      margin: 1.5rem 0 0.05rem 0;
+      margin: 1.5rem 0 0.25rem 0;
       text-align: center;
       font-weight: 500;
-      line-height: 1.3;
+      line-height: 1.35;
     }
 
     body.theme-aurora .share-contact-text {
@@ -670,14 +707,14 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       display: flex;
       gap: 0.5rem;
       width: 100%;
-      margin-top: 0.05rem;
+      margin-top: 0.15rem;
     }
 
     .contact-buttons-row .action-row-btn {
       flex: 1;
       min-width: 0;
-      padding: 0.65rem 0.5rem;
-      font-size: 0.85rem;
+      padding: 0.75rem 0.65rem;
+      font-size: 0.95rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -735,11 +772,11 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     .action-row-btn {
       text-decoration: none;
       background: var(--accent);
-      color: #ffffff !important;
+      color: var(--accent-contrast) !important;
       font-weight: 600;
-      font-size: 0.88rem;
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
+      font-size: 0.98rem;
+      padding: 0.82rem 1.15rem;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -747,12 +784,14 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
       cursor: pointer;
       transition: all 0.2s ease;
       box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+      ${isLightAccent ? 'border: 1px solid rgba(0, 0, 0, 0.15);' : ''}
     }
 
     /* Aurora theme specific buttons look white with accent text */
     body.theme-aurora .action-row-btn {
       background: #ffffff;
-      color: var(--accent) !important;
+      color: ${isLightAccent ? '#0f172a' : 'var(--accent)'} !important;
+      ${isLightAccent ? 'border: 1px solid rgba(0, 0, 0, 0.12);' : ''}
     }
 
     .action-row-btn:hover {
@@ -767,13 +806,15 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
 
     /* Footer Info */
     .card-footer {
-      margin-top: 0.35rem;
-      font-size: 0.78rem;
+      margin-top: 0.65rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
-      opacity: 0.8;
+      opacity: 0.85;
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 0.25rem;
+      line-height: 1.3;
     }
 
     body.theme-obsidian .card-footer {
@@ -799,7 +840,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
         border: none;
         border-radius: 16px;
         box-shadow: none;
-        padding: 0.65rem 1rem 0.85rem 1rem;
+        padding: 0.75rem 1rem 1rem 1rem;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -810,33 +851,37 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
         margin-bottom: 0.35rem !important;
       }
       .company-address {
-        font-size: 0.8rem;
-        margin-bottom: 0.55rem;
+        font-size: 0.92rem;
+        margin-bottom: 0.65rem;
       }
       .avatar-wrapper {
         width: ${avatarSize}px !important;
         height: ${avatarSize}px !important;
-        margin-bottom: 0.55rem !important;
+        margin-bottom: 0.65rem !important;
       }
       .initials-avatar {
         font-size: ${Math.round(avatarSize * 0.38)}px !important;
       }
       .collab-name {
-        font-size: 1.45rem;
-        margin-bottom: 0.2rem;
+        font-size: 1.65rem;
+        margin-bottom: 0.25rem;
       }
       .collab-role {
-        font-size: 0.9rem;
-        margin-bottom: 0.65rem;
+        font-size: 1.02rem;
+        margin-bottom: 0.75rem;
       }
       .share-contact-text {
-        margin: 1.25rem 0 0.05rem 0;
-        font-size: 0.85rem;
+        margin: 1.25rem 0 0.15rem 0;
+        font-size: 0.95rem;
       }
       .action-row-btn {
-        font-size: 0.88rem;
-        padding: 0.68rem 0.8rem;
+        font-size: 0.98rem;
+        padding: 0.78rem 0.95rem;
         border-radius: 10px;
+      }
+      .contact-buttons-row .action-row-btn {
+        font-size: 0.95rem;
+        padding: 0.75rem 0.6rem;
       }
       .actions-list-round .action-row-btn {
         width: 52px !important;
@@ -849,8 +894,8 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
         height: 22px;
       }
       .card-footer {
-        margin-top: 0.45rem !important;
-        font-size: 0.78rem;
+        margin-top: 0.65rem !important;
+        font-size: 0.85rem;
       }
     }
     .card-container.is-blurred {
@@ -1015,7 +1060,7 @@ app.put('/api/companies/:id', authenticateToken, async (req, res) => {
     res.json(updated);
   } catch (err) {
     console.error(`Erreur PUT /api/companies/${req.params.id}:`, err.message);
-    res.status(500).json({ error: 'Erreur lors de la modification de l\'entreprise.' });
+    res.status(400).json({ error: err.message || 'Erreur lors de la modification de l\'entreprise.' });
   }
 });
 

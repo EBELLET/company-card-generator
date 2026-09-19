@@ -390,6 +390,20 @@ const addCompany = async (c) => {
 };
 
 const updateCompany = async (id, c) => {
+  const trimmedName = c.name ? c.name.trim() : '';
+  if (!trimmedName) {
+    throw new Error("Le nom de l'entreprise ne peut pas être vide.");
+  }
+
+  // Vérifier qu'aucune autre entreprise ne possède déjà ce nom (insensible à la casse)
+  const [existingByName] = await pool.query(
+    'SELECT id, name FROM company_info WHERE LOWER(name) = LOWER(?) AND id != ? LIMIT 1',
+    [trimmedName, id]
+  );
+  if (existingByName.length > 0) {
+    throw new Error(`L'entreprise "${existingByName[0].name}" existe déjà dans le système.`);
+  }
+
   let subEndDate = null;
   if (c.subscription_end_date !== undefined) {
     subEndDate = c.subscription_end_date || null;
@@ -423,7 +437,7 @@ const updateCompany = async (id, c) => {
       is_subscription_active = ?
     WHERE id = ?
   `, [
-    c.name,
+    trimmedName,
     c.domain || '',
     c.address || '',
     c.zip || '',

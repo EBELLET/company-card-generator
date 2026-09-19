@@ -5,15 +5,47 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.7.9-saut-de-ligne-br-champs-collaborateur`
-* **Date** : 18 septembre 2026
+* **Version / Tag** : `v2.8.0-unicite-nom-entreprise-insensible-casse`
+* **Date** : 19 septembre 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.7.9-saut-de-ligne-br-champs-collaborateur` (Dernière version)
+### 🚀 Version `v2.8.0-unicite-nom-entreprise-insensible-casse` (Dernière version)
+**Thème : Contrôle d'unicité insensible à la casse du nom d'entreprise lors de la modification et création**
+* **Contrôle d'unicité SQL en base de données (`updateCompany`)** :
+  * Vérification systématique par requête SQL `LOWER(TRIM(name)) = LOWER(?) AND id != ?` lors de la modification d'une entreprise existante.
+  * Si une autre entreprise possède déjà ce nom (ex. "TOTO" existant et tentative de renommer en "toto"), la modification est immédiatement rejetée avec un message explicite.
+  * Le changement de casse sur sa propre entreprise (ex. "toto" vers "Toto") reste parfaitement autorisé car l'identifiant est le même.
+* **Gestion des erreurs API (`PUT /api/companies/:id`)** :
+  * Renvoi d'un code HTTP 400 avec le message d'erreur JSON précis (`err.message`) en lieu et place d'une erreur 500 générique masquant la cause.
+* **Expérience utilisateur et pré-validation côté interface (`src/main.js`)** :
+  * Pré-validation instantanée côté client dans `btnSaveCompany` et `btnSaveNewCompany` contre la liste locale `allCompanies`.
+  * Affichage de la notification d'alerte avec le message renvoyé par l'API au lieu d'une alerte d'échec générique.
+  * Synchronisation en direct du nom dans le cache local `allCompanies` après validation.
+* **Contraste adaptatif des symboles et textes des boutons d'action (Téléchargement, Mobile, Email)** :
+  * Calcul dynamique de la luminosité perçue YIQ de la couleur des boutons (`--accent` / `--accent-color`).
+  * Si l'utilisateur choisit une couleur claire ou proche du blanc (ex: `#ffffff`, teintes pastel ou claires), les symboles SVG et textes passent automatiquement en noir `#0f172a` avec une bordure subtile garantissant une lisibilité parfaite.
+  * Préservation automatique de la couleur blanche sur les teintes sombres et adaptation conjointe dans l'aperçu mobile et sur la carte virtuelle HTML publique.
+* **Affichage des initiales du collaborateur en l'absence de photo sur la carte publique** :
+  * Harmonisation de la carte virtuelle publique avec l'aperçu mobile : affichage systématique des initiales (`PD`, `JD`, etc.) lorsque le collaborateur n'a pas de photo de profil.
+  * Déclinaison des styles selon le thème actif (`theme-minimalist`, `theme-glass`, `theme-obsidian`, `theme-aurora`) pour une visibilité et une lisibilité optimales.
+  * Sécurisation du fallback `onerror` sur l'image en cas de lien brisé.
+* **Optimisation de la typographie et lisibilité sur la carte virtuelle publique** :
+  * Augmentation harmonieuse de la taille des polices de texte sur la carte publique pour s'aligner avec le confort de lecture de l'aperçu :
+    * Nom du collaborateur porté à `1.7rem` (au lieu de `1.45rem`).
+    * Fonction / Poste à `1.05rem` (au lieu de `0.9rem`).
+    * Adresse de l'entreprise à `0.98rem` (au lieu de `0.85rem`).
+    * Texte d'invitation au partage à `0.95rem` (au lieu de `0.85rem`).
+    * Boutons d'action (*Télécharger la fiche contact*, *Mobile*, *Email*) portés à `0.98rem` / `0.95rem` avec un espacement interne plus généreux.
+    * Pied de page et messages personnalisés portés à `0.85rem` et `0.8rem`.
+  * Ajustement conjoint des règles responsives sur smartphones (`@media (max-width: 480px)`).
+
+---
+
+### 🚀 Version `v2.7.9-saut-de-ligne-br-champs-collaborateur`
 **Thème : Prise en charge des sauts de ligne via le code `<br>` dans les champs texte des collaborateurs**
 * **Aperçu mobile et Carte virtuelle HTML publique** :
   * Interprétation du code `<br>` (ainsi que `<br/>`, `<br />`, `<BR>`) pour créer un véritable retour à la ligne dans tous les champs texte de la fiche collaborateur (*Fonction / Poste*, *Civilité*, *Prénom*, *Nom*, *Adresse*).
