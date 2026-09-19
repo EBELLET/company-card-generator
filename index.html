@@ -482,6 +482,31 @@
                   </div>
                 </div>
 
+                <!-- CARD 4: Période offerte / Abonnements -->
+                <div class="settings-card">
+                  <div class="settings-card-header">
+                    <div class="settings-card-icon color-blue" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    </div>
+                    <div>
+                      <h4>Abonnements & Période offerte</h4>
+                      <p>Durée de la période offerte appliquée par défaut lors de la création d'une entreprise</p>
+                    </div>
+                  </div>
+
+                  <div class="settings-card-body">
+                    <div class="setting-item-row">
+                      <div class="setting-item-info">
+                        <label for="setting-trial-period-days" class="setting-label">Période offerte (en jours)</label>
+                        <p class="setting-help">Nombre de jours d'abonnement offert attribué automatiquement à chaque nouvelle entreprise créée dans l'application.</p>
+                      </div>
+                      <div class="setting-item-control">
+                        <input type="number" id="setting-trial-period-days" class="setting-select" style="width: 140px;" min="0" step="1" value="30" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Footer Save Action -->
                 <div class="settings-actions-footer">
                   <button type="button" id="btn-save-all-settings" class="btn-save-settings">
@@ -763,6 +788,18 @@
                         <div class="input-wrapper" style="margin-top: 0.35rem;">
                           <input type="date" id="company-subscription-end" />
                           <span class="focus-border"></span>
+                        </div>
+                      </div>
+
+                      <!-- Subscription Period Type -->
+                      <div class="form-group" style="margin-bottom: 0;">
+                        <label for="company-subscription-type" style="font-size: 0.85rem; font-weight: 600;">Période de l'abonnement <span id="sub-type-superadmin-badge" style="font-size: 0.72rem; color: #818cf8; font-weight: 500; margin-left: 0.35rem;">(Réservé au Super Admin)</span></label>
+                        <div class="input-wrapper" style="margin-top: 0.35rem;">
+                          <select id="company-subscription-type" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-color); font-size: 0.9rem;">
+                            <option value="Offerte">Offerte</option>
+                            <option value="Payant">Payant</option>
+                            <option value="Echu">Échu</option>
+                          </select>
                         </div>
                       </div>
 

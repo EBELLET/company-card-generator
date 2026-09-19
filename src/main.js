@@ -91,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let vcfAnnotationOrigin = true;
   let vcfIncludeCardUrl = true;
   let supportEmail = '';
+  let trialPeriodDays = 30;
   const rawStoredActivity = sessionStorage.getItem('tdconnect_last_activity') || localStorage.getItem('tdconnect_last_activity') || null;
   let lastActivityTime = rawStoredActivity ? parseInt(rawStoredActivity, 10) : Date.now();
   if (!rawStoredActivity && authToken && currentUser) {
@@ -127,6 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof data.supportEmail === 'string' && data.supportEmail.trim()) {
           supportEmail = data.supportEmail.trim();
           updateSupportEmailDOM(supportEmail);
+        }
+        if (typeof data.trialPeriodDays === 'number') {
+          trialPeriodDays = data.trialPeriodDays;
         }
       }
     } catch (e) {
@@ -298,6 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const companyCityInput = document.getElementById('company-city');
   const companyCountryInput = document.getElementById('company-country');
   const companySubscriptionEndInput = document.getElementById('company-subscription-end');
+  const companySubscriptionTypeSelect = document.getElementById('company-subscription-type');
   const companyIsSubscriptionActiveInput = document.getElementById('company-is-subscription-active');
   const companyLogoSizeInput = document.getElementById('company-logo-size');
   const companyLogoSizeVal = document.getElementById('company-logo-size-val');
@@ -1447,6 +1452,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const settingVcfAnnotationOrigin = document.getElementById('setting-vcf-annotation-origin');
   const settingVcfIncludeCardUrl = document.getElementById('setting-vcf-include-card-url');
   const settingSupportEmailInput = document.getElementById('setting-support-email');
+  const settingTrialPeriodDaysInput = document.getElementById('setting-trial-period-days');
   const btnSaveAllSettings = document.getElementById('btn-save-all-settings');
   const settingsMsg = document.getElementById('settings-msg');
 
@@ -1464,6 +1470,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (settingSupportEmailInput) {
       settingSupportEmailInput.value = supportEmail;
     }
+    if (settingTrialPeriodDaysInput) {
+      settingTrialPeriodDaysInput.value = String(trialPeriodDays);
+    }
   }
 
   if (btnSaveAllSettings) {
@@ -1473,6 +1482,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const annotationVal = settingVcfAnnotationOrigin ? settingVcfAnnotationOrigin.checked : true;
       const includeUrlVal = settingVcfIncludeCardUrl ? settingVcfIncludeCardUrl.checked : true;
       const supportEmailVal = settingSupportEmailInput ? settingSupportEmailInput.value.trim() : supportEmail;
+      const trialDaysVal = settingTrialPeriodDaysInput ? parseInt(settingTrialPeriodDaysInput.value, 10) : trialPeriodDays;
 
       try {
         const res = await apiFetch(`${API_BASE}/settings`, {
@@ -1482,7 +1492,8 @@ document.addEventListener('DOMContentLoaded', () => {
             inactivityTimeoutMinutes: timeoutVal,
             vcfAnnotationOrigin: annotationVal,
             vcfIncludeCardUrl: includeUrlVal,
-            supportEmail: supportEmailVal
+            supportEmail: supportEmailVal,
+            trialPeriodDays: isNaN(trialDaysVal) ? 30 : Math.max(0, trialDaysVal)
           })
         });
         const data = await res.json();
@@ -1494,6 +1505,9 @@ document.addEventListener('DOMContentLoaded', () => {
           if (data.supportEmail) {
             supportEmail = data.supportEmail;
             updateSupportEmailDOM(supportEmail);
+          }
+          if (typeof data.trialPeriodDays === 'number') {
+            trialPeriodDays = data.trialPeriodDays;
           }
           if (settingsMsg) {
             settingsMsg.textContent = "Paramètres enregistrés avec succès !";
@@ -1843,6 +1857,7 @@ document.addEventListener('DOMContentLoaded', () => {
         country: companyCountryInput.value.trim(),
         subscription_end_date: companySubscriptionEndInput ? companySubscriptionEndInput.value : null,
         is_subscription_active: companyIsSubscriptionActiveInput ? (companyIsSubscriptionActiveInput.checked ? 0 : 1) : 1,
+        subscription_type: companySubscriptionTypeSelect ? companySubscriptionTypeSelect.value : 'Offerte',
         logo_custom_url: logoCustomUrl || '',
         theme: currentTheme,
         font: currentFont,
@@ -1990,7 +2005,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (testBanner) {
         if (companyIsSubscriptionActiveInput.checked) {
           testBanner.classList.add('hidden');
-        } else {
+        } else if (companySubscriptionTypeSelect && companySubscriptionTypeSelect.value === 'Offerte') {
           testBanner.classList.remove('hidden');
         }
       }
@@ -1998,7 +2013,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  [companyNameInput, companyAddressInput, companyZipInput, companyCityInput, companyCountryInput, companyDomainInput, companySubscriptionEndInput, companyAvatarSizeInput, companyMessageTextInput, companyMessageUrlInput, companyLogoSizeInput, companyLogoXInput, customColorInput].filter(Boolean).forEach(input => {
+  if (companySubscriptionTypeSelect) {
+    companySubscriptionTypeSelect.addEventListener('change', () => {
+      isCompanyFormDirty = true;
+      const testBanner = document.getElementById('company-test-banner');
+      if (testBanner) {
+        if (companySubscriptionTypeSelect.value === 'Offerte' && !(companyIsSubscriptionActiveInput && companyIsSubscriptionActiveInput.checked)) {
+          testBanner.classList.remove('hidden');
+        } else {
+          testBanner.classList.add('hidden');
+        }
+      }
+      updateMockupPreview();
+    });
+  }
+
+  [companyNameInput, companyAddressInput, companyZipInput, companyCityInput, companyCountryInput, companyDomainInput, companySubscriptionEndInput, companySubscriptionTypeSelect, companyAvatarSizeInput, companyMessageTextInput, companyMessageUrlInput, companyLogoSizeInput, companyLogoXInput, customColorInput].filter(Boolean).forEach(input => {
     input.addEventListener('input', () => {
       isCompanyFormDirty = true;
       updateCompanyPreview();
@@ -2365,6 +2395,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const subEndDateVal = companySubscriptionEndInput ? companySubscriptionEndInput.value : '';
     const todayStr = new Date().toISOString().split('T')[0];
     const isDateExpired = subEndDateVal && (subEndDateVal < todayStr);
+    const isEchu = companySubscriptionTypeSelect && companySubscriptionTypeSelect.value === 'Echu';
+    const isSubExpired = isDateExpired || isEchu;
     const isCollabInactive = collab && (collab.isActive === 0 || collab.is_active === 0);
 
     const prevCardBlurOverlay = document.getElementById('prev-card-blur-overlay');
@@ -2377,7 +2409,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (prevBlurSubtitle) prevBlurSubtitle.textContent = "L'accès aux cartes de cette entreprise a été suspendu par l'administrateur.";
         prevCardBlurOverlay.classList.remove('hidden');
         if (cardElement) cardElement.style.filter = 'blur(6px) opacity(0.5)';
-      } else if (isDateExpired) {
+      } else if (isSubExpired) {
         if (prevBlurTitle) prevBlurTitle.textContent = 'Abonnement échu';
         if (prevBlurSubtitle) prevBlurSubtitle.textContent = "L'abonnement de cette entreprise a expiré.";
         prevCardBlurOverlay.classList.remove('hidden');
@@ -3134,20 +3166,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // VIEW A: COMPANIES LIST LOGIC
   // ==========================================
 
-  function getOneMonthFromNowDateString() {
+  function getTrialEndDateString(days = trialPeriodDays) {
     const d = new Date();
-    d.setMonth(d.getMonth() + 1);
+    d.setDate(d.getDate() + Number(days || 30));
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
+  function getOneMonthFromNowDateString() {
+    return getTrialEndDateString(trialPeriodDays);
+  }
+
   // Toggle company creation inline form
   btnAddCompanyShow.addEventListener('click', () => {
     companyAddFormContainer.classList.toggle('hidden');
     if (newCompanySubscriptionEndInput && !newCompanySubscriptionEndInput.value) {
-      newCompanySubscriptionEndInput.value = getOneMonthFromNowDateString();
+      newCompanySubscriptionEndInput.value = getTrialEndDateString(trialPeriodDays);
     }
     newCompanyNameInput.focus();
   });
@@ -3165,7 +3201,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const domain = newCompanyDomainInput.value.trim().toLowerCase();
     const subEndDate = (newCompanySubscriptionEndInput && newCompanySubscriptionEndInput.value)
       ? newCompanySubscriptionEndInput.value
-      : getOneMonthFromNowDateString();
+      : getTrialEndDateString(trialPeriodDays);
 
     if (!name) {
       alert("Veuillez renseigner le nom de l'entreprise.");
@@ -3189,7 +3225,8 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({
           name,
           domain,
-          subscription_end_date: subEndDate
+          subscription_end_date: subEndDate,
+          subscription_type: 'Offerte'
         })
       });
       const newCompany = await res.json();
@@ -3272,32 +3309,54 @@ document.addEventListener('DOMContentLoaded', () => {
       const activeCount = company.active_collabs_count != null ? company.active_collabs_count : 0;
       const inactiveCount = company.inactive_collabs_count != null ? company.inactive_collabs_count : 0;
 
-      // Subscription End Date
+      // Subscription End Date & remaining days
       const rawSubDate = company.subscriptionEndDate || company.subscription_end_date;
       let formattedSubDate = 'Non définie';
+      let diffDays = null;
       let isDateExpired = false;
+      let isWithin15Days = false;
       if (rawSubDate) {
         const parts = String(rawSubDate).split('T')[0].split('-');
         if (parts.length === 3) {
           formattedSubDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const end = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+          end.setHours(0, 0, 0, 0);
+          diffDays = Math.round((end - today) / (1000 * 60 * 60 * 24));
+          if (diffDays < 0) {
+            isDateExpired = true;
+          } else if (diffDays <= 15) {
+            isWithin15Days = true;
+          }
         } else {
           formattedSubDate = String(rawSubDate);
         }
-        const todayStr = new Date().toISOString().split('T')[0];
-        if (String(rawSubDate).split('T')[0] < todayStr) {
-          isDateExpired = true;
-        }
       }
 
-      // Access Status (Accès suspendu / Accès actif / Abonnement échu)
-      const isSuspended = company.is_subscription_active === 0 || company.isSubscriptionActive === 0;
-      let statusBadgeHtml = '';
-      if (isSuspended) {
-        statusBadgeHtml = `<span class="company-meta-badge status-suspended" style="background: rgba(244, 63, 94, 0.12); color: #e11d48; border: 1px solid rgba(244, 63, 94, 0.25); padding: 0.18rem 0.55rem; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">⛔ Accès suspendu</span>`;
-      } else if (isDateExpired) {
-        statusBadgeHtml = `<span class="company-meta-badge status-expired" style="background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.25); padding: 0.18rem 0.55rem; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">⚠️ Abonnement échu</span>`;
+      // Subscription Type & 4-color Indicators:
+      // 1. Rouge : date dépassée OU statut "Echu"
+      // 2. Orange : date de fin d'abonnement < 15 jours
+      // 3. Vert pâle : en cours de période offerte
+      // 4. Vert foncé : période d'abonnement (Payant)
+      const subType = company.subscription_type || company.subscriptionType || 'Offerte';
+      let subBadgeHtml = '';
+      if (subType === 'Echu' || isDateExpired) {
+        const label = isDateExpired ? `Échu (${Math.abs(diffDays)}j retard)` : 'Échu';
+        subBadgeHtml = `<span class="company-meta-badge sub-badge-expired" title="Date dépassée ou abonnement échu">🔴 ${label}</span>`;
+      } else if (isWithin15Days && diffDays !== null) {
+        subBadgeHtml = `<span class="company-meta-badge sub-badge-warning" title="Fin d'abonnement dans ${diffDays} jour(s)">🟠 Fin proche (${diffDays}j)</span>`;
+      } else if (subType === 'Offerte') {
+        subBadgeHtml = `<span class="company-meta-badge sub-badge-trial" title="Période offerte en cours">🟢 Période offerte</span>`;
       } else {
-        statusBadgeHtml = `<span class="company-meta-badge status-active" style="background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25); padding: 0.18rem 0.55rem; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">🟢 Accès actif</span>`;
+        subBadgeHtml = `<span class="company-meta-badge sub-badge-paid" title="Abonnement payant actif">🟢 Abonnement</span>`;
+      }
+
+      // Subscription Suspended Indicator (indépendant du statut de l'abonnement)
+      const isSuspended = company.is_subscription_active === 0 || company.isSubscriptionActive === 0;
+      let suspendedBadgeHtml = '';
+      if (isSuspended) {
+        suspendedBadgeHtml = `<span class="company-meta-badge status-suspended" style="background: rgba(244, 63, 94, 0.12); color: #e11d48; border: 1px solid rgba(244, 63, 94, 0.25); padding: 0.18rem 0.55rem; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">⛔ Accès suspendu</span>`;
       }
 
       card.innerHTML = `
@@ -3320,7 +3379,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="company-meta-badge sub-date" style="background: rgba(99, 102, 241, 0.08); color: #4f46e5; padding: 0.18rem 0.55rem; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
               📅 Fin : ${formattedSubDate}
             </span>
-            ${statusBadgeHtml}
+            ${subBadgeHtml}
+            ${suspendedBadgeHtml}
           </div>
         </div>
         <button type="button" class="btn-company-delete" title="Supprimer l'entreprise">
@@ -3382,12 +3442,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const isSuspended = companyInfo.is_subscription_active === 0 || companyInfo.isSubscriptionActive === 0;
 
-      // Update test subscription banner notice (hidden if access is suspended)
+      // Update test subscription banner notice (shown only if subscription_type is 'Offerte' and access is not suspended)
       const testBanner = document.getElementById('company-test-banner');
       const testBannerText = document.getElementById('company-test-banner-text');
+      const currentSubType = companyInfo.subscription_type || companyInfo.subscriptionType || 'Offerte';
       if (testBanner && testBannerText) {
         const subDateVal = companyInfo.subscriptionEndDate || companyInfo.subscription_end_date;
-        if (!isSuspended && subDateVal) {
+        if (!isSuspended && subDateVal && currentSubType === 'Offerte') {
           let formattedDate = subDateVal;
           const parts = String(subDateVal).split('T')[0].split('-');
           if (parts.length === 3) {
@@ -3420,6 +3481,20 @@ document.addEventListener('DOMContentLoaded', () => {
           companySubscriptionEndInput.title = '';
           companySubscriptionEndInput.style.cursor = 'pointer';
           companySubscriptionEndInput.style.opacity = '1';
+        }
+      }
+
+      if (companySubscriptionTypeSelect) {
+        companySubscriptionTypeSelect.value = currentSubType;
+        companySubscriptionTypeSelect.disabled = !isSuperAdmin;
+        if (!isSuperAdmin) {
+          companySubscriptionTypeSelect.title = "Seul le Super Admin peut modifier le type d'abonnement.";
+          companySubscriptionTypeSelect.style.cursor = 'not-allowed';
+          companySubscriptionTypeSelect.style.opacity = '0.6';
+        } else {
+          companySubscriptionTypeSelect.title = '';
+          companySubscriptionTypeSelect.style.cursor = 'pointer';
+          companySubscriptionTypeSelect.style.opacity = '1';
         }
       }
 

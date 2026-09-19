@@ -100,6 +100,15 @@ async function initializeDatabase() {
     await pool.query(`ALTER TABLE company_info ADD COLUMN tdconnect_url TEXT`);
   } catch (e) {}
 
+  try {
+    await pool.query(`ALTER TABLE company_info ADD COLUMN subscription_type VARCHAR(20) DEFAULT 'Offerte'`);
+  } catch (e) {}
+
+  // Initialize existing companies with subscription_type 'Payant' if currently NULL or empty
+  try {
+    await pool.query(`UPDATE company_info SET subscription_type = 'Payant' WHERE subscription_type IS NULL OR subscription_type = ''`);
+  } catch (e) {}
+
   // Ensure all existing companies have an active valid subscription date for testing
   try {
     await pool.query(`UPDATE company_info SET subscription_end_date = '2030-12-31', is_subscription_active = 1 WHERE subscription_end_date IS NULL OR subscription_end_date < CURRENT_DATE()`);
@@ -185,6 +194,7 @@ async function initializeDatabase() {
     await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('vcf_annotation_origin', '1')`);
     await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('vcf_include_card_url', '1')`);
     await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('support_email', 'contact@tdconnect.fr')`);
+    await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('trial_period_days', '30')`);
   } catch (e) {}
 
   console.log("Schéma de la base MySQL initialisé avec succès.");
@@ -266,13 +276,17 @@ function mapCollaboratorRow(row) {
   };
 }
 
-function getOneMonthFromNowDateString() {
+function calculateTrialEndDate(days = 30) {
   const d = new Date();
-  d.setFullYear(d.getFullYear() + 1);
+  d.setDate(d.getDate() + Number(days || 30));
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function getOneMonthFromNowDateString() {
+  return calculateTrialEndDate(30);
 }
 
 function formatCompany(row) {
@@ -289,8 +303,11 @@ function formatCompany(row) {
       subEndDate = String(row.subscription_end_date).split('T')[0];
     }
   }
+  const subType = row.subscription_type || 'Offerte';
   return {
     ...row,
+    subscription_type: subType,
+    subscriptionType: subType,
     subscription_end_date: subEndDate,
     subscriptionEndDate: subEndDate,
     is_subscription_active: row.is_subscription_active != null ? row.is_subscription_active : 1,
@@ -335,8 +352,11 @@ const addCompany = async (c) => {
   const trimmedDomain = c.domain ? c.domain.trim().toLowerCase() : '';
   let subEndDate = c.subscription_end_date || c.subscriptionEndDate;
   if (!subEndDate) {
-    subEndDate = getOneMonthFromNowDateString();
+    const trialDaysSetting = await getSetting('trial_period_days', '30');
+    const trialDays = parseInt(trialDaysSetting, 10);
+    subEndDate = calculateTrialEndDate(isNaN(trialDays) ? 30 : trialDays);
   }
+  const subType = c.subscription_type || c.subscriptionType || 'Offerte';
 
   let existingRows = [];
   if (trimmedDomain) {
@@ -362,8 +382,9 @@ const addCompany = async (c) => {
       name, domain, address, zip, city, country, logo_custom_url,
       theme, font, accent_color, logo_size, button_style,
       avatar_size, show_name_under_logo, show_tdconnect_message,
-      tdconnect_message, tdconnect_url, logo_x, subscription_end_date, is_subscription_active
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      tdconnect_message, tdconnect_url, logo_x, subscription_end_date, is_subscription_active,
+      subscription_type
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     trimmedName,
     trimmedDomain,
@@ -384,7 +405,8 @@ const addCompany = async (c) => {
     c.tdconnect_url || c.tdconnectUrl || '',
     c.logo_x !== undefined ? c.logo_x : 0,
     subEndDate || null,
-    isSubActiveVal
+    isSubActiveVal,
+    subType
   ]);
   return getCompanyById(result.insertId);
 };
@@ -413,6 +435,10 @@ const updateCompany = async (id, c) => {
 
   const isSubActiveVal = c.is_subscription_active !== undefined ? (c.is_subscription_active ? 1 : 0) : (c.isSubscriptionActive !== undefined ? (c.isSubscriptionActive ? 1 : 0) : 1);
 
+  const [currentRows] = await pool.query('SELECT subscription_type FROM company_info WHERE id = ?', [id]);
+  const currentSubType = currentRows[0] ? (currentRows[0].subscription_type || 'Offerte') : 'Offerte';
+  const subType = (c.subscription_type !== undefined) ? c.subscription_type : ((c.subscriptionType !== undefined) ? c.subscriptionType : currentSubType);
+
   await pool.query(`
     UPDATE company_info SET
       name = ?,
@@ -434,7 +460,8 @@ const updateCompany = async (id, c) => {
       tdconnect_url = ?,
       logo_x = ?,
       subscription_end_date = ?,
-      is_subscription_active = ?
+      is_subscription_active = ?,
+      subscription_type = ?
     WHERE id = ?
   `, [
     trimmedName,
@@ -457,6 +484,7 @@ const updateCompany = async (id, c) => {
     c.logo_x !== undefined ? c.logo_x : 0,
     subEndDate || null,
     isSubActiveVal,
+    subType || 'Offerte',
     id
   ]);
   return getCompanyById(id);
@@ -698,14 +726,16 @@ const registerUserWithCompany = async (userData, companyData) => {
         throw new Error(`L'entreprise "${existingRows[0].name || trimmedName}" existe déjà. Impossible de créer un compte avec une entreprise déjà existante.`);
       }
 
-      const defaultSubEnd = getOneMonthFromNowDateString();
+      const trialDaysSetting = await getSetting('trial_period_days', '30');
+      const trialDays = parseInt(trialDaysSetting, 10);
+      const defaultSubEnd = calculateTrialEndDate(isNaN(trialDays) ? 30 : trialDays);
       const [companyResult] = await connection.query(`
-        INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, subscription_end_date, is_subscription_active)
-        VALUES (?, ?, 'theme-minimalist', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 0, '', ?, 1)
+        INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, subscription_end_date, is_subscription_active, subscription_type)
+        VALUES (?, ?, 'theme-minimalist', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 0, '', ?, 1, 'Offerte')
       `, [trimmedName, trimmedDomain, defaultSubEnd]);
       
       companyId = companyResult.insertId;
-      console.log(`[DB] Nouvelle entreprise "${trimmedName}" créée (ID ${companyId}). Date d'abonnement : ${defaultSubEnd}.`);
+      console.log(`[DB] Nouvelle entreprise "${trimmedName}" créée (ID ${companyId}). Période offerte jusqu'au : ${defaultSubEnd}.`);
     }
     
     await connection.query(`
@@ -785,7 +815,8 @@ const getAllSettings = async () => {
   const settings = {
     inactivity_timeout_minutes: '60',
     vcf_annotation_origin: '1',
-    vcf_include_card_url: '1'
+    vcf_include_card_url: '1',
+    trial_period_days: '30'
   };
   rows.forEach(r => {
     settings[r.setting_key] = r.setting_value;

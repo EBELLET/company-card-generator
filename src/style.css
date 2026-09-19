@@ -891,6 +891,69 @@ label {
   font-family: var(--font-sans);
 }
 
+.company-meta-badge {
+  padding: 0.2rem 0.55rem;
+  border-radius: 12px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  line-height: 1.2;
+}
+
+/* 1. Vert pale : en cours de periode offerte */
+.company-meta-badge.sub-badge-trial {
+  background: rgba(52, 211, 153, 0.22);
+  color: #10b981;
+  border: 1px solid rgba(52, 211, 153, 0.45);
+}
+:root[data-theme="light"] .company-meta-badge.sub-badge-trial,
+body:not(.dark) .company-meta-badge.sub-badge-trial {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+/* 2. Vert fonce : periode d'abonnement actif / payant */
+.company-meta-badge.sub-badge-paid {
+  background: rgba(5, 150, 105, 0.35);
+  color: #34d399;
+  border: 1px solid rgba(5, 150, 105, 0.65);
+}
+:root[data-theme="light"] .company-meta-badge.sub-badge-paid,
+body:not(.dark) .company-meta-badge.sub-badge-paid {
+  background: #065f46;
+  color: #ffffff;
+  border: 1px solid #047857;
+}
+
+/* 3. Orange : date de fin d'abonnement inferieure a 15 jours */
+.company-meta-badge.sub-badge-warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+}
+:root[data-theme="light"] .company-meta-badge.sub-badge-warning,
+body:not(.dark) .company-meta-badge.sub-badge-warning {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fcd34d;
+}
+
+/* 4. Rouge : date de fin depassee ou type echu */
+.company-meta-badge.sub-badge-expired {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+}
+:root[data-theme="light"] .company-meta-badge.sub-badge-expired,
+body:not(.dark) .company-meta-badge.sub-badge-expired {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
 /* ==========================================
    COLLABORATORS SECTION
    ========================================== */

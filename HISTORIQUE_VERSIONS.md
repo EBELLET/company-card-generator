@@ -5,7 +5,7 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.8.0-unicite-nom-entreprise-insensible-casse`
+* **Version / Tag** : `v2.9.0-gestion-periode-offerte-et-abonnements`
 * **Date** : 19 septembre 2026
 * **Statut** : Version stable en production / MySQL / Docker
 
@@ -13,7 +13,32 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.8.0-unicite-nom-entreprise-insensible-casse` (Dernière version)
+### 🚀 Version `v2.9.0-gestion-periode-offerte-et-abonnements` (Dernière version)
+**Thème : Paramétrage global de la période offerte, indicateurs d'abonnement quadricolores et gestion des périodes**
+* **Paramètre général "Période offerte" (`app_settings.trial_period_days`)** :
+  * Ajout d'une nouvelle section dédiée *Abonnements & Période offerte* dans le panneau des **Paramètres Généraux** de l'application (`#view-settings-panel`).
+  * Champ numérique configurable en nombre de jours (par défaut 30 jours), strictement réservé aux Super Administrateurs.
+  * Prise en compte immédiate lors de la création manuelle d'une entreprise ou lors de l'auto-inscription d'un administrateur avec entreprise : la date de fin d'abonnement est calculée dynamiquement (`date du jour + N jours offerts`).
+* **Migration non destructive de la base de données MySQL** :
+  * Ajout automatique et sécurisé de la colonne `subscription_type VARCHAR(20) DEFAULT 'Offerte'` sur la table `company_info` (`IF NOT EXISTS` / bloc `try/catch`).
+  * Conservation intégrale de toutes les données et entreprises existantes sur le serveur de production : initialisation automatique des entreprises existantes avec le statut `Payant` sans altérer leurs dates de souscription.
+  * Ajout de la clé `trial_period_days` dans `app_settings` avec valeur par défaut `30`.
+* **Indicateurs visuels d'abonnement quadricolores dans la liste des entreprises** :
+  * Chaque entreprise dispose sur sa carte d'un badge dynamique reflétant précisément sa situation :
+    * **Vert pâle (`🟢 Période offerte`)** : en cours de période offerte (`Offerte`, date valide à plus de 15 jours).
+    * **Vert foncé (`🟢 Abonnement`)** : période d'abonnement payant actif (`Payant`, date valide à plus de 15 jours).
+    * **Orange (`🟠 Fin proche (Xj)`)** : date de fin d'abonnement inférieure ou égale à 15 jours (alerte fin proche).
+    * **Rouge (`🔴 Échu`)** : date de fin d'abonnement dépassée ou période manuellement définie sur `Échu`.
+  * Préservation intégrale du fonctionnement de la coche **Accès suspendu** : affichage conjoint du badge `⛔ Accès suspendu` si l'entreprise est suspendue par un Super Admin, quel que soit son état d'abonnement.
+* **Gestion de la période d'abonnement dans la fiche entreprise** :
+  * Ajout d'un menu déroulant *Période de l'abonnement* proposant les choix : `Offerte`, `Payant`, `Echu`.
+  * Contrôle strict des permissions : le menu déroulant est réservé aux Super Administrateurs (verrouillé pour les administrateurs de l'entreprise et sécurisé côté backend dans `PUT /api/companies/:id`).
+  * Adaptation du bandeau d'information test : affiché uniquement lorsque l'entreprise est en statut `Offerte` et non suspendue.
+  * Floutage immédiat et message explicite "Abonnement échu" sur l'aperçu mobile et sur la carte virtuelle publique dès lors que l'entreprise est configurée en statut `Échu` ou que sa date de fin est dépassée.
+
+---
+
+### 🚀 Version `v2.8.0-unicite-nom-entreprise-insensible-casse`
 **Thème : Contrôle d'unicité insensible à la casse du nom d'entreprise lors de la modification et création**
 * **Contrôle d'unicité SQL en base de données (`updateCompany`)** :
   * Vérification systématique par requête SQL `LOWER(TRIM(name)) = LOWER(?) AND id != ?` lors de la modification d'une entreprise existante.

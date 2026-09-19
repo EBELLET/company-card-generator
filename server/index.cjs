@@ -107,11 +107,13 @@ function checkCardStatus(collab, company) {
       }
     }
 
+    const isEchu = (company.subscription_type === 'Echu' || company.subscriptionType === 'Echu');
+
     if (isSuspended) {
       isExpired = true;
       messageTitle = 'Accès suspendu';
       messageSubtitle = "L'accès aux cartes de visite de cette entreprise a été suspendu par l'administrateur.";
-    } else if (isDateExpired) {
+    } else if (isDateExpired || isEchu) {
       isExpired = true;
       messageTitle = 'Abonnement échu';
       messageSubtitle = "L'abonnement de cette entreprise a expiré. Veuillez contacter l'administrateur.";
@@ -1049,11 +1051,13 @@ app.put('/api/companies/:id', authenticateToken, async (req, res) => {
     if (!allowedIds.includes(Number(companyId))) {
       return res.status(403).json({ error: "Vous n'avez pas l'autorisation de modifier cette entreprise." });
     }
-    // Prevent non-superadmin users from modifying subscription_end_date and is_subscription_active
+    // Prevent non-superadmin users from modifying subscription_end_date, is_subscription_active and subscription_type
     req.body.subscription_end_date = existingComp.subscription_end_date;
     req.body.subscriptionEndDate = existingComp.subscription_end_date;
     req.body.is_subscription_active = existingComp.is_subscription_active;
     req.body.isSubscriptionActive = existingComp.is_subscription_active;
+    req.body.subscription_type = existingComp.subscription_type;
+    req.body.subscriptionType = existingComp.subscription_type;
   }
   try {
     const updated = await db.updateCompany(companyId, req.body);
@@ -1509,7 +1513,8 @@ app.get('/api/settings', async (req, res) => {
       inactivityTimeoutMinutes: parseInt(settings.inactivity_timeout_minutes || '60', 10),
       vcfAnnotationOrigin: settings.vcf_annotation_origin === '1' || settings.vcf_annotation_origin === 'true',
       vcfIncludeCardUrl: settings.vcf_include_card_url === '1' || settings.vcf_include_card_url === 'true',
-      supportEmail: settings.support_email || 'contact@tdconnect.fr'
+      supportEmail: settings.support_email || 'contact@tdconnect.fr',
+      trialPeriodDays: parseInt(settings.trial_period_days || '30', 10)
     });
   } catch (err) {
     console.error("Erreur GET /api/settings:", err.message);
@@ -1531,7 +1536,7 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
   if (req.user.role !== 'superadmin') {
     return res.status(403).json({ error: "Accès réservé au Super Admin." });
   }
-  const { inactivityTimeoutMinutes, vcfAnnotationOrigin, vcfIncludeCardUrl, supportEmail } = req.body;
+  const { inactivityTimeoutMinutes, vcfAnnotationOrigin, vcfIncludeCardUrl, supportEmail, trialPeriodDays } = req.body;
   try {
     if (typeof inactivityTimeoutMinutes === 'number' && inactivityTimeoutMinutes >= 0) {
       await db.setSetting('inactivity_timeout_minutes', inactivityTimeoutMinutes);
@@ -1545,12 +1550,17 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
     if (typeof supportEmail === 'string' && supportEmail.trim().length > 0) {
       await db.setSetting('support_email', supportEmail.trim());
     }
+    if (typeof trialPeriodDays === 'number' && trialPeriodDays >= 0) {
+      await db.setSetting('trial_period_days', Math.round(trialPeriodDays));
+    }
+    const currentSettings = await db.getAllSettings();
     res.json({
       success: true,
       inactivityTimeoutMinutes,
       vcfAnnotationOrigin: !!vcfAnnotationOrigin,
       vcfIncludeCardUrl: !!vcfIncludeCardUrl,
-      supportEmail: supportEmail ? supportEmail.trim() : 'contact@tdconnect.fr'
+      supportEmail: supportEmail ? supportEmail.trim() : 'contact@tdconnect.fr',
+      trialPeriodDays: parseInt(currentSettings.trial_period_days || '30', 10)
     });
   } catch (err) {
     console.error("Erreur PUT /api/settings:", err.message);
