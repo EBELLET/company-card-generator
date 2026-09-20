@@ -319,6 +319,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const companyShowNameInput = document.getElementById('company-show-name');
   const companyShowPhoneBtnInput = document.getElementById('company-show-phone-btn');
   const companyShowEmailBtnInput = document.getElementById('company-show-email-btn');
+  const companyEmailTemplateSection = document.getElementById('company-email-template-section');
+  const companyEmailSubjectInput = document.getElementById('company-email-subject');
+  const companyEmailBodyInput = document.getElementById('company-email-body');
   const companyShowMessageInput = document.getElementById('company-show-message');
   const companyMessageTextInput = document.getElementById('company-message-text');
   const companyMessageUrlInput = document.getElementById('company-message-url');
@@ -1945,6 +1948,8 @@ document.addEventListener('DOMContentLoaded', () => {
         show_name_under_logo: companyShowNameInput ? (companyShowNameInput.checked ? 1 : 0) : 1,
         show_phone_button: companyShowPhoneBtnInput ? (companyShowPhoneBtnInput.checked ? 1 : 0) : 1,
         show_email_button: companyShowEmailBtnInput ? (companyShowEmailBtnInput.checked ? 1 : 0) : 1,
+        contact_email_subject: companyEmailSubjectInput ? companyEmailSubjectInput.value.trim() : 'Échange de coordonnées',
+        contact_email_body: companyEmailBodyInput ? companyEmailBodyInput.value : '',
         show_tdconnect_message: companyShowMessageInput ? (companyShowMessageInput.checked ? 1 : 0) : 0,
         tdconnect_message: companyMessageTextInput ? companyMessageTextInput.value.trim() : '',
         tdconnect_url: companyMessageUrlInput ? companyMessageUrlInput.value.trim() : ''
@@ -2079,6 +2084,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (companyShowEmailBtnInput) {
     companyShowEmailBtnInput.addEventListener('change', () => {
       isCompanyFormDirty = true;
+      if (companyEmailTemplateSection) {
+        if (companyShowEmailBtnInput.checked) {
+          companyEmailTemplateSection.classList.remove('hidden');
+        } else {
+          companyEmailTemplateSection.classList.add('hidden');
+        }
+      }
       updateCompanyPreview();
     });
   }
@@ -2121,7 +2133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  [companyNameInput, companyAddressInput, companyZipInput, companyCityInput, companyCountryInput, companyDomainInput, companySubscriptionEndInput, companySubscriptionTypeSelect, companyAvatarSizeInput, companyMessageTextInput, companyMessageUrlInput, companyLogoSizeInput, companyLogoXInput, customColorInput].filter(Boolean).forEach(input => {
+  [companyNameInput, companyAddressInput, companyZipInput, companyCityInput, companyCountryInput, companyDomainInput, companySubscriptionEndInput, companySubscriptionTypeSelect, companyAvatarSizeInput, companyMessageTextInput, companyMessageUrlInput, companyEmailSubjectInput, companyEmailBodyInput, companyLogoSizeInput, companyLogoXInput, customColorInput].filter(Boolean).forEach(input => {
     input.addEventListener('input', () => {
       isCompanyFormDirty = true;
       updateCompanyPreview();
@@ -2645,8 +2657,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const canShowEmail = isEmailEnabled && Boolean(collab.email);
       if (canShowEmail) {
-        const mailSubject = encodeURIComponent("Échange de coordonnées");
-        const mailBody = encodeURIComponent("Bonjour,\r\n\r\nPour faire suite à notre rencontre je vous adresse mes coordonnées.\r\n\r\nBonne réception.");
+        const activeComp = (Array.isArray(allCompanies) ? allCompanies : []).find(c => Number(c.id) === Number(currentCompanyId));
+        const defaultSubject = "Échange de coordonnées";
+        const defaultBody = "Bonjour,\r\n\r\nPour faire suite à notre rencontre, je vous adresse mes coordonnées.\r\n\r\nBonne réception.";
+        const subjectVal = (companyEmailSubjectInput && companyEmailSubjectInput.value.trim())
+          ? companyEmailSubjectInput.value.trim()
+          : (activeComp && activeComp.contact_email_subject ? activeComp.contact_email_subject : defaultSubject);
+        const bodyVal = (companyEmailBodyInput && companyEmailBodyInput.value != null && companyEmailBodyInput.value !== '')
+          ? companyEmailBodyInput.value
+          : (activeComp && activeComp.contact_email_body != null ? activeComp.contact_email_body : defaultBody);
+
+        const mailSubject = encodeURIComponent(subjectVal);
+        const mailBody = encodeURIComponent(bodyVal.replace(/\r?\n/g, '\r\n'));
         prevActionEmail.href = `mailto:${collab.email}?subject=${mailSubject}&body=${mailBody}`;
         prevBtnEmailText.textContent = `Email`;
         prevActionEmail.classList.remove('hidden');
@@ -3678,7 +3700,25 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (companyShowEmailBtnInput) {
-        companyShowEmailBtnInput.checked = companyInfo.show_email_button !== 0;
+        const isEmailBtnChecked = companyInfo.show_email_button !== 0;
+        companyShowEmailBtnInput.checked = isEmailBtnChecked;
+        if (companyEmailTemplateSection) {
+          if (isEmailBtnChecked) {
+            companyEmailTemplateSection.classList.remove('hidden');
+          } else {
+            companyEmailTemplateSection.classList.add('hidden');
+          }
+        }
+      }
+
+      if (companyEmailSubjectInput) {
+        companyEmailSubjectInput.value = companyInfo.contact_email_subject || 'Échange de coordonnées';
+      }
+
+      if (companyEmailBodyInput) {
+        companyEmailBodyInput.value = companyInfo.contact_email_body != null 
+          ? companyInfo.contact_email_body 
+          : "Bonjour,\r\n\r\nPour faire suite à notre rencontre, je vous adresse mes coordonnées.\r\n\r\nBonne réception.";
       }
       
       // Gestion des permissions du message de bas de page (case à cocher, texte et URL) :

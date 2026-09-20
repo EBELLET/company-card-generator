@@ -757,6 +757,18 @@
                         Email
                       </label>
                     </div>
+
+                    <!-- Configuration du mail de réponse au clic sur Email -->
+                    <div id="company-email-template-section" style="margin-top: 0.85rem; padding: 0.85rem 1rem; background: var(--bg-card, rgba(255,255,255,0.03)); border: 1px solid var(--border-color); border-radius: 8px;">
+                      <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="company-email-subject" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Objet du mail</label>
+                        <input type="text" id="company-email-subject" placeholder="Ex: Échange de coordonnées" style="width: 100%; font-size: 0.85rem;" />
+                      </div>
+                      <div class="form-group" style="margin-bottom: 0;">
+                        <label for="company-email-body" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Corps du message</label>
+                        <textarea id="company-email-body" rows="4" placeholder="Ex: Bonjour,&#10;&#10;Pour faire suite à notre rencontre, je vous adresse mes coordonnées.&#10;&#10;Bonne réception." style="width: 100%; font-size: 0.85rem; resize: vertical; line-height: 1.4; font-family: inherit;"></textarea>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="form-group">

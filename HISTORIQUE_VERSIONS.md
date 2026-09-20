@@ -5,7 +5,7 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.11.0-message-bas-de-carte-periode-offerte`
+* **Version / Tag** : `v2.12.0-modele-mail-contact-entreprise`
 * **Date** : 20 septembre 2026
 * **Statut** : Version stable / MySQL / Docker
 
@@ -13,7 +13,23 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.11.0-message-bas-de-carte-periode-offerte` (Dernière version)
+### 🚀 Version `v2.12.0-modele-mail-contact-entreprise` (Dernière version)
+**Thème : Personnalisation de l'objet et du corps du mail d'échange de coordonnées par entreprise et migration VPS**
+* **Rubrique "Boutons de la carte virtuelle" - Modèle d'e-mail paramétrable** :
+  * Ajout dans le formulaire entreprise, sous les cases à cocher Téléphone / Email, de deux champs de configuration :
+    * **Objet du mail** (`contact_email_subject`) : champ texte permettant de personnaliser l'objet prérempli (valeur par défaut : *"Échange de coordonnées"*).
+    * **Corps du message** (`contact_email_body`) : champ multi-lignes (`<textarea>`) conservant la mise en page et les sauts de ligne (valeur par défaut : *"Bonjour,\r\n\r\nPour faire suite à notre rencontre, je vous adresse mes coordonnées.\r\n\r\nBonne réception."*).
+  * Affichage conditionnel de cet encart lorsque le bouton Email est coché.
+* **Génération dynamique des liens `mailto:`** :
+  * Sur les cartes virtuelles publiques (`/c/:slug` ou `/c/:id`) et dans l'aperçu collaborateur, le clic sur le bouton Email ouvre le client de messagerie du contact avec l'objet et le corps personnalisés de l'entreprise (encodage standard RFC `\r\n` compatible avec tous les clients de messagerie).
+* **Migration de base de données & Compatibilité VPS** :
+  * Ajout des colonnes `contact_email_subject VARCHAR(255)` et `contact_email_body TEXT` sur la table `company_info`.
+  * Auto-migration idempotente au démarrage dans `server/database.cjs` avec initialisation automatique des entreprises existantes.
+  * Création du script de migration SQL dédié : `migrations/migration_v2.12.0_email_template.sql`.
+
+---
+
+### 🚀 Version `v2.11.0-message-bas-de-carte-periode-offerte`
 **Thème : Paramétrage général de l'initialisation du message et de l'URL de bas de carte pour les nouvelles entreprises, et gestion stricte des permissions en période offerte**
 * **Paramètres Généraux ("Abonnements & Période offerte")** :
   * Ajout des deux champs configurables réservés aux Super Admins :

@@ -421,8 +421,12 @@ function generateVirtualCardHTML(collab, company, isStandalone = false, globalSe
     activePhoneLabel = 'Mobile';
   }
 
-  const mailSubject = encodeURIComponent("Échange de coordonnées");
-  const mailBody = encodeURIComponent("Bonjour,\r\n\r\nPour faire suite à notre rencontre je vous adresse mes coordonnées.\r\n\r\nBonne réception.");
+  const customSubject = company.contact_email_subject || "Échange de coordonnées";
+  const customBody = (company.contact_email_body != null && company.contact_email_body !== '')
+    ? company.contact_email_body
+    : "Bonjour,\r\n\r\nPour faire suite à notre rencontre, je vous adresse mes coordonnées.\r\n\r\nBonne réception.";
+  const mailSubject = encodeURIComponent(customSubject);
+  const mailBody = encodeURIComponent(customBody.replace(/\r?\n/g, '\r\n'));
   const phoneHref = cardStatus.isBlurred ? 'javascript:void(0)' : `tel:${activePhone}`;
   const emailHref = cardStatus.isBlurred ? 'javascript:void(0)' : `mailto:${collab.email}?subject=${mailSubject}&body=${mailBody}`;
   const vcfHref = cardStatus.isBlurred ? 'javascript:void(0)' : (isStandalone ? `./${vcfFilename}` : `/api/collaborators/${collab.id}/vcf`);

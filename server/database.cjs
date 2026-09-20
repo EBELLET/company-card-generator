@@ -81,6 +81,8 @@ async function initializeDatabase() {
       logo_x INT DEFAULT 0,
       show_phone_button INT DEFAULT 1,
       show_email_button INT DEFAULT 1,
+      contact_email_subject VARCHAR(255) DEFAULT 'Échange de coordonnées',
+      contact_email_body TEXT,
       subscription_end_date DATE NULL,
       is_subscription_active INT DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -114,6 +116,14 @@ async function initializeDatabase() {
     await pool.query(`ALTER TABLE company_info ADD COLUMN show_email_button INT DEFAULT 1`);
   } catch (e) {}
 
+  try {
+    await pool.query(`ALTER TABLE company_info ADD COLUMN contact_email_subject VARCHAR(255) DEFAULT 'Échange de coordonnées'`);
+  } catch (e) {}
+
+  try {
+    await pool.query(`ALTER TABLE company_info ADD COLUMN contact_email_body TEXT`);
+  } catch (e) {}
+
   // Initialize existing companies with subscription_type 'Payant' if currently NULL or empty
   try {
     await pool.query(`UPDATE company_info SET subscription_type = 'Payant' WHERE subscription_type IS NULL OR subscription_type = ''`);
@@ -126,6 +136,15 @@ async function initializeDatabase() {
 
   try {
     await pool.query(`UPDATE company_info SET show_email_button = 1 WHERE show_email_button IS NULL`);
+  } catch (e) {}
+
+  // Initialize contact_email_subject and contact_email_body with default values if NULL or empty
+  try {
+    await pool.query(`UPDATE company_info SET contact_email_subject = 'Échange de coordonnées' WHERE contact_email_subject IS NULL OR contact_email_subject = ''`);
+  } catch (e) {}
+
+  try {
+    await pool.query(`UPDATE company_info SET contact_email_body = 'Bonjour,\\r\\n\\r\\nPour faire suite à notre rencontre, je vous adresse mes coordonnées.\\r\\n\\r\\nBonne réception.' WHERE contact_email_body IS NULL OR contact_email_body = ''`);
   } catch (e) {}
 
   // Ensure all existing companies have an active valid subscription date for testing
@@ -406,14 +425,18 @@ const addCompany = async (c) => {
     ? (c.tdconnect_url || c.tdconnectUrl || '') 
     : trialMsgUrlSetting;
 
+  const contactEmailSubject = c.contact_email_subject !== undefined ? c.contact_email_subject : (c.contactEmailSubject !== undefined ? c.contactEmailSubject : 'Échange de coordonnées');
+  const contactEmailBody = c.contact_email_body !== undefined ? c.contact_email_body : (c.contactEmailBody !== undefined ? c.contactEmailBody : "Bonjour,\r\n\r\nPour faire suite à notre rencontre, je vous adresse mes coordonnées.\r\n\r\nBonne réception.");
+
   const [result] = await pool.query(`
     INSERT INTO company_info (
       name, domain, address, zip, city, country, logo_custom_url,
       theme, font, accent_color, logo_size, button_style,
       avatar_size, show_name_under_logo, show_tdconnect_message,
       tdconnect_message, tdconnect_url, logo_x, subscription_end_date, is_subscription_active,
-      subscription_type, show_phone_button, show_email_button
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      subscription_type, show_phone_button, show_email_button,
+      contact_email_subject, contact_email_body
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     trimmedName,
     trimmedDomain,
@@ -437,7 +460,9 @@ const addCompany = async (c) => {
     isSubActiveVal,
     subType,
     showPhoneBtn,
-    showEmailBtn
+    showEmailBtn,
+    contactEmailSubject,
+    contactEmailBody
   ]);
   return getCompanyById(result.insertId);
 };
@@ -466,7 +491,7 @@ const updateCompany = async (id, c) => {
 
   const isSubActiveVal = c.is_subscription_active !== undefined ? (c.is_subscription_active ? 1 : 0) : (c.isSubscriptionActive !== undefined ? (c.isSubscriptionActive ? 1 : 0) : 1);
 
-  const [currentRows] = await pool.query('SELECT subscription_type, show_phone_button, show_email_button FROM company_info WHERE id = ?', [id]);
+  const [currentRows] = await pool.query('SELECT subscription_type, show_phone_button, show_email_button, contact_email_subject, contact_email_body FROM company_info WHERE id = ?', [id]);
   const currentSubType = currentRows[0] ? (currentRows[0].subscription_type || 'Offerte') : 'Offerte';
   const subType = (c.subscription_type !== undefined) ? c.subscription_type : ((c.subscriptionType !== undefined) ? c.subscriptionType : currentSubType);
 
@@ -475,6 +500,12 @@ const updateCompany = async (id, c) => {
 
   const showPhoneBtn = c.show_phone_button !== undefined ? (c.show_phone_button ? 1 : 0) : currentShowPhone;
   const showEmailBtn = c.show_email_button !== undefined ? (c.show_email_button ? 1 : 0) : currentShowEmail;
+
+  const currentContactSubject = currentRows[0] && currentRows[0].contact_email_subject !== undefined ? currentRows[0].contact_email_subject : 'Échange de coordonnées';
+  const currentContactBody = currentRows[0] && currentRows[0].contact_email_body !== undefined ? currentRows[0].contact_email_body : "Bonjour,\r\n\r\nPour faire suite à notre rencontre, je vous adresse mes coordonnées.\r\n\r\nBonne réception.";
+
+  const contactSubject = c.contact_email_subject !== undefined ? c.contact_email_subject : (c.contactEmailSubject !== undefined ? c.contactEmailSubject : currentContactSubject);
+  const contactBody = c.contact_email_body !== undefined ? c.contact_email_body : (c.contactEmailBody !== undefined ? c.contactEmailBody : currentContactBody);
 
   await pool.query(`
     UPDATE company_info SET
@@ -500,7 +531,9 @@ const updateCompany = async (id, c) => {
       is_subscription_active = ?,
       subscription_type = ?,
       show_phone_button = ?,
-      show_email_button = ?
+      show_email_button = ?,
+      contact_email_subject = ?,
+      contact_email_body = ?
     WHERE id = ?
   `, [
     trimmedName,
@@ -526,6 +559,8 @@ const updateCompany = async (id, c) => {
     subType || 'Offerte',
     showPhoneBtn,
     showEmailBtn,
+    contactSubject,
+    contactBody,
     id
   ]);
   return getCompanyById(id);
@@ -765,8 +800,8 @@ const registerUserWithCompany = async (userData, companyData) => {
       const trialMsgTextSetting = await getSetting('trial_message_text', '');
       const trialMsgUrlSetting = await getSetting('trial_message_url', '');
       const [companyResult] = await connection.query(`
-        INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, tdconnect_url, subscription_end_date, is_subscription_active, subscription_type)
-        VALUES (?, ?, 'theme-minimalist', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 1, ?, ?, ?, 1, 'Offerte')
+        INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, tdconnect_url, subscription_end_date, is_subscription_active, subscription_type, show_phone_button, show_email_button, contact_email_subject, contact_email_body)
+        VALUES (?, ?, 'theme-minimalist', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 1, ?, ?, ?, 1, 'Offerte', 1, 1, 'Échange de coordonnées', 'Bonjour,\r\n\r\nPour faire suite à notre rencontre, je vous adresse mes coordonnées.\r\n\r\nBonne réception.')
       `, [trimmedName, trimmedDomain, trialMsgTextSetting, trialMsgUrlSetting, defaultSubEnd]);
       
       companyId = companyResult.insertId;
