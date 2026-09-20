@@ -2783,23 +2783,6 @@ document.addEventListener('DOMContentLoaded', () => {
         prevCompanyMessageUnderFooter.classList.add('hidden');
       }
     }
-
-    // Apply trial message under footer in preview (shown if subscription_type === 'Offerte')
-    const prevTrialMessageUnderFooter = document.getElementById('prev-trial-message-under-footer');
-    if (prevTrialMessageUnderFooter) {
-      const isTrial = companySubscriptionTypeSelect ? companySubscriptionTypeSelect.value === 'Offerte' : true;
-      if (isTrial && trialMessageText) {
-        if (trialMessageUrl) {
-          const targetUrl = trialMessageUrl.startsWith('http') ? trialMessageUrl : 'https://' + trialMessageUrl;
-          prevTrialMessageUnderFooter.innerHTML = `<a href="${targetUrl}" target="_blank" style="color: inherit; text-decoration: underline; cursor: pointer;">${trialMessageText}</a>`;
-        } else {
-          prevTrialMessageUnderFooter.textContent = trialMessageText;
-        }
-        prevTrialMessageUnderFooter.classList.remove('hidden');
-      } else {
-        prevTrialMessageUnderFooter.classList.add('hidden');
-      }
-    }
   }
 
   // Copy Link with fallback for non-secure HTTP contexts (IP addresses)
@@ -3653,14 +3636,46 @@ document.addEventListener('DOMContentLoaded', () => {
         companyShowEmailBtnInput.checked = companyInfo.show_email_button !== 0;
       }
       
+      // Seul le Super Admin peut modifier le message de bas de carte en période offerte.
+      // En période d'abonnement (Payant, etc.), les administrateurs d'entreprise peuvent le modifier.
+      const canEditBottomMessage = isSuperAdmin || currentSubType !== 'Offerte';
+
       if (companyShowMessageInput) {
         companyShowMessageInput.checked = companyInfo.show_tdconnect_message !== 0;
+        companyShowMessageInput.disabled = !canEditBottomMessage;
+        if (!canEditBottomMessage) {
+          companyShowMessageInput.title = "En période offerte, seul le Super Admin peut modifier le message de bas de carte.";
+          companyShowMessageInput.style.cursor = 'not-allowed';
+        } else {
+          companyShowMessageInput.title = '';
+          companyShowMessageInput.style.cursor = 'pointer';
+        }
       }
       if (companyMessageTextInput) {
         companyMessageTextInput.value = companyInfo.tdconnect_message || '';
+        companyMessageTextInput.disabled = !canEditBottomMessage;
+        if (!canEditBottomMessage) {
+          companyMessageTextInput.title = "En période offerte, seul le Super Admin peut modifier le message de bas de carte.";
+          companyMessageTextInput.style.cursor = 'not-allowed';
+          companyMessageTextInput.style.opacity = '0.6';
+        } else {
+          companyMessageTextInput.title = '';
+          companyMessageTextInput.style.cursor = 'text';
+          companyMessageTextInput.style.opacity = '1';
+        }
       }
       if (companyMessageUrlInput) {
         companyMessageUrlInput.value = companyInfo.tdconnect_url || companyInfo.tdconnectUrl || '';
+        companyMessageUrlInput.disabled = !canEditBottomMessage;
+        if (!canEditBottomMessage) {
+          companyMessageUrlInput.title = "En période offerte, seul le Super Admin peut modifier l'URL de redirection.";
+          companyMessageUrlInput.style.cursor = 'not-allowed';
+          companyMessageUrlInput.style.opacity = '0.6';
+        } else {
+          companyMessageUrlInput.title = '';
+          companyMessageUrlInput.style.cursor = 'text';
+          companyMessageUrlInput.style.opacity = '1';
+        }
       }
       if (companyMessageContainer) {
         if (companyInfo.show_tdconnect_message !== 0) {

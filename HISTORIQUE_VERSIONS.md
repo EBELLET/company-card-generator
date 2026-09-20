@@ -14,14 +14,23 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ## 📜 Historique Chronologique des Versions
 
 ### 🚀 Version `v2.11.0-message-bas-de-carte-periode-offerte` (Dernière version)
-**Thème : Paramétrage général du message et de l'URL de bas de carte pour les entreprises en période offerte**
-* **Nouveaux champs dans l'encart "Abonnements & Période offerte" des Paramètres Généraux** :
-  * **Texte dans le bas de la carte en période offerte** (`app_settings.trial_message_text`) : texte personnalisé affiché au bas des cartes des entreprises dont l'abonnement est au statut `Offerte`.
-  * **URL de redirection au clic sur le message de bas de carte** (`app_settings.trial_message_url`) : lien hypertexte cliquable ouvrant le site web ou la page de destination configurée (ex: `https://tdconnect.fr`).
-* **Affichage conditionnel et dynamique** :
-  * Prise en compte dans l'aperçu mobile interactif (`#prev-trial-message-under-footer`) et mise à jour en direct lors du basculement du statut de l'abonnement.
-  * Rendu sur la page web publique de la carte de visite virtuelle (`generateVirtualCardHTML` et `/card/:id`) ainsi que dans l'export standalone ZIP.
-  * Affichage automatique tant que l'entreprise est en statut `Offerte`, et masquage automatique dès que l'abonnement passe en statut `Payant`.
+**Thème : Paramétrage général de l'initialisation du message et de l'URL de bas de carte pour les nouvelles entreprises, et gestion stricte des permissions en période offerte**
+* **Paramètres Généraux ("Abonnements & Période offerte")** :
+  * Ajout des deux champs configurables réservés aux Super Admins :
+    * **Texte dans le bas de la carte en période offerte** (`app_settings.trial_message_text`).
+    * **URL de redirection au clic sur le message de bas de carte** (`app_settings.trial_message_url`).
+  * Ces valeurs servent de **modèle d'initialisation par défaut** pour toute nouvelle entreprise créée.
+* **Initialisation automatique à la création de l'entreprise** :
+  * Lors de la création d'une entreprise (création manuelle par Super Admin ou inscription autonome) :
+    * La case **"Message en bas de carte"** est automatiquement initialisée **cochée** (`show_tdconnect_message = 1`).
+    * Le texte de bas de carte (`tdconnect_message`) est automatiquement pré-rempli avec la valeur de `trial_message_text`.
+    * L'URL de redirection (`tdconnect_url`) est automatiquement pré-remplie avec la valeur de `trial_message_url`.
+* **Gestion des permissions selon la période d'abonnement** :
+  * **En période offerte (`Offerte`)** :
+    * Seuls les **Super Administrateurs** peuvent modifier la case à cocher, le texte et l'URL de bas de carte sur la fiche de l'entreprise.
+    * Pour les administrateurs normaux de l'entreprise, ces trois champs sont verrouillés (désactivés avec infobulle explicative côté interface, et protégés côté backend dans l'API `PUT /api/companies/:id`).
+  * **En période d'abonnement payant (`Payant`)** :
+    * Les administrateurs de l'entreprise peuvent modifier librement le message, l'URL de redirection ou désactiver l'affichage selon les besoins de leur société.
 * **Migration SQL et compatibilité VPS** :
   * Insertion idempotente dans `app_settings` au démarrage via `server/database.cjs` (`initDb()`).
   * Script SQL autonome `migrations/migration_v2.11.0_trial_card_message.sql` mis à disposition pour le portage sur le VPS.

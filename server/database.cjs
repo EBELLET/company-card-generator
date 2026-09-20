@@ -401,6 +401,19 @@ const addCompany = async (c) => {
   const showPhoneBtn = c.show_phone_button !== undefined ? (c.show_phone_button ? 1 : 0) : 1;
   const showEmailBtn = c.show_email_button !== undefined ? (c.show_email_button ? 1 : 0) : 1;
 
+  const trialMsgTextSetting = await getSetting('trial_message_text', '');
+  const trialMsgUrlSetting = await getSetting('trial_message_url', '');
+
+  const showTdconnectMsg = c.show_tdconnect_message !== undefined 
+    ? (c.show_tdconnect_message ? 1 : 0) 
+    : 1;
+  const tdconnectMsg = c.tdconnect_message !== undefined 
+    ? c.tdconnect_message 
+    : trialMsgTextSetting;
+  const tdconnectUrl = (c.tdconnect_url !== undefined || c.tdconnectUrl !== undefined) 
+    ? (c.tdconnect_url || c.tdconnectUrl || '') 
+    : trialMsgUrlSetting;
+
   const [result] = await pool.query(`
     INSERT INTO company_info (
       name, domain, address, zip, city, country, logo_custom_url,
@@ -424,9 +437,9 @@ const addCompany = async (c) => {
     c.button_style || 'rectangle',
     c.avatar_size !== undefined ? c.avatar_size : 100,
     c.show_name_under_logo !== undefined ? c.show_name_under_logo : 1,
-    c.show_tdconnect_message !== undefined ? c.show_tdconnect_message : 0,
-    c.tdconnect_message || '',
-    c.tdconnect_url || c.tdconnectUrl || '',
+    showTdconnectMsg,
+    tdconnectMsg,
+    tdconnectUrl,
     c.logo_x !== undefined ? c.logo_x : 0,
     subEndDate || null,
     isSubActiveVal,
@@ -765,10 +778,12 @@ const registerUserWithCompany = async (userData, companyData) => {
       const trialDaysSetting = await getSetting('trial_period_days', '30');
       const trialDays = parseInt(trialDaysSetting, 10);
       const defaultSubEnd = calculateTrialEndDate(isNaN(trialDays) ? 30 : trialDays);
+      const trialMsgTextSetting = await getSetting('trial_message_text', '');
+      const trialMsgUrlSetting = await getSetting('trial_message_url', '');
       const [companyResult] = await connection.query(`
-        INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, subscription_end_date, is_subscription_active, subscription_type)
-        VALUES (?, ?, 'theme-minimalist', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 0, '', ?, 1, 'Offerte')
-      `, [trimmedName, trimmedDomain, defaultSubEnd]);
+        INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, tdconnect_url, subscription_end_date, is_subscription_active, subscription_type)
+        VALUES (?, ?, 'theme-minimalist', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 1, ?, ?, ?, 1, 'Offerte')
+      `, [trimmedName, trimmedDomain, trialMsgTextSetting, trialMsgUrlSetting, defaultSubEnd]);
       
       companyId = companyResult.insertId;
       console.log(`[DB] Nouvelle entreprise "${trimmedName}" créée (ID ${companyId}). Période offerte jusqu'au : ${defaultSubEnd}.`);
