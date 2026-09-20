@@ -3681,15 +3681,16 @@ document.addEventListener('DOMContentLoaded', () => {
         companyShowEmailBtnInput.checked = companyInfo.show_email_button !== 0;
       }
       
-      // Seul le Super Admin peut modifier le message de bas de carte en période offerte.
-      // En période d'abonnement (Payant, etc.), les administrateurs d'entreprise peuvent le modifier.
-      const canEditBottomMessage = isSuperAdmin || currentSubType !== 'Offerte';
+      // Seul le Super Admin peut modifier le texte et l'URL du message de bas de page.
+      // La case à cocher (afficher/masquer) est verrouillée en période offerte, et modifiable par l'administrateur en période d'abonnement payant.
+      const canToggleBottomMessage = isSuperAdmin || currentSubType !== 'Offerte';
+      const canEditTextAndUrl = isSuperAdmin;
 
       if (companyShowMessageInput) {
         companyShowMessageInput.checked = companyInfo.show_tdconnect_message !== 0;
-        companyShowMessageInput.disabled = !canEditBottomMessage;
-        if (!canEditBottomMessage) {
-          companyShowMessageInput.title = "En période offerte, seul le Super Admin peut modifier le message de bas de carte.";
+        companyShowMessageInput.disabled = !canToggleBottomMessage;
+        if (!canToggleBottomMessage) {
+          companyShowMessageInput.title = "En période offerte, seul le Super Admin peut modifier l'affichage du message de bas de carte.";
           companyShowMessageInput.style.cursor = 'not-allowed';
         } else {
           companyShowMessageInput.title = '';
@@ -3698,9 +3699,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (companyMessageTextInput) {
         companyMessageTextInput.value = companyInfo.tdconnect_message || '';
-        companyMessageTextInput.disabled = !canEditBottomMessage;
-        if (!canEditBottomMessage) {
-          companyMessageTextInput.title = "En période offerte, seul le Super Admin peut modifier le message de bas de carte.";
+        companyMessageTextInput.disabled = !canEditTextAndUrl;
+        if (!canEditTextAndUrl) {
+          companyMessageTextInput.title = "Seul le Super Admin peut modifier le texte du message de bas de page.";
           companyMessageTextInput.style.cursor = 'not-allowed';
           companyMessageTextInput.style.opacity = '0.6';
         } else {
@@ -3711,9 +3712,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (companyMessageUrlInput) {
         companyMessageUrlInput.value = companyInfo.tdconnect_url || companyInfo.tdconnectUrl || '';
-        companyMessageUrlInput.disabled = !canEditBottomMessage;
-        if (!canEditBottomMessage) {
-          companyMessageUrlInput.title = "En période offerte, seul le Super Admin peut modifier l'URL de redirection.";
+        companyMessageUrlInput.disabled = !canEditTextAndUrl;
+        if (!canEditTextAndUrl) {
+          companyMessageUrlInput.title = "Seul le Super Admin peut modifier l'URL de redirection du message de bas de page.";
           companyMessageUrlInput.style.cursor = 'not-allowed';
           companyMessageUrlInput.style.opacity = '0.6';
         } else {

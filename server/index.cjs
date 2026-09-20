@@ -1067,16 +1067,17 @@ app.put('/api/companies/:id', authenticateToken, async (req, res) => {
     req.body.subscription_type = existingComp.subscription_type;
     req.body.subscriptionType = existingComp.subscription_type;
 
-    // Seul le Super Admin peut modifier le message de bas de carte en période offerte.
-    // En période d'abonnement (Payant, etc.), les administrateurs peuvent le modifier.
+    // Seul le Super Admin peut modifier le texte et l'URL du message de bas de page.
+    req.body.tdconnect_message = existingComp.tdconnect_message;
+    req.body.tdconnectMessage = existingComp.tdconnect_message;
+    req.body.tdconnect_url = existingComp.tdconnect_url;
+    req.body.tdconnectUrl = existingComp.tdconnect_url;
+
+    // En période offerte, la case à cocher d'affichage est également verrouillée pour les non-superadmins.
     const subType = existingComp.subscription_type || existingComp.subscriptionType || 'Offerte';
     if (subType === 'Offerte') {
       req.body.show_tdconnect_message = existingComp.show_tdconnect_message;
       req.body.showTdconnectMessage = existingComp.show_tdconnect_message;
-      req.body.tdconnect_message = existingComp.tdconnect_message;
-      req.body.tdconnectMessage = existingComp.tdconnect_message;
-      req.body.tdconnect_url = existingComp.tdconnect_url;
-      req.body.tdconnectUrl = existingComp.tdconnect_url;
     }
   }
   try {
