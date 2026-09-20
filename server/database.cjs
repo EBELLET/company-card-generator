@@ -214,6 +214,8 @@ async function initializeDatabase() {
     await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('vcf_include_card_url', '1')`);
     await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('support_email', 'contact@tdconnect.fr')`);
     await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('trial_period_days', '30')`);
+    await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('trial_message_text', '')`);
+    await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('trial_message_url', '')`);
   } catch (e) {}
 
   console.log("Schéma de la base MySQL initialisé avec succès.");
@@ -850,7 +852,10 @@ const getAllSettings = async () => {
     inactivity_timeout_minutes: '60',
     vcf_annotation_origin: '1',
     vcf_include_card_url: '1',
-    trial_period_days: '30'
+    support_email: 'contact@tdconnect.fr',
+    trial_period_days: '30',
+    trial_message_text: '',
+    trial_message_url: ''
   };
   rows.forEach(r => {
     settings[r.setting_key] = r.setting_value;

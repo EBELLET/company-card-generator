@@ -5,7 +5,7 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.10.0-options-boutons-carte-virtuelle`
+* **Version / Tag** : `v2.11.0-message-bas-de-carte-periode-offerte`
 * **Date** : 20 septembre 2026
 * **Statut** : Version stable / MySQL / Docker
 
@@ -13,7 +13,22 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.10.0-options-boutons-carte-virtuelle` (Dernière version)
+### 🚀 Version `v2.11.0-message-bas-de-carte-periode-offerte` (Dernière version)
+**Thème : Paramétrage général du message et de l'URL de bas de carte pour les entreprises en période offerte**
+* **Nouveaux champs dans l'encart "Abonnements & Période offerte" des Paramètres Généraux** :
+  * **Texte dans le bas de la carte en période offerte** (`app_settings.trial_message_text`) : texte personnalisé affiché au bas des cartes des entreprises dont l'abonnement est au statut `Offerte`.
+  * **URL de redirection au clic sur le message de bas de carte** (`app_settings.trial_message_url`) : lien hypertexte cliquable ouvrant le site web ou la page de destination configurée (ex: `https://tdconnect.fr`).
+* **Affichage conditionnel et dynamique** :
+  * Prise en compte dans l'aperçu mobile interactif (`#prev-trial-message-under-footer`) et mise à jour en direct lors du basculement du statut de l'abonnement.
+  * Rendu sur la page web publique de la carte de visite virtuelle (`generateVirtualCardHTML` et `/card/:id`) ainsi que dans l'export standalone ZIP.
+  * Affichage automatique tant que l'entreprise est en statut `Offerte`, et masquage automatique dès que l'abonnement passe en statut `Payant`.
+* **Migration SQL et compatibilité VPS** :
+  * Insertion idempotente dans `app_settings` au démarrage via `server/database.cjs` (`initDb()`).
+  * Script SQL autonome `migrations/migration_v2.11.0_trial_card_message.sql` mis à disposition pour le portage sur le VPS.
+
+---
+
+### 🚀 Version `v2.10.0-options-boutons-carte-virtuelle`
 **Thème : Gestion unitaire des boutons Téléphone/Mobile et Email sur la carte virtuelle, masquage intelligent et migration VPS**
 * **Rubrique "Boutons de la carte virtuelle" dans le formulaire de l'entreprise** :
   * Insertion de la rubrique avant "Couleur des boutons" avec 2 cases à cocher : **Téléphone / Mobile** et **Email**.

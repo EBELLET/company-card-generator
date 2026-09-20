@@ -92,6 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let vcfIncludeCardUrl = true;
   let supportEmail = '';
   let trialPeriodDays = 30;
+  let trialMessageText = '';
+  let trialMessageUrl = '';
   const rawStoredActivity = sessionStorage.getItem('tdconnect_last_activity') || localStorage.getItem('tdconnect_last_activity') || null;
   let lastActivityTime = rawStoredActivity ? parseInt(rawStoredActivity, 10) : Date.now();
   if (!rawStoredActivity && authToken && currentUser) {
@@ -131,6 +133,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (typeof data.trialPeriodDays === 'number') {
           trialPeriodDays = data.trialPeriodDays;
+        }
+        if (typeof data.trialMessageText === 'string') {
+          trialMessageText = data.trialMessageText;
+        }
+        if (typeof data.trialMessageUrl === 'string') {
+          trialMessageUrl = data.trialMessageUrl;
         }
       }
     } catch (e) {
@@ -1457,6 +1465,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const settingVcfIncludeCardUrl = document.getElementById('setting-vcf-include-card-url');
   const settingSupportEmailInput = document.getElementById('setting-support-email');
   const settingTrialPeriodDaysInput = document.getElementById('setting-trial-period-days');
+  const settingTrialMessageTextInput = document.getElementById('setting-trial-message-text');
+  const settingTrialMessageUrlInput = document.getElementById('setting-trial-message-url');
   const btnSaveAllSettings = document.getElementById('btn-save-all-settings');
   const settingsMsg = document.getElementById('settings-msg');
 
@@ -1477,6 +1487,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (settingTrialPeriodDaysInput) {
       settingTrialPeriodDaysInput.value = String(trialPeriodDays);
     }
+    if (settingTrialMessageTextInput) {
+      settingTrialMessageTextInput.value = trialMessageText;
+    }
+    if (settingTrialMessageUrlInput) {
+      settingTrialMessageUrlInput.value = trialMessageUrl;
+    }
   }
 
   if (btnSaveAllSettings) {
@@ -1487,6 +1503,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const includeUrlVal = settingVcfIncludeCardUrl ? settingVcfIncludeCardUrl.checked : true;
       const supportEmailVal = settingSupportEmailInput ? settingSupportEmailInput.value.trim() : supportEmail;
       const trialDaysVal = settingTrialPeriodDaysInput ? parseInt(settingTrialPeriodDaysInput.value, 10) : trialPeriodDays;
+      const trialMsgTextVal = settingTrialMessageTextInput ? settingTrialMessageTextInput.value.trim() : trialMessageText;
+      const trialMsgUrlVal = settingTrialMessageUrlInput ? settingTrialMessageUrlInput.value.trim() : trialMessageUrl;
 
       try {
         const res = await apiFetch(`${API_BASE}/settings`, {
@@ -1497,7 +1515,9 @@ document.addEventListener('DOMContentLoaded', () => {
             vcfAnnotationOrigin: annotationVal,
             vcfIncludeCardUrl: includeUrlVal,
             supportEmail: supportEmailVal,
-            trialPeriodDays: isNaN(trialDaysVal) ? 30 : Math.max(0, trialDaysVal)
+            trialPeriodDays: isNaN(trialDaysVal) ? 30 : Math.max(0, trialDaysVal),
+            trialMessageText: trialMsgTextVal,
+            trialMessageUrl: trialMsgUrlVal
           })
         });
         const data = await res.json();
@@ -1513,6 +1533,13 @@ document.addEventListener('DOMContentLoaded', () => {
           if (typeof data.trialPeriodDays === 'number') {
             trialPeriodDays = data.trialPeriodDays;
           }
+          if (typeof data.trialMessageText === 'string') {
+            trialMessageText = data.trialMessageText;
+          }
+          if (typeof data.trialMessageUrl === 'string') {
+            trialMessageUrl = data.trialMessageUrl;
+          }
+          updateCompanyPreview();
           if (settingsMsg) {
             settingsMsg.textContent = "Paramètres enregistrés avec succès !";
             settingsMsg.style.color = '#10b981';
@@ -2044,6 +2071,7 @@ document.addEventListener('DOMContentLoaded', () => {
           testBanner.classList.add('hidden');
         }
       }
+      updateCompanyPreview();
       updateMockupPreview();
     });
   }
@@ -2753,6 +2781,23 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       if (prevCompanyMessageUnderFooter) {
         prevCompanyMessageUnderFooter.classList.add('hidden');
+      }
+    }
+
+    // Apply trial message under footer in preview (shown if subscription_type === 'Offerte')
+    const prevTrialMessageUnderFooter = document.getElementById('prev-trial-message-under-footer');
+    if (prevTrialMessageUnderFooter) {
+      const isTrial = companySubscriptionTypeSelect ? companySubscriptionTypeSelect.value === 'Offerte' : true;
+      if (isTrial && trialMessageText) {
+        if (trialMessageUrl) {
+          const targetUrl = trialMessageUrl.startsWith('http') ? trialMessageUrl : 'https://' + trialMessageUrl;
+          prevTrialMessageUnderFooter.innerHTML = `<a href="${targetUrl}" target="_blank" style="color: inherit; text-decoration: underline; cursor: pointer;">${trialMessageText}</a>`;
+        } else {
+          prevTrialMessageUnderFooter.textContent = trialMessageText;
+        }
+        prevTrialMessageUnderFooter.classList.remove('hidden');
+      } else {
+        prevTrialMessageUnderFooter.classList.add('hidden');
       }
     }
   }

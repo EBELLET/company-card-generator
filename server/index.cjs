@@ -280,7 +280,7 @@ function getButtonContrastColor(hexColor) {
 }
 
 // --- HTML Template for Virtual Business Card ---
-function generateVirtualCardHTML(collab, company, isStandalone = false) {
+function generateVirtualCardHTML(collab, company, isStandalone = false, globalSettings = null) {
   const cardStatus = checkCardStatus(collab, company);
   const accentColor = company.accent_color || '#6366f1';
   const { textColor: btnTextColor, isLight: isLightAccent } = getButtonContrastColor(accentColor);
@@ -304,6 +304,20 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
     customMsgContentHTML = `<a href="${targetUrl}" target="_blank" style="color: inherit; text-decoration: underline; opacity: 0.9;">${customMsgText}</a>`;
   }
   const customMsgHTML = (showCustomMsg && customMsgText) ? `<div class="tdconnect-custom-message" style="font-size: 0.8rem; color: var(--text-muted); opacity: 0.85; margin-top: 0.45rem; font-weight: 500; text-align: center; width: 100%;">${customMsgContentHTML}</div>` : '';
+
+  // Message de bas de carte en période offerte
+  const isTrial = (company.subscription_type === 'Offerte' || company.subscriptionType === 'Offerte');
+  const trialMsgText = (globalSettings && globalSettings.trial_message_text) ? globalSettings.trial_message_text.trim() : '';
+  const trialMsgUrl = (globalSettings && globalSettings.trial_message_url) ? globalSettings.trial_message_url.trim() : '';
+  let trialMsgHTML = '';
+  if (isTrial && trialMsgText) {
+    let trialMsgContentHTML = trialMsgText;
+    if (trialMsgUrl && !cardStatus.isBlurred) {
+      const targetUrl = trialMsgUrl.startsWith('http') ? trialMsgUrl : 'https://' + trialMsgUrl;
+      trialMsgContentHTML = `<a href="${targetUrl}" target="_blank" style="color: inherit; text-decoration: underline; opacity: 0.9;">${trialMsgText}</a>`;
+    }
+    trialMsgHTML = `<div class="tdconnect-trial-message" style="font-size: 0.8rem; color: var(--text-muted); opacity: 0.85; margin-top: 0.45rem; font-weight: 500; text-align: center; width: 100%;">${trialMsgContentHTML}</div>`;
+  }
   
   // Resolve profile picture with alignment properties
   let avatarHTML = '';
@@ -980,6 +994,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false) {
 
     <div class="card-footer">
       ${customMsgHTML}
+      ${trialMsgHTML}
     </div>
   </div>
   ${cardStatus.isBlurred ? `
@@ -1522,7 +1537,9 @@ app.get('/api/settings', async (req, res) => {
       vcfAnnotationOrigin: settings.vcf_annotation_origin === '1' || settings.vcf_annotation_origin === 'true',
       vcfIncludeCardUrl: settings.vcf_include_card_url === '1' || settings.vcf_include_card_url === 'true',
       supportEmail: settings.support_email || 'contact@tdconnect.fr',
-      trialPeriodDays: parseInt(settings.trial_period_days || '30', 10)
+      trialPeriodDays: parseInt(settings.trial_period_days || '30', 10),
+      trialMessageText: settings.trial_message_text || '',
+      trialMessageUrl: settings.trial_message_url || ''
     });
   } catch (err) {
     console.error("Erreur GET /api/settings:", err.message);
@@ -1544,7 +1561,7 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
   if (req.user.role !== 'superadmin') {
     return res.status(403).json({ error: "Accès réservé au Super Admin." });
   }
-  const { inactivityTimeoutMinutes, vcfAnnotationOrigin, vcfIncludeCardUrl, supportEmail, trialPeriodDays } = req.body;
+  const { inactivityTimeoutMinutes, vcfAnnotationOrigin, vcfIncludeCardUrl, supportEmail, trialPeriodDays, trialMessageText, trialMessageUrl } = req.body;
   try {
     if (typeof inactivityTimeoutMinutes === 'number' && inactivityTimeoutMinutes >= 0) {
       await db.setSetting('inactivity_timeout_minutes', inactivityTimeoutMinutes);
@@ -1561,6 +1578,12 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
     if (typeof trialPeriodDays === 'number' && trialPeriodDays >= 0) {
       await db.setSetting('trial_period_days', Math.round(trialPeriodDays));
     }
+    if (trialMessageText !== undefined) {
+      await db.setSetting('trial_message_text', String(trialMessageText).trim());
+    }
+    if (trialMessageUrl !== undefined) {
+      await db.setSetting('trial_message_url', String(trialMessageUrl).trim());
+    }
     const currentSettings = await db.getAllSettings();
     res.json({
       success: true,
@@ -1568,7 +1591,9 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
       vcfAnnotationOrigin: !!vcfAnnotationOrigin,
       vcfIncludeCardUrl: !!vcfIncludeCardUrl,
       supportEmail: supportEmail ? supportEmail.trim() : 'contact@tdconnect.fr',
-      trialPeriodDays: parseInt(currentSettings.trial_period_days || '30', 10)
+      trialPeriodDays: parseInt(currentSettings.trial_period_days || '30', 10),
+      trialMessageText: currentSettings.trial_message_text || '',
+      trialMessageUrl: currentSettings.trial_message_url || ''
     });
   } catch (err) {
     console.error("Erreur PUT /api/settings:", err.message);
@@ -1731,7 +1756,8 @@ app.get('/card/:id', async (req, res) => {
     if (!company) {
       return res.status(404).send(generateUnknownCardHTML());
     }
-    const htmlContent = generateVirtualCardHTML(collab, company);
+    const settings = await db.getAllSettings();
+    const htmlContent = generateVirtualCardHTML(collab, company, false, settings);
     res.send(htmlContent);
   } catch (err) {
     console.error(`Erreur GET /card/${req.params.id}:`, err.message);
@@ -1977,7 +2003,8 @@ app.get('/api/collaborators/:id/export', async (req, res) => {
     }
 
     // 3. Generate standalone index.html
-    const htmlContent = generateVirtualCardHTML(collab, company, true);
+    const zipSettings = await db.getAllSettings();
+    const htmlContent = generateVirtualCardHTML(collab, company, true, zipSettings);
     zip.addFile('index.html', Buffer.from(htmlContent, 'utf-8'));
 
     // 4. Generate contact.vcf

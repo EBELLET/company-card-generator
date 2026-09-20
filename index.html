@@ -504,6 +504,32 @@
                         <input type="number" id="setting-trial-period-days" class="setting-select" style="width: 140px;" min="0" step="1" value="30" />
                       </div>
                     </div>
+
+                    <hr class="setting-divider" />
+
+                    <!-- Option 2: Texte dans le bas de la carte en période offerte -->
+                    <div class="setting-item-row">
+                      <div class="setting-item-info">
+                        <label for="setting-trial-message-text" class="setting-label">Texte dans le bas de la carte en période offerte</label>
+                        <p class="setting-help">Message promotionnel ou informatif affiché au bas des cartes de visite virtuelles pour les entreprises en période offerte.</p>
+                      </div>
+                      <div class="setting-item-control" style="flex: 1; max-width: 380px;">
+                        <input type="text" id="setting-trial-message-text" class="setting-select" style="width: 100%;" placeholder="Ex: Carte virtuelle offerte par TDConnect" value="" />
+                      </div>
+                    </div>
+
+                    <hr class="setting-divider" />
+
+                    <!-- Option 3: URL de redirection au clic sur le message de bas de carte -->
+                    <div class="setting-item-row">
+                      <div class="setting-item-info">
+                        <label for="setting-trial-message-url" class="setting-label">URL de redirection au clic sur le message de bas de carte</label>
+                        <p class="setting-help">Lien web ouvert lorsque le visiteur clique sur le message de bas de carte en période offerte (ex: https://tdconnect.fr).</p>
+                      </div>
+                      <div class="setting-item-control" style="flex: 1; max-width: 380px;">
+                        <input type="url" id="setting-trial-message-url" class="setting-select" style="width: 100%;" placeholder="Ex: https://tdconnect.fr" value="" />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1152,6 +1178,7 @@
                     
                     <div class="preview-card-footer">
                       <div id="prev-company-message-under-footer" class="hidden" style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.8; margin-top: 0.35rem; font-weight: 500; text-align: center; width: 100%;"></div>
+                      <div id="prev-trial-message-under-footer" class="hidden" style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.8; margin-top: 0.35rem; font-weight: 500; text-align: center; width: 100%;"></div>
                     </div>
 
                     <!-- Live Blur Overlay for Expired Subscription or Inactive Collaborator -->
