@@ -81,6 +81,9 @@ async function initializeDatabase() {
       logo_x INT DEFAULT 0,
       show_phone_button INT DEFAULT 1,
       show_email_button INT DEFAULT 1,
+      show_vcf_button INT DEFAULT 1,
+      vcf_annotation_origin INT DEFAULT 1,
+      vcf_include_card_url INT DEFAULT 1,
       contact_email_subject VARCHAR(255) DEFAULT 'Échange de coordonnées',
       contact_email_body TEXT,
       subscription_end_date DATE NULL,
@@ -117,6 +120,18 @@ async function initializeDatabase() {
   } catch (e) {}
 
   try {
+    await pool.query(`ALTER TABLE company_info ADD COLUMN show_vcf_button INT DEFAULT 1`);
+  } catch (e) {}
+
+  try {
+    await pool.query(`ALTER TABLE company_info ADD COLUMN vcf_annotation_origin INT DEFAULT 1`);
+  } catch (e) {}
+
+  try {
+    await pool.query(`ALTER TABLE company_info ADD COLUMN vcf_include_card_url INT DEFAULT 1`);
+  } catch (e) {}
+
+  try {
     await pool.query(`ALTER TABLE company_info ADD COLUMN contact_email_subject VARCHAR(255) DEFAULT 'Échange de coordonnées'`);
   } catch (e) {}
 
@@ -136,6 +151,18 @@ async function initializeDatabase() {
 
   try {
     await pool.query(`UPDATE company_info SET show_email_button = 1 WHERE show_email_button IS NULL`);
+  } catch (e) {}
+
+  try {
+    await pool.query(`UPDATE company_info SET show_vcf_button = 1 WHERE show_vcf_button IS NULL`);
+  } catch (e) {}
+
+  try {
+    await pool.query(`UPDATE company_info SET vcf_annotation_origin = 1 WHERE vcf_annotation_origin IS NULL`);
+  } catch (e) {}
+
+  try {
+    await pool.query(`UPDATE company_info SET vcf_include_card_url = 1 WHERE vcf_include_card_url IS NULL`);
   } catch (e) {}
 
   // Initialize contact_email_subject and contact_email_body with default values if NULL or empty
@@ -411,6 +438,9 @@ const addCompany = async (c) => {
 
   const showPhoneBtn = c.show_phone_button !== undefined ? (c.show_phone_button ? 1 : 0) : 1;
   const showEmailBtn = c.show_email_button !== undefined ? (c.show_email_button ? 1 : 0) : 1;
+  const showVcfBtn = c.show_vcf_button !== undefined ? (c.show_vcf_button ? 1 : 0) : 1;
+  const vcfAnnotation = c.vcf_annotation_origin !== undefined ? (c.vcf_annotation_origin ? 1 : 0) : 1;
+  const vcfIncludeUrl = c.vcf_include_card_url !== undefined ? (c.vcf_include_card_url ? 1 : 0) : 1;
 
   const trialMsgTextSetting = await getSetting('trial_message_text', '');
   const trialMsgUrlSetting = await getSetting('trial_message_url', '');
@@ -434,9 +464,9 @@ const addCompany = async (c) => {
       theme, font, accent_color, logo_size, button_style,
       avatar_size, show_name_under_logo, show_tdconnect_message,
       tdconnect_message, tdconnect_url, logo_x, subscription_end_date, is_subscription_active,
-      subscription_type, show_phone_button, show_email_button,
+      subscription_type, show_phone_button, show_email_button, show_vcf_button, vcf_annotation_origin, vcf_include_card_url,
       contact_email_subject, contact_email_body
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     trimmedName,
     trimmedDomain,
@@ -461,6 +491,9 @@ const addCompany = async (c) => {
     subType,
     showPhoneBtn,
     showEmailBtn,
+    showVcfBtn,
+    vcfAnnotation,
+    vcfIncludeUrl,
     contactEmailSubject,
     contactEmailBody
   ]);
@@ -491,15 +524,21 @@ const updateCompany = async (id, c) => {
 
   const isSubActiveVal = c.is_subscription_active !== undefined ? (c.is_subscription_active ? 1 : 0) : (c.isSubscriptionActive !== undefined ? (c.isSubscriptionActive ? 1 : 0) : 1);
 
-  const [currentRows] = await pool.query('SELECT subscription_type, show_phone_button, show_email_button, contact_email_subject, contact_email_body FROM company_info WHERE id = ?', [id]);
+  const [currentRows] = await pool.query('SELECT subscription_type, show_phone_button, show_email_button, show_vcf_button, vcf_annotation_origin, vcf_include_card_url, contact_email_subject, contact_email_body FROM company_info WHERE id = ?', [id]);
   const currentSubType = currentRows[0] ? (currentRows[0].subscription_type || 'Offerte') : 'Offerte';
   const subType = (c.subscription_type !== undefined) ? c.subscription_type : ((c.subscriptionType !== undefined) ? c.subscriptionType : currentSubType);
 
   const currentShowPhone = currentRows[0] && currentRows[0].show_phone_button !== undefined ? currentRows[0].show_phone_button : 1;
   const currentShowEmail = currentRows[0] && currentRows[0].show_email_button !== undefined ? currentRows[0].show_email_button : 1;
+  const currentShowVcf = currentRows[0] && currentRows[0].show_vcf_button !== undefined ? currentRows[0].show_vcf_button : 1;
+  const currentVcfAnnotation = currentRows[0] && currentRows[0].vcf_annotation_origin !== undefined ? currentRows[0].vcf_annotation_origin : 1;
+  const currentVcfIncludeUrl = currentRows[0] && currentRows[0].vcf_include_card_url !== undefined ? currentRows[0].vcf_include_card_url : 1;
 
   const showPhoneBtn = c.show_phone_button !== undefined ? (c.show_phone_button ? 1 : 0) : currentShowPhone;
   const showEmailBtn = c.show_email_button !== undefined ? (c.show_email_button ? 1 : 0) : currentShowEmail;
+  const showVcfBtn = c.show_vcf_button !== undefined ? (c.show_vcf_button ? 1 : 0) : currentShowVcf;
+  const vcfAnnotation = c.vcf_annotation_origin !== undefined ? (c.vcf_annotation_origin ? 1 : 0) : currentVcfAnnotation;
+  const vcfIncludeUrl = c.vcf_include_card_url !== undefined ? (c.vcf_include_card_url ? 1 : 0) : currentVcfIncludeUrl;
 
   const currentContactSubject = currentRows[0] && currentRows[0].contact_email_subject !== undefined ? currentRows[0].contact_email_subject : 'Échange de coordonnées';
   const currentContactBody = currentRows[0] && currentRows[0].contact_email_body !== undefined ? currentRows[0].contact_email_body : "Bonjour,\r\n\r\nPour faire suite à notre rencontre, je vous adresse mes coordonnées.\r\n\r\nBonne réception.";
@@ -532,6 +571,9 @@ const updateCompany = async (id, c) => {
       subscription_type = ?,
       show_phone_button = ?,
       show_email_button = ?,
+      show_vcf_button = ?,
+      vcf_annotation_origin = ?,
+      vcf_include_card_url = ?,
       contact_email_subject = ?,
       contact_email_body = ?
     WHERE id = ?
@@ -559,6 +601,9 @@ const updateCompany = async (id, c) => {
     subType || 'Offerte',
     showPhoneBtn,
     showEmailBtn,
+    showVcfBtn,
+    vcfAnnotation,
+    vcfIncludeUrl,
     contactSubject,
     contactBody,
     id
@@ -800,8 +845,8 @@ const registerUserWithCompany = async (userData, companyData) => {
       const trialMsgTextSetting = await getSetting('trial_message_text', '');
       const trialMsgUrlSetting = await getSetting('trial_message_url', '');
       const [companyResult] = await connection.query(`
-        INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, tdconnect_url, subscription_end_date, is_subscription_active, subscription_type, show_phone_button, show_email_button, contact_email_subject, contact_email_body)
-        VALUES (?, ?, 'theme-minimalist', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 1, ?, ?, ?, 1, 'Offerte', 1, 1, 'Échange de coordonnées', 'Bonjour,\r\n\r\nPour faire suite à notre rencontre, je vous adresse mes coordonnées.\r\n\r\nBonne réception.')
+        INSERT INTO company_info (name, domain, theme, font, accent_color, logo_size, button_style, avatar_size, show_name_under_logo, show_tdconnect_message, tdconnect_message, tdconnect_url, subscription_end_date, is_subscription_active, subscription_type, show_phone_button, show_email_button, show_vcf_button, vcf_annotation_origin, vcf_include_card_url, contact_email_subject, contact_email_body)
+        VALUES (?, ?, 'theme-minimalist', 'font-outfit', '#6366f1', 72, 'rectangle', 100, 1, 1, ?, ?, ?, 1, 'Offerte', 1, 1, 1, 1, 1, 'Échange de coordonnées', 'Bonjour,\r\n\r\nPour faire suite à notre rencontre, je vous adresse mes coordonnées.\r\n\r\nBonne réception.')
       `, [trimmedName, trimmedDomain, trialMsgTextSetting, trialMsgUrlSetting, defaultSubEnd]);
       
       companyId = companyResult.insertId;

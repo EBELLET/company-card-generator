@@ -88,8 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- General App Settings Management ---
   const cachedTimeout = parseInt(localStorage.getItem('tdconnect_inactivity_timeout') || '60', 10);
   let inactivityTimeoutMinutes = isNaN(cachedTimeout) ? 60 : cachedTimeout;
-  let vcfAnnotationOrigin = true;
-  let vcfIncludeCardUrl = true;
   let supportEmail = '';
   let trialPeriodDays = 30;
   let trialMessageText = '';
@@ -120,12 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
           inactivityTimeoutMinutes = data.inactivityTimeoutMinutes;
           localStorage.setItem('tdconnect_inactivity_timeout', data.inactivityTimeoutMinutes.toString());
           checkInactivity();
-        }
-        if (typeof data.vcfAnnotationOrigin === 'boolean') {
-          vcfAnnotationOrigin = data.vcfAnnotationOrigin;
-        }
-        if (typeof data.vcfIncludeCardUrl === 'boolean') {
-          vcfIncludeCardUrl = data.vcfIncludeCardUrl;
         }
         if (typeof data.supportEmail === 'string' && data.supportEmail.trim()) {
           supportEmail = data.supportEmail.trim();
@@ -319,6 +311,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const companyShowNameInput = document.getElementById('company-show-name');
   const companyShowPhoneBtnInput = document.getElementById('company-show-phone-btn');
   const companyShowEmailBtnInput = document.getElementById('company-show-email-btn');
+  const companyShowVcfBtnInput = document.getElementById('company-show-vcf-btn');
+  const companyVcfOptionsSection = document.getElementById('company-vcf-options-section');
+  const companyVcfAnnotationOriginInput = document.getElementById('company-vcf-annotation-origin');
+  const companyVcfIncludeCardUrlInput = document.getElementById('company-vcf-include-card-url');
   const companyEmailTemplateSection = document.getElementById('company-email-template-section');
   const companyEmailSubjectInput = document.getElementById('company-email-subject');
   const companyEmailBodyInput = document.getElementById('company-email-body');
@@ -1509,8 +1505,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const settingInactivityTimeoutSelect = document.getElementById('setting-inactivity-timeout');
-  const settingVcfAnnotationOrigin = document.getElementById('setting-vcf-annotation-origin');
-  const settingVcfIncludeCardUrl = document.getElementById('setting-vcf-include-card-url');
   const settingSupportEmailInput = document.getElementById('setting-support-email');
   const settingTrialPeriodDaysInput = document.getElementById('setting-trial-period-days');
   const settingTrialMessageTextInput = document.getElementById('setting-trial-message-text');
@@ -1522,12 +1516,6 @@ document.addEventListener('DOMContentLoaded', () => {
     await fetchAllSettings();
     if (settingInactivityTimeoutSelect) {
       settingInactivityTimeoutSelect.value = String(inactivityTimeoutMinutes);
-    }
-    if (settingVcfAnnotationOrigin) {
-      settingVcfAnnotationOrigin.checked = vcfAnnotationOrigin;
-    }
-    if (settingVcfIncludeCardUrl) {
-      settingVcfIncludeCardUrl.checked = vcfIncludeCardUrl;
     }
     if (settingSupportEmailInput) {
       settingSupportEmailInput.value = supportEmail;
@@ -1547,8 +1535,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSaveAllSettings.addEventListener('click', async () => {
       if (!settingInactivityTimeoutSelect) return;
       const timeoutVal = parseInt(settingInactivityTimeoutSelect.value, 10);
-      const annotationVal = settingVcfAnnotationOrigin ? settingVcfAnnotationOrigin.checked : true;
-      const includeUrlVal = settingVcfIncludeCardUrl ? settingVcfIncludeCardUrl.checked : true;
       const supportEmailVal = settingSupportEmailInput ? settingSupportEmailInput.value.trim() : supportEmail;
       const trialDaysVal = settingTrialPeriodDaysInput ? parseInt(settingTrialPeriodDaysInput.value, 10) : trialPeriodDays;
       const trialMsgTextVal = settingTrialMessageTextInput ? settingTrialMessageTextInput.value.trim() : trialMessageText;
@@ -1560,8 +1546,6 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             inactivityTimeoutMinutes: timeoutVal,
-            vcfAnnotationOrigin: annotationVal,
-            vcfIncludeCardUrl: includeUrlVal,
             supportEmail: supportEmailVal,
             trialPeriodDays: isNaN(trialDaysVal) ? 30 : Math.max(0, trialDaysVal),
             trialMessageText: trialMsgTextVal,
@@ -1572,8 +1556,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.success) {
           inactivityTimeoutMinutes = timeoutVal;
           localStorage.setItem('tdconnect_inactivity_timeout', timeoutVal.toString());
-          vcfAnnotationOrigin = annotationVal;
-          vcfIncludeCardUrl = includeUrlVal;
           if (data.supportEmail) {
             supportEmail = data.supportEmail;
             updateSupportEmailDOM(supportEmail);
@@ -1948,6 +1930,9 @@ document.addEventListener('DOMContentLoaded', () => {
         show_name_under_logo: companyShowNameInput ? (companyShowNameInput.checked ? 1 : 0) : 1,
         show_phone_button: companyShowPhoneBtnInput ? (companyShowPhoneBtnInput.checked ? 1 : 0) : 1,
         show_email_button: companyShowEmailBtnInput ? (companyShowEmailBtnInput.checked ? 1 : 0) : 1,
+        show_vcf_button: companyShowVcfBtnInput ? (companyShowVcfBtnInput.checked ? 1 : 0) : 1,
+        vcf_annotation_origin: companyVcfAnnotationOriginInput ? (companyVcfAnnotationOriginInput.checked ? 1 : 0) : 1,
+        vcf_include_card_url: companyVcfIncludeCardUrlInput ? (companyVcfIncludeCardUrlInput.checked ? 1 : 0) : 1,
         contact_email_subject: companyEmailSubjectInput ? companyEmailSubjectInput.value.trim() : 'Échange de coordonnées',
         contact_email_body: companyEmailBodyInput ? companyEmailBodyInput.value : '',
         show_tdconnect_message: companyShowMessageInput ? (companyShowMessageInput.checked ? 1 : 0) : 0,
@@ -2092,6 +2077,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       updateCompanyPreview();
+    });
+  }
+
+  if (companyShowVcfBtnInput) {
+    companyShowVcfBtnInput.addEventListener('change', () => {
+      isCompanyFormDirty = true;
+      if (companyVcfOptionsSection) {
+        if (companyShowVcfBtnInput.checked) {
+          companyVcfOptionsSection.classList.remove('hidden');
+        } else {
+          companyVcfOptionsSection.classList.add('hidden');
+        }
+      }
+      updateCompanyPreview();
+    });
+  }
+
+  if (companyVcfAnnotationOriginInput) {
+    companyVcfAnnotationOriginInput.addEventListener('change', () => {
+      isCompanyFormDirty = true;
+    });
+  }
+
+  if (companyVcfIncludeCardUrlInput) {
+    companyVcfIncludeCardUrlInput.addEventListener('change', () => {
+      isCompanyFormDirty = true;
     });
   }
 
@@ -2774,6 +2785,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       prevActionVcard.href = '#';
       btnExportZip.href = '#';
+    }
+
+    const isVcfEnabled = companyShowVcfBtnInput ? companyShowVcfBtnInput.checked : true;
+    if (prevActionVcard) {
+      if (isVcfEnabled) {
+        prevActionVcard.classList.remove('hidden');
+      } else {
+        prevActionVcard.classList.add('hidden');
+      }
     }
 
     // Apply company avatar size
@@ -3719,6 +3739,26 @@ document.addEventListener('DOMContentLoaded', () => {
         companyEmailBodyInput.value = companyInfo.contact_email_body != null 
           ? companyInfo.contact_email_body 
           : "Bonjour,\r\n\r\nPour faire suite à notre rencontre, je vous adresse mes coordonnées.\r\n\r\nBonne réception.";
+      }
+
+      if (companyShowVcfBtnInput) {
+        const isVcfBtnChecked = companyInfo.show_vcf_button !== 0;
+        companyShowVcfBtnInput.checked = isVcfBtnChecked;
+        if (companyVcfOptionsSection) {
+          if (isVcfBtnChecked) {
+            companyVcfOptionsSection.classList.remove('hidden');
+          } else {
+            companyVcfOptionsSection.classList.add('hidden');
+          }
+        }
+      }
+
+      if (companyVcfAnnotationOriginInput) {
+        companyVcfAnnotationOriginInput.checked = companyInfo.vcf_annotation_origin !== 0;
+      }
+
+      if (companyVcfIncludeCardUrlInput) {
+        companyVcfIncludeCardUrlInput.checked = companyInfo.vcf_include_card_url !== 0;
       }
       
       // Gestion des permissions du message de bas de page (case à cocher, texte et URL) :

@@ -5,7 +5,7 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.12.0-modele-mail-contact-entreprise`
+* **Version / Tag** : `v2.13.0-options-vcf-entreprise`
 * **Date** : 20 septembre 2026
 * **Statut** : Version stable / MySQL / Docker
 
@@ -13,7 +13,27 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.12.0-modele-mail-contact-entreprise` (Dernière version)
+### 🚀 Version `v2.13.0-options-vcf-entreprise` (Dernière version)
+**Thème : Décentralisation des paramètres d'export vCard (.vcf) au niveau de chaque entreprise, nouveau bouton activable et migration VPS**
+* **Décentralisation des paramètres vCard (.vcf) de l'application vers chaque entreprise** :
+  * Suppression de l'encart *"Exportation vCard (.vcf)"* de la page des Paramètres Généraux.
+  * Ajout dans le formulaire Entreprise, dans la rubrique *"Boutons de la carte virtuelle"*, d'une nouvelle case à cocher :
+    * **"Télécharger la fiche contact"** (`show_vcf_button`) à côté de *"Téléphone / Mobile"* et *"Email"*.
+  * Affichage conditionnel d'un sous-encart de configuration vCard lorsque la case est cochée :
+    * **"Annotation dans la carte vcf de l'origine du contact"** (`vcf_annotation_origin`) : contrôle la présence de la mention d'origine dans le carnet d'adresses du destinataire.
+    * **"Ajout de l'url de la carte virtuelle dans le vcf"** (`vcf_include_card_url`) : contrôle la présence de l'URL de la carte virtuelle mobile du collaborateur dans le carnet d'adresses.
+* **Affichage conditionnel du bouton VCF sur les cartes virtuelles** :
+  * Le bouton *"Télécharger la fiche contact"* n'apparaît sur les cartes virtuelles (publiques, autonomes ZIP et aperçu dans l'application) que si l'entreprise l'a activé (`show_vcf_button = 1`).
+* **Génération personnalisée du fichier `.vcf` par entreprise** :
+  * La fonction `buildVCardBuffer` prend désormais en compte les paramètres `vcf_annotation_origin` et `vcf_include_card_url` spécifiques à l'entreprise du collaborateur.
+* **Migration de base de données & Compatibilité VPS** :
+  * Ajout des colonnes `show_vcf_button INT DEFAULT 1`, `vcf_annotation_origin INT DEFAULT 1` et `vcf_include_card_url INT DEFAULT 1` sur la table `company_info`.
+  * Auto-migration idempotente au démarrage dans `server/database.cjs` avec initialisation automatique des entreprises existantes.
+  * Création du script de migration SQL dédié : `migrations/migration_v2.13.0_vcf_company_options.sql`.
+
+---
+
+### 🚀 Version `v2.12.0-modele-mail-contact-entreprise`
 **Thème : Personnalisation de l'objet et du corps du mail d'échange de coordonnées par entreprise et migration VPS**
 * **Rubrique "Boutons de la carte virtuelle" - Modèle d'e-mail paramétrable** :
   * Ajout dans le formulaire entreprise, sous les cases à cocher Téléphone / Email, de deux champs de configuration :

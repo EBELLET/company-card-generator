@@ -436,6 +436,7 @@ function generateVirtualCardHTML(collab, company, isStandalone = false, globalSe
 
   const showPhoneBtn = company.show_phone_button !== undefined ? Number(company.show_phone_button) === 1 : true;
   const showEmailBtn = company.show_email_button !== undefined ? Number(company.show_email_button) === 1 : true;
+  const showVcfBtn = company.show_vcf_button !== undefined ? Number(company.show_vcf_button) === 1 : true;
 
   const hasPhone = Boolean(showPhoneBtn && activePhone);
   const hasEmail = Boolean(showEmailBtn && collab.email);
@@ -443,11 +444,12 @@ function generateVirtualCardHTML(collab, company, isStandalone = false, globalSe
 
   const buttonsHTML = `
   <div class="actions-list-stacked ${isRound ? 'round' : ''}">
+    ${showVcfBtn ? `
     <!-- 1. Download vCard / Contact Card -->
     <a href="${vcfHref}" class="action-row-btn btn-vcard" title="Télécharger la fiche contact">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: ${isRound ? '0' : '0.4rem'};"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
       <span>Télécharger la fiche contact</span>
-    </a>
+    </a>` : ''}
 
     ${hasAnyContactBtn ? `
     <!-- 2. Share contact text -->
@@ -1783,9 +1785,12 @@ app.get('/card/:id', async (req, res) => {
 });
 
 async function buildVCardBuffer(collab, company, req = null) {
-  const settings = await db.getAllSettings();
-  const vcfAnnotationOrigin = settings.vcf_annotation_origin === '1' || settings.vcf_annotation_origin === 'true';
-  const vcfIncludeCardUrl = settings.vcf_include_card_url === '1' || settings.vcf_include_card_url === 'true';
+  const vcfAnnotationOrigin = company && company.vcf_annotation_origin !== undefined
+    ? (Number(company.vcf_annotation_origin) === 1 || company.vcf_annotation_origin === true)
+    : true;
+  const vcfIncludeCardUrl = company && company.vcf_include_card_url !== undefined
+    ? (Number(company.vcf_include_card_url) === 1 || company.vcf_include_card_url === true)
+    : true;
 
   const companyName = stripBr(company.name || '').trim();
   const companyUrl = (company.domain || '').trim();

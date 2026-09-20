@@ -412,50 +412,6 @@
                   </div>
                 </div>
 
-                <!-- CARD 2: Options des cartes vCard (.vcf) -->
-                <div class="settings-card">
-                  <div class="settings-card-header">
-                    <div class="settings-card-icon color-emerald">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    </div>
-                    <div>
-                      <h4>Exportation vCard (.vcf)</h4>
-                      <p>Contenu des fiches de contacts générées au format .vcf</p>
-                    </div>
-                  </div>
-
-                  <div class="settings-card-body">
-                    <!-- Option 1: Annotation origin -->
-                    <div class="setting-item-row">
-                      <div class="setting-item-info">
-                        <span class="setting-label">Annotation dans la carte vcf de l'origine du contact</span>
-                        <p class="setting-help">Incruste une note <em>"Origine : Carte de visite virtuelle TDConnect"</em> dans le carnet d'adresses du destinataire.</p>
-                      </div>
-                      <div class="setting-item-control">
-                        <label class="toggle-switch">
-                          <input type="checkbox" id="setting-vcf-annotation-origin" checked />
-                          <span class="toggle-slider"></span>
-                        </label>
-                      </div>
-                    </div>
-
-                    <hr class="setting-divider" />
-
-                    <!-- Option 2: Include Card URL -->
-                    <div class="setting-item-row">
-                      <div class="setting-item-info">
-                        <span class="setting-label">Ajout de l'url de la carte virtuelle dans le vcf</span>
-                        <p class="setting-help">Incruste l'adresse de la carte de visite virtuelle mobile du collaborateur parmi les informations du contact enregistré.</p>
-                      </div>
-                      <div class="setting-item-control">
-                        <label class="toggle-switch">
-                          <input type="checkbox" id="setting-vcf-include-card-url" checked />
-                          <span class="toggle-slider"></span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
                 <!-- CARD 3: Email / Support -->
                 <div class="settings-card">
@@ -747,7 +703,7 @@
                   <!-- Boutons de la carte virtuelle -->
                   <div class="form-group">
                     <label>Boutons de la carte virtuelle</label>
-                    <div style="display: flex; gap: 1.5rem; align-items: center; padding: 0.25rem 0;">
+                    <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; padding: 0.25rem 0;">
                       <label class="switch-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; user-select: none; color: var(--text-secondary);">
                         <input type="checkbox" id="company-show-phone-btn" checked style="width: 16px; height: 16px; cursor: pointer;" />
                         Téléphone / Mobile
@@ -755,6 +711,10 @@
                       <label class="switch-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; user-select: none; color: var(--text-secondary);">
                         <input type="checkbox" id="company-show-email-btn" checked style="width: 16px; height: 16px; cursor: pointer;" />
                         Email
+                      </label>
+                      <label class="switch-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; user-select: none; color: var(--text-secondary);">
+                        <input type="checkbox" id="company-show-vcf-btn" checked style="width: 16px; height: 16px; cursor: pointer;" />
+                        Télécharger la fiche contact
                       </label>
                     </div>
 
@@ -767,6 +727,21 @@
                       <div class="form-group" style="margin-bottom: 0;">
                         <label for="company-email-body" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Corps du message</label>
                         <textarea id="company-email-body" rows="4" placeholder="Ex: Bonjour,&#10;&#10;Pour faire suite à notre rencontre, je vous adresse mes coordonnées.&#10;&#10;Bonne réception." style="width: 100%; font-size: 0.85rem; resize: vertical; line-height: 1.4; font-family: inherit;"></textarea>
+                      </div>
+                    </div>
+
+                    <!-- Options d'exportation vCard (.vcf) -->
+                    <div id="company-vcf-options-section" style="margin-top: 0.85rem; padding: 0.85rem 1rem; background: var(--bg-card, rgba(255,255,255,0.03)); border: 1px solid var(--border-color); border-radius: 8px;">
+                      <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.6rem;">Exportation vCard (.vcf)</div>
+                      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <label class="switch-label" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 0.85rem; font-weight: 500; user-select: none; color: var(--text-primary, #e2e8f0);">
+                          <span>Annotation dans la carte vcf de l'origine du contact</span>
+                          <input type="checkbox" id="company-vcf-annotation-origin" checked style="width: 16px; height: 16px; cursor: pointer;" />
+                        </label>
+                        <label class="switch-label" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 0.85rem; font-weight: 500; user-select: none; color: var(--text-primary, #e2e8f0);">
+                          <span>Ajout de l'url de la carte virtuelle dans le vcf</span>
+                          <input type="checkbox" id="company-vcf-include-card-url" checked style="width: 16px; height: 16px; cursor: pointer;" />
+                        </label>
                       </div>
                     </div>
                   </div>
