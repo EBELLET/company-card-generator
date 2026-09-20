@@ -1067,17 +1067,30 @@ app.put('/api/companies/:id', authenticateToken, async (req, res) => {
     req.body.subscription_type = existingComp.subscription_type;
     req.body.subscriptionType = existingComp.subscription_type;
 
-    // Seul le Super Admin peut modifier le texte et l'URL du message de bas de page.
-    req.body.tdconnect_message = existingComp.tdconnect_message;
-    req.body.tdconnectMessage = existingComp.tdconnect_message;
-    req.body.tdconnect_url = existingComp.tdconnect_url;
-    req.body.tdconnectUrl = existingComp.tdconnect_url;
-
-    // En période offerte, la case à cocher d'affichage est également verrouillée pour les non-superadmins.
+    // Gestion des permissions pour le message de bas de page (case à cocher, texte et URL) :
+    // - Super Admin : peut modifier les 3 champs quelle que soit la période.
+    // - Administrateur : modifiables durant une période payante active, mais bloqués durant une période offerte ou échue/suspendue.
+    const subActiveVal = existingComp.is_subscription_active != null ? existingComp.is_subscription_active : 1;
+    const isSuspended = Number(subActiveVal) === 0 || subActiveVal === false;
+    let isDateExpired = false;
+    if (existingComp.subscription_end_date) {
+      const subDateStr = String(existingComp.subscription_end_date).split('T')[0];
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (subDateStr < todayStr) {
+        isDateExpired = true;
+      }
+    }
     const subType = existingComp.subscription_type || existingComp.subscriptionType || 'Offerte';
-    if (subType === 'Offerte') {
+    const isEchu = (subType === 'Echu');
+    const isPaidActivePeriod = (subType !== 'Offerte') && !isSuspended && !isDateExpired && !isEchu;
+
+    if (!isPaidActivePeriod) {
       req.body.show_tdconnect_message = existingComp.show_tdconnect_message;
       req.body.showTdconnectMessage = existingComp.show_tdconnect_message;
+      req.body.tdconnect_message = existingComp.tdconnect_message;
+      req.body.tdconnectMessage = existingComp.tdconnect_message;
+      req.body.tdconnect_url = existingComp.tdconnect_url;
+      req.body.tdconnectUrl = existingComp.tdconnect_url;
     }
   }
   try {
