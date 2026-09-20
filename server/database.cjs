@@ -379,21 +379,13 @@ const addCompany = async (c) => {
   }
   const subType = c.subscription_type || c.subscriptionType || 'Offerte';
 
-  let existingRows = [];
-  if (trimmedDomain) {
-    [existingRows] = await pool.query(
-      'SELECT * FROM company_info WHERE LOWER(name) = LOWER(?) OR (domain IS NOT NULL AND domain != "" AND LOWER(domain) = LOWER(?)) LIMIT 1',
-      [trimmedName, trimmedDomain]
-    );
-  } else {
-    [existingRows] = await pool.query(
-      'SELECT * FROM company_info WHERE LOWER(name) = LOWER(?) LIMIT 1',
-      [trimmedName]
-    );
-  }
+  const [existingRows] = await pool.query(
+    'SELECT id, name FROM company_info WHERE LOWER(name) = LOWER(?) LIMIT 1',
+    [trimmedName]
+  );
 
   if (existingRows.length > 0) {
-    throw new Error(`L'entreprise "${existingRows[0].name || trimmedName}" existe déjà dans le système.`);
+    throw new Error(`L'entreprise "${existingRows[0].name}" existe déjà dans le système.`);
   }
 
   const isSubActiveVal = c.is_subscription_active !== undefined ? (c.is_subscription_active ? 1 : 0) : (c.isSubscriptionActive !== undefined ? (c.isSubscriptionActive ? 1 : 0) : 1);
@@ -758,21 +750,13 @@ const registerUserWithCompany = async (userData, companyData) => {
       const trimmedName = companyData.name.trim();
       const trimmedDomain = companyData.domain ? companyData.domain.trim().toLowerCase() : '';
       
-      let existingRows = [];
-      if (trimmedDomain) {
-        [existingRows] = await connection.query(
-          'SELECT id, name FROM company_info WHERE LOWER(name) = LOWER(?) OR (domain IS NOT NULL AND domain != "" AND LOWER(domain) = LOWER(?)) LIMIT 1',
-          [trimmedName, trimmedDomain]
-        );
-      } else {
-        [existingRows] = await connection.query(
-          'SELECT id, name FROM company_info WHERE LOWER(name) = LOWER(?) LIMIT 1',
-          [trimmedName]
-        );
-      }
+      const [existingRows] = await connection.query(
+        'SELECT id, name FROM company_info WHERE LOWER(name) = LOWER(?) LIMIT 1',
+        [trimmedName]
+      );
 
       if (existingRows.length > 0) {
-        throw new Error(`L'entreprise "${existingRows[0].name || trimmedName}" existe déjà. Impossible de créer un compte avec une entreprise déjà existante.`);
+        throw new Error(`L'entreprise "${existingRows[0].name}" existe déjà. Impossible de créer un compte avec une entreprise déjà existante.`);
       }
 
       const trialDaysSetting = await getSetting('trial_period_days', '30');
@@ -789,6 +773,14 @@ const registerUserWithCompany = async (userData, companyData) => {
       console.log(`[DB] Nouvelle entreprise "${trimmedName}" créée (ID ${companyId}). Période offerte jusqu'au : ${defaultSubEnd}.`);
     }
     
+    const [existingUsers] = await connection.query(
+      'SELECT id FROM users WHERE LOWER(id) = LOWER(?) LIMIT 1',
+      [userData.id.trim()]
+    );
+    if (existingUsers.length > 0) {
+      throw new Error(`L'identifiant "${userData.id.trim()}" est déjà utilisé. Veuillez en choisir un autre.`);
+    }
+
     await connection.query(`
       INSERT INTO users (id, password_hash, first_name, last_name, email, role, is_temp_password)
       VALUES (?, ?, ?, ?, ?, 'admin', ?)
