@@ -63,3 +63,6 @@ DEALLOCATE PREPARE alterIfNotExists;
 UPDATE company_info SET show_vcf_button = 1 WHERE show_vcf_button IS NULL;
 UPDATE company_info SET vcf_annotation_origin = 1 WHERE vcf_annotation_origin IS NULL;
 UPDATE company_info SET vcf_include_card_url = 1 WHERE vcf_include_card_url IS NULL;
+
+-- 5. Nettoyage des anciens paramètres généraux devenus obsolètes dans app_settings
+DELETE FROM app_settings WHERE setting_key IN ('vcf_annotation_origin', 'vcf_include_card_url');
