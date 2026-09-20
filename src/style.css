@@ -332,6 +332,14 @@ label {
   gap: 0.35rem;
 }
 
+#card-form .form-group > label:not(.switch-label):not(.theme-radio):not(.color-picker-label),
+#card-form .form-row label:not(.switch-label),
+#card-form label[for="company-name"] {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+}
+
 .tooltip {
   cursor: help;
   font-size: 0.75rem;

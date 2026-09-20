@@ -5,15 +5,32 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.9.0-gestion-periode-offerte-et-abonnements`
-* **Date** : 19 septembre 2026
-* **Statut** : Version stable en production / MySQL / Docker
+* **Version / Tag** : `v2.10.0-options-boutons-carte-virtuelle`
+* **Date** : 20 septembre 2026
+* **Statut** : Version stable / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.9.0-gestion-periode-offerte-et-abonnements` (Dernière version)
+### 🚀 Version `v2.10.0-options-boutons-carte-virtuelle` (Dernière version)
+**Thème : Gestion unitaire des boutons Téléphone/Mobile et Email sur la carte virtuelle, masquage intelligent et migration VPS**
+* **Rubrique "Boutons de la carte virtuelle" dans le formulaire de l'entreprise** :
+  * Insertion de la rubrique avant "Couleur des boutons" avec 2 cases à cocher : **Téléphone / Mobile** et **Email**.
+  * Initialisées cochées par défaut (`checked = 1`).
+* **Affichage conditionnel sur l'aperçu mobile et sur la carte virtuelle publique** :
+  * Masquage en direct du bouton Téléphone ou Email s'il est décoché.
+  * Masquage automatique de la phrase d'accroche *"Partagez vos coordonnées avec votre nouveau contact :"* et du conteneur de boutons lorsque aucun des deux boutons n'est activé.
+* **Mise en valeur typographique des rubriques du formulaire** :
+  * Accentuation visuelle en gras (`font-weight: 700; color: var(--text-primary)`) sur les libellés de rubriques de la configuration de carte (*Logo de l'entreprise*, *Thème visuel*, *Police d'écriture*, *Boutons de la carte virtuelle*, *Couleur des boutons*, etc.).
+* **Migration de base de données non destructive & Portage VPS** :
+  * Ajout des colonnes `show_phone_button INT DEFAULT 1` et `show_email_button INT DEFAULT 1` sur la table `company_info`.
+  * Migration idempotente et automatique intégrée dans `server/database.cjs` (`initDb()`).
+  * Mise à disposition du script SQL autonome `migrations/migration_v2.10.0_buttons_options.sql` pour un déploiement manuel transparent sur VPS.
+
+---
+
+### 🚀 Version `v2.9.0-gestion-periode-offerte-et-abonnements`
 **Thème : Paramétrage global de la période offerte, indicateurs d'abonnement quadricolores et gestion des périodes**
 * **Paramètre général "Période offerte" (`app_settings.trial_period_days`)** :
   * Ajout d'une nouvelle section dédiée *Abonnements & Période offerte* dans le panneau des **Paramètres Généraux** de l'application (`#view-settings-panel`).

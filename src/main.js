@@ -309,6 +309,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const companyLogoXInput = document.getElementById('company-logo-x');
   const companyLogoXVal = document.getElementById('company-logo-x-val');
   const companyShowNameInput = document.getElementById('company-show-name');
+  const companyShowPhoneBtnInput = document.getElementById('company-show-phone-btn');
+  const companyShowEmailBtnInput = document.getElementById('company-show-email-btn');
   const companyShowMessageInput = document.getElementById('company-show-message');
   const companyMessageTextInput = document.getElementById('company-message-text');
   const companyMessageUrlInput = document.getElementById('company-message-url');
@@ -344,18 +346,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const collabDisplayIdInput = document.getElementById('collab-display-id');
   const collabFirstnameInput = document.getElementById('collab-firstname');
   const collabLastnameInput = document.getElementById('collab-lastname');
+  const collabActiveToggle = document.getElementById('collab-active-toggle');
+  const collabActiveLabel = document.getElementById('collab-active-label');
   const collabTitleInput = document.getElementById('collab-title');
   const collabRoleInput = document.getElementById('collab-role');
-  const collabPhoneInput = document.getElementById('collab-phone');
   const collabPhoneMobileInput = document.getElementById('collab-phone-mobile');
   const collabPhoneWorkInput = document.getElementById('collab-phone-work');
   const collabPhoneFaxInput = document.getElementById('collab-phone-fax');
-  const collabPhoneDefaultInput = document.getElementById('collab-phone-default');
+  const collabPhoneDefaultSelect = document.getElementById('collab-phone-default');
+  const collabPhoneInput = document.getElementById('collab-phone'); // Hidden legacy fallback
   const collabEmailInput = document.getElementById('collab-email');
   const collabAddressInput = document.getElementById('collab-address');
   const collabPhotoClickUrlInput = document.getElementById('collab-photo-click-url');
-  const collabActiveToggle = document.getElementById('collab-active-toggle');
-  const collabActiveLabel = document.getElementById('collab-active-label');
   const collabCustomSlugInput = document.getElementById('collab-custom-slug');
   const collabCustomSlugGroup = document.getElementById('collab-custom-slug-group');
   const collabSlugWarning = document.getElementById('collab-slug-warning');
@@ -396,6 +398,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const prevActionPhone = document.getElementById('prev-action-phone');
   const prevActionEmail = document.getElementById('prev-action-email');
   const prevActionVcard = document.getElementById('prev-action-vcard');
+  const prevShareContactText = document.getElementById('prev-share-contact-text');
+  const prevContactButtonsRow = document.querySelector('.preview-contact-buttons-row');
 
   const prevBtnPhoneText = document.getElementById('prev-btn-phone-text');
   const prevBtnEmailText = document.getElementById('prev-btn-email-text');
@@ -1867,6 +1871,8 @@ document.addEventListener('DOMContentLoaded', () => {
         button_style: currentButtonStyle,
         avatar_size: companyAvatarSizeInput ? parseInt(companyAvatarSizeInput.value, 10) : 100,
         show_name_under_logo: companyShowNameInput ? (companyShowNameInput.checked ? 1 : 0) : 1,
+        show_phone_button: companyShowPhoneBtnInput ? (companyShowPhoneBtnInput.checked ? 1 : 0) : 1,
+        show_email_button: companyShowEmailBtnInput ? (companyShowEmailBtnInput.checked ? 1 : 0) : 1,
         show_tdconnect_message: companyShowMessageInput ? (companyShowMessageInput.checked ? 1 : 0) : 0,
         tdconnect_message: companyMessageTextInput ? companyMessageTextInput.value.trim() : '',
         tdconnect_url: companyMessageUrlInput ? companyMessageUrlInput.value.trim() : ''
@@ -1986,6 +1992,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (companyShowNameInput) {
     companyShowNameInput.addEventListener('change', () => {
+      isCompanyFormDirty = true;
+      updateCompanyPreview();
+    });
+  }
+
+  if (companyShowPhoneBtnInput) {
+    companyShowPhoneBtnInput.addEventListener('change', () => {
+      isCompanyFormDirty = true;
+      updateCompanyPreview();
+    });
+  }
+
+  if (companyShowEmailBtnInput) {
+    companyShowEmailBtnInput.addEventListener('change', () => {
       isCompanyFormDirty = true;
       updateCompanyPreview();
     });
@@ -2538,7 +2558,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Action Button links
-      if (activePhone) {
+      const isPhoneEnabled = companyShowPhoneBtnInput ? companyShowPhoneBtnInput.checked : true;
+      const isEmailEnabled = companyShowEmailBtnInput ? companyShowEmailBtnInput.checked : true;
+
+      const canShowPhone = isPhoneEnabled && Boolean(activePhone);
+      if (canShowPhone) {
         prevBtnPhoneText.textContent = activeLabel;
         prevActionPhone.href = `tel:${activePhone}`;
         prevActionPhone.classList.remove('hidden');
@@ -2546,7 +2570,8 @@ document.addEventListener('DOMContentLoaded', () => {
         prevActionPhone.classList.add('hidden');
       }
 
-      if (collab.email) {
+      const canShowEmail = isEmailEnabled && Boolean(collab.email);
+      if (canShowEmail) {
         const mailSubject = encodeURIComponent("Échange de coordonnées");
         const mailBody = encodeURIComponent("Bonjour,\r\n\r\nPour faire suite à notre rencontre je vous adresse mes coordonnées.\r\n\r\nBonne réception.");
         prevActionEmail.href = `mailto:${collab.email}?subject=${mailSubject}&body=${mailBody}`;
@@ -2554,6 +2579,21 @@ document.addEventListener('DOMContentLoaded', () => {
         prevActionEmail.classList.remove('hidden');
       } else {
         prevActionEmail.classList.add('hidden');
+      }
+
+      if (prevShareContactText) {
+        if (canShowPhone || canShowEmail) {
+          prevShareContactText.classList.remove('hidden');
+        } else {
+          prevShareContactText.classList.add('hidden');
+        }
+      }
+      if (prevContactButtonsRow) {
+        if (canShowPhone || canShowEmail) {
+          prevContactButtonsRow.classList.remove('hidden');
+        } else {
+          prevContactButtonsRow.classList.add('hidden');
+        }
       }
 
       const urlId = collab.customSlug || collab.id;
@@ -2603,12 +2643,40 @@ document.addEventListener('DOMContentLoaded', () => {
       prevAvatarInitials.classList.remove('hidden');
 
       // Action Buttons dummy
-      prevBtnPhoneText.textContent = 'Mobile';
-      prevActionPhone.href = '#';
-      prevActionPhone.classList.remove('hidden');
-      prevActionEmail.href = '#';
-      prevBtnEmailText.textContent = 'Email';
-      prevActionEmail.classList.remove('hidden');
+      const isPhoneEnabled = companyShowPhoneBtnInput ? companyShowPhoneBtnInput.checked : true;
+      const isEmailEnabled = companyShowEmailBtnInput ? companyShowEmailBtnInput.checked : true;
+
+      if (isPhoneEnabled) {
+        prevBtnPhoneText.textContent = 'Mobile';
+        prevActionPhone.href = '#';
+        prevActionPhone.classList.remove('hidden');
+      } else {
+        prevActionPhone.classList.add('hidden');
+      }
+
+      if (isEmailEnabled) {
+        prevBtnEmailText.textContent = 'Email';
+        prevActionEmail.href = '#';
+        prevActionEmail.classList.remove('hidden');
+      } else {
+        prevActionEmail.classList.add('hidden');
+      }
+
+      if (prevShareContactText) {
+        if (isPhoneEnabled || isEmailEnabled) {
+          prevShareContactText.classList.remove('hidden');
+        } else {
+          prevShareContactText.classList.add('hidden');
+        }
+      }
+      if (prevContactButtonsRow) {
+        if (isPhoneEnabled || isEmailEnabled) {
+          prevContactButtonsRow.classList.remove('hidden');
+        } else {
+          prevContactButtonsRow.classList.add('hidden');
+        }
+      }
+
       prevActionVcard.href = '#';
       btnExportZip.href = '#';
     }
@@ -3530,6 +3598,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (companyShowNameInput) {
         companyShowNameInput.checked = companyInfo.show_name_under_logo !== 0;
+      }
+
+      if (companyShowPhoneBtnInput) {
+        companyShowPhoneBtnInput.checked = companyInfo.show_phone_button !== 0;
+      }
+
+      if (companyShowEmailBtnInput) {
+        companyShowEmailBtnInput.checked = companyInfo.show_email_button !== 0;
       }
       
       if (companyShowMessageInput) {

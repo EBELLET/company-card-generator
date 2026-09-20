@@ -79,6 +79,8 @@ async function initializeDatabase() {
       tdconnect_message TEXT,
       tdconnect_url TEXT,
       logo_x INT DEFAULT 0,
+      show_phone_button INT DEFAULT 1,
+      show_email_button INT DEFAULT 1,
       subscription_end_date DATE NULL,
       is_subscription_active INT DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -104,9 +106,26 @@ async function initializeDatabase() {
     await pool.query(`ALTER TABLE company_info ADD COLUMN subscription_type VARCHAR(20) DEFAULT 'Offerte'`);
   } catch (e) {}
 
+  try {
+    await pool.query(`ALTER TABLE company_info ADD COLUMN show_phone_button INT DEFAULT 1`);
+  } catch (e) {}
+
+  try {
+    await pool.query(`ALTER TABLE company_info ADD COLUMN show_email_button INT DEFAULT 1`);
+  } catch (e) {}
+
   // Initialize existing companies with subscription_type 'Payant' if currently NULL or empty
   try {
     await pool.query(`UPDATE company_info SET subscription_type = 'Payant' WHERE subscription_type IS NULL OR subscription_type = ''`);
+  } catch (e) {}
+
+  // Initialize show_phone_button and show_email_button to 1 for any NULL entries
+  try {
+    await pool.query(`UPDATE company_info SET show_phone_button = 1 WHERE show_phone_button IS NULL`);
+  } catch (e) {}
+
+  try {
+    await pool.query(`UPDATE company_info SET show_email_button = 1 WHERE show_email_button IS NULL`);
   } catch (e) {}
 
   // Ensure all existing companies have an active valid subscription date for testing
@@ -377,14 +396,17 @@ const addCompany = async (c) => {
 
   const isSubActiveVal = c.is_subscription_active !== undefined ? (c.is_subscription_active ? 1 : 0) : (c.isSubscriptionActive !== undefined ? (c.isSubscriptionActive ? 1 : 0) : 1);
 
+  const showPhoneBtn = c.show_phone_button !== undefined ? (c.show_phone_button ? 1 : 0) : 1;
+  const showEmailBtn = c.show_email_button !== undefined ? (c.show_email_button ? 1 : 0) : 1;
+
   const [result] = await pool.query(`
     INSERT INTO company_info (
       name, domain, address, zip, city, country, logo_custom_url,
       theme, font, accent_color, logo_size, button_style,
       avatar_size, show_name_under_logo, show_tdconnect_message,
       tdconnect_message, tdconnect_url, logo_x, subscription_end_date, is_subscription_active,
-      subscription_type
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      subscription_type, show_phone_button, show_email_button
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     trimmedName,
     trimmedDomain,
@@ -406,7 +428,9 @@ const addCompany = async (c) => {
     c.logo_x !== undefined ? c.logo_x : 0,
     subEndDate || null,
     isSubActiveVal,
-    subType
+    subType,
+    showPhoneBtn,
+    showEmailBtn
   ]);
   return getCompanyById(result.insertId);
 };
@@ -435,9 +459,15 @@ const updateCompany = async (id, c) => {
 
   const isSubActiveVal = c.is_subscription_active !== undefined ? (c.is_subscription_active ? 1 : 0) : (c.isSubscriptionActive !== undefined ? (c.isSubscriptionActive ? 1 : 0) : 1);
 
-  const [currentRows] = await pool.query('SELECT subscription_type FROM company_info WHERE id = ?', [id]);
+  const [currentRows] = await pool.query('SELECT subscription_type, show_phone_button, show_email_button FROM company_info WHERE id = ?', [id]);
   const currentSubType = currentRows[0] ? (currentRows[0].subscription_type || 'Offerte') : 'Offerte';
   const subType = (c.subscription_type !== undefined) ? c.subscription_type : ((c.subscriptionType !== undefined) ? c.subscriptionType : currentSubType);
+
+  const currentShowPhone = currentRows[0] && currentRows[0].show_phone_button !== undefined ? currentRows[0].show_phone_button : 1;
+  const currentShowEmail = currentRows[0] && currentRows[0].show_email_button !== undefined ? currentRows[0].show_email_button : 1;
+
+  const showPhoneBtn = c.show_phone_button !== undefined ? (c.show_phone_button ? 1 : 0) : currentShowPhone;
+  const showEmailBtn = c.show_email_button !== undefined ? (c.show_email_button ? 1 : 0) : currentShowEmail;
 
   await pool.query(`
     UPDATE company_info SET
@@ -461,7 +491,9 @@ const updateCompany = async (id, c) => {
       logo_x = ?,
       subscription_end_date = ?,
       is_subscription_active = ?,
-      subscription_type = ?
+      subscription_type = ?,
+      show_phone_button = ?,
+      show_email_button = ?
     WHERE id = ?
   `, [
     trimmedName,
@@ -485,6 +517,8 @@ const updateCompany = async (id, c) => {
     subEndDate || null,
     isSubActiveVal,
     subType || 'Offerte',
+    showPhoneBtn,
+    showEmailBtn,
     id
   ]);
   return getCompanyById(id);
