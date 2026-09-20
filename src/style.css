@@ -1753,7 +1753,7 @@ body.theme-obsidian .preview-share-contact-text {
   height: 50px !important;
   border-radius: 50% !important;
   padding: 0 !important;
-  display: flex !important;
+  display: flex;
   align-items: center !important;
   justify-content: center !important;
   flex: 0 0 50px !important;
@@ -1778,7 +1778,7 @@ body.theme-obsidian .preview-share-contact-text {
   height: 50px !important;
   border-radius: 50% !important;
   padding: 0 !important;
-  display: flex !important;
+  display: flex;
   align-items: center !important;
   justify-content: center !important;
   flex: 0 0 50px !important;
@@ -1790,6 +1790,12 @@ body.theme-obsidian .preview-share-contact-text {
 
 .preview-actions-list-stacked.round .preview-contact-buttons-row .preview-action-row-btn svg {
   margin-right: 0 !important;
+}
+
+.preview-actions-list-stacked.round .preview-action-row-btn.hidden,
+.preview-actions-list-stacked.round .vcard-btn.hidden,
+.preview-actions-list-stacked.round .preview-contact-buttons-row .preview-action-row-btn.hidden {
+  display: none !important;
 }
 
 /* ==========================================
