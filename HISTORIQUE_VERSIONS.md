@@ -31,6 +31,9 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
     * Pour les administrateurs normaux de l'entreprise, ces trois champs sont verrouillés (désactivés avec infobulle explicative côté interface, et protégés côté backend dans l'API `PUT /api/companies/:id`).
   * **En période d'abonnement payant (`Payant`)** :
     * Les administrateurs de l'entreprise peuvent modifier librement le message, l'URL de redirection ou désactiver l'affichage selon les besoins de leur société.
+* **Redirection directe vers la modale de connexion depuis l'email de bienvenue** :
+  * Le bouton *Accéder à TDConnect* dans l'email envoyé lors de l'inscription pointe désormais directement vers `${appUrl}/#login?user=...`.
+  * La modale de connexion s'ouvre automatiquement dès le chargement de la page avec l'identifiant de l'administrateur pré-rempli et le focus positionné sur le champ mot de passe.
 * **Migration SQL et compatibilité VPS** :
   * Insertion idempotente dans `app_settings` au démarrage via `server/database.cjs` (`initDb()`).
   * Script SQL autonome `migrations/migration_v2.11.0_trial_card_message.sql` mis à disposition pour le portage sur le VPS.

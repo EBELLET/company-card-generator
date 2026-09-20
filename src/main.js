@@ -608,6 +608,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const cleanHash = rawHash.startsWith('#') ? rawHash : '#' + rawHash;
     const isLoggedIn = !!(authToken && currentUser);
 
+    if (cleanHash.startsWith('#login')) {
+      if (!isLoggedIn) {
+        toggleAppView(false);
+        let prefillUser = '';
+        const urlParams = new URLSearchParams(window.location.search);
+        prefillUser = urlParams.get('user') || urlParams.get('username') || '';
+        if (!prefillUser && cleanHash.includes('?')) {
+          const hashParams = new URLSearchParams(cleanHash.split('?')[1]);
+          prefillUser = hashParams.get('user') || hashParams.get('username') || '';
+        }
+        showLoginModal('', prefillUser);
+        return;
+      } else {
+        navigateTo('#dashboard');
+        return;
+      }
+    }
+
     if (cleanHash.startsWith('#company/')) {
       const parts = cleanHash.split('/');
       const companyId = parts[1];
@@ -741,7 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function showLoginModal(message = '') {
+  function showLoginModal(message = '', prefillUsername = '') {
     if (loginModal) {
       loginModal.classList.remove('hidden');
       if (message) {
@@ -751,13 +769,23 @@ document.addEventListener('DOMContentLoaded', () => {
         loginErrorMsg.classList.add('hidden');
       }
       loginForm.reset();
-      loginUsernameInput.focus();
+      if (prefillUsername && loginUsernameInput) {
+        loginUsernameInput.value = prefillUsername;
+        if (loginPasswordInput) {
+          loginPasswordInput.focus();
+        }
+      } else if (loginUsernameInput) {
+        loginUsernameInput.focus();
+      }
     }
   }
 
   function hideLoginModal() {
     if (loginModal) {
       loginModal.classList.add('hidden');
+    }
+    if (window.location.hash.startsWith('#login')) {
+      history.replaceState(null, '', window.location.pathname);
     }
   }
 
@@ -1023,6 +1051,23 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (token) {
       openResetModal(token);
+    }
+  })();
+
+  // --- Détection automatique de la demande de connexion dans l'URL (#login ou ?action=login) ---
+  (function checkLoginRouteInURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasLoginQuery = urlParams.get('login') === '1' || urlParams.get('action') === 'login';
+    const isLoginHash = window.location.hash.startsWith('#login');
+    if (hasLoginQuery || isLoginHash) {
+      if (!authToken || !currentUser) {
+        let prefillUser = urlParams.get('user') || urlParams.get('username') || '';
+        if (!prefillUser && window.location.hash.includes('?')) {
+          const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+          prefillUser = hashParams.get('user') || hashParams.get('username') || '';
+        }
+        showLoginModal('', prefillUser);
+      }
     }
   })();
 

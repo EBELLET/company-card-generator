@@ -1323,7 +1323,8 @@ app.post('/api/auth/register', async (req, res) => {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       userId: userId.trim(),
-      password: tempPassword
+      password: tempPassword,
+      origin: req.headers.origin
     }).catch(err => console.error('[Mail] Erreur envoi email bienvenue inscription:', err.message));
 
     // Generate token
@@ -1650,7 +1651,8 @@ app.post('/api/admin/users', authenticateToken, async (req, res) => {
       firstName,
       lastName,
       userId: id.trim(),
-      password
+      password,
+      origin: req.headers.origin
     }).catch(err => console.error('[Mail] Erreur envoi email bienvenue:', err.message));
     
     res.status(201).json(newUser);

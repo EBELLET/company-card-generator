@@ -95,6 +95,7 @@ function htmlWrapper(title, bodyHtml) {
 // ─────────────────────────────────────────────────────────────────────────────
 async function sendWelcomeEmail({ to, firstName, lastName, userId, password, origin }) {
   const appUrl = getAppUrl(origin);
+  const loginUrl = `${appUrl}/#login?user=${encodeURIComponent(userId)}`;
   const subject = 'Votre compte TDConnect a été créé';
 
   const body = `
@@ -111,10 +112,11 @@ async function sendWelcomeEmail({ to, firstName, lastName, userId, password, ori
     </div>
 
     <p style="margin-top:20px;">Connectez-vous dès maintenant et modifiez votre mot de passe lors de votre première connexion :</p>
-    <a href="${appUrl}" class="btn">Accéder à TDConnect →</a>
+    <a href="${loginUrl}" class="btn">Accéder à TDConnect →</a>
 
     <hr class="divider"/>
     <p style="font-size:0.8rem; color:#6b7280;">Pour des raisons de sécurité, nous vous recommandons de changer votre mot de passe dès votre première connexion.</p>
+    <p style="font-size:0.8rem; color:#6b7280;">Lien direct :<br/><a href="${loginUrl}" style="color:#818cf8;">${loginUrl}</a></p>
   `;
 
   await getTransporter().sendMail({
