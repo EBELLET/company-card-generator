@@ -309,12 +309,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const companyLogoXInput = document.getElementById('company-logo-x');
   const companyLogoXVal = document.getElementById('company-logo-x-val');
   const companyShowNameInput = document.getElementById('company-show-name');
-  const companyShowPhoneBtnInput = document.getElementById('company-show-phone-btn');
-  const companyShowEmailBtnInput = document.getElementById('company-show-email-btn');
-  const companyShowVcfBtnInput = document.getElementById('company-show-vcf-btn');
+  function getRadioBool(name, defaultVal = true) {
+    const checked = document.querySelector(`input[name="${name}"]:checked`);
+    if (!checked) return defaultVal;
+    return checked.value === '1';
+  }
+
+  function setRadioBool(name, isTrue) {
+    const val = isTrue ? '1' : '0';
+    const radio = document.querySelector(`input[name="${name}"][value="${val}"]`);
+    if (radio) {
+      radio.checked = true;
+    }
+  }
+
   const companyVcfOptionsSection = document.getElementById('company-vcf-options-section');
-  const companyVcfAnnotationOriginInput = document.getElementById('company-vcf-annotation-origin');
-  const companyVcfIncludeCardUrlInput = document.getElementById('company-vcf-include-card-url');
   const companyEmailTemplateSection = document.getElementById('company-email-template-section');
   const companyEmailSubjectInput = document.getElementById('company-email-subject');
   const companyEmailBodyInput = document.getElementById('company-email-body');
@@ -1928,11 +1937,11 @@ document.addEventListener('DOMContentLoaded', () => {
         button_style: currentButtonStyle,
         avatar_size: companyAvatarSizeInput ? parseInt(companyAvatarSizeInput.value, 10) : 100,
         show_name_under_logo: companyShowNameInput ? (companyShowNameInput.checked ? 1 : 0) : 1,
-        show_phone_button: companyShowPhoneBtnInput ? (companyShowPhoneBtnInput.checked ? 1 : 0) : 1,
-        show_email_button: companyShowEmailBtnInput ? (companyShowEmailBtnInput.checked ? 1 : 0) : 1,
-        show_vcf_button: companyShowVcfBtnInput ? (companyShowVcfBtnInput.checked ? 1 : 0) : 1,
-        vcf_annotation_origin: companyVcfAnnotationOriginInput ? (companyVcfAnnotationOriginInput.checked ? 1 : 0) : 1,
-        vcf_include_card_url: companyVcfIncludeCardUrlInput ? (companyVcfIncludeCardUrlInput.checked ? 1 : 0) : 1,
+        show_phone_button: getRadioBool('company-show-phone-btn', true) ? 1 : 0,
+        show_email_button: getRadioBool('company-show-email-btn', true) ? 1 : 0,
+        show_vcf_button: getRadioBool('company-show-vcf-btn', true) ? 1 : 0,
+        vcf_annotation_origin: getRadioBool('company-vcf-annotation-origin', true) ? 1 : 0,
+        vcf_include_card_url: getRadioBool('company-vcf-include-card-url', true) ? 1 : 0,
         contact_email_subject: companyEmailSubjectInput ? companyEmailSubjectInput.value.trim() : 'Échange de coordonnées',
         contact_email_body: companyEmailBodyInput ? companyEmailBodyInput.value : '',
         show_tdconnect_message: companyShowMessageInput ? (companyShowMessageInput.checked ? 1 : 0) : 0,
@@ -2059,52 +2068,46 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (companyShowPhoneBtnInput) {
-    companyShowPhoneBtnInput.addEventListener('change', () => {
+  document.querySelectorAll('input[name="company-show-phone-btn"]').forEach(radio => {
+    radio.addEventListener('change', () => {
       isCompanyFormDirty = true;
       updateCompanyPreview();
     });
-  }
+  });
 
-  if (companyShowEmailBtnInput) {
-    companyShowEmailBtnInput.addEventListener('change', () => {
+  document.querySelectorAll('input[name="company-show-email-btn"]').forEach(radio => {
+    radio.addEventListener('change', () => {
       isCompanyFormDirty = true;
+      const isEmailOn = getRadioBool('company-show-email-btn');
       if (companyEmailTemplateSection) {
-        if (companyShowEmailBtnInput.checked) {
-          companyEmailTemplateSection.classList.remove('hidden');
-        } else {
-          companyEmailTemplateSection.classList.add('hidden');
-        }
+        companyEmailTemplateSection.classList.toggle('hidden', !isEmailOn);
       }
       updateCompanyPreview();
     });
-  }
+  });
 
-  if (companyShowVcfBtnInput) {
-    companyShowVcfBtnInput.addEventListener('change', () => {
+  document.querySelectorAll('input[name="company-show-vcf-btn"]').forEach(radio => {
+    radio.addEventListener('change', () => {
       isCompanyFormDirty = true;
+      const isVcfOn = getRadioBool('company-show-vcf-btn');
       if (companyVcfOptionsSection) {
-        if (companyShowVcfBtnInput.checked) {
-          companyVcfOptionsSection.classList.remove('hidden');
-        } else {
-          companyVcfOptionsSection.classList.add('hidden');
-        }
+        companyVcfOptionsSection.classList.toggle('hidden', !isVcfOn);
       }
       updateCompanyPreview();
     });
-  }
+  });
 
-  if (companyVcfAnnotationOriginInput) {
-    companyVcfAnnotationOriginInput.addEventListener('change', () => {
+  document.querySelectorAll('input[name="company-vcf-annotation-origin"]').forEach(radio => {
+    radio.addEventListener('change', () => {
       isCompanyFormDirty = true;
     });
-  }
+  });
 
-  if (companyVcfIncludeCardUrlInput) {
-    companyVcfIncludeCardUrlInput.addEventListener('change', () => {
+  document.querySelectorAll('input[name="company-vcf-include-card-url"]').forEach(radio => {
+    radio.addEventListener('change', () => {
       isCompanyFormDirty = true;
     });
-  }
+  });
 
   if (companyShowMessageInput) {
     companyShowMessageInput.addEventListener('change', () => {
@@ -2654,8 +2657,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Action Button links
-      const isPhoneEnabled = companyShowPhoneBtnInput ? companyShowPhoneBtnInput.checked : true;
-      const isEmailEnabled = companyShowEmailBtnInput ? companyShowEmailBtnInput.checked : true;
+      const isPhoneEnabled = getRadioBool('company-show-phone-btn', true);
+      const isEmailEnabled = getRadioBool('company-show-email-btn', true);
 
       const canShowPhone = isPhoneEnabled && Boolean(activePhone);
       if (canShowPhone) {
@@ -2749,8 +2752,8 @@ document.addEventListener('DOMContentLoaded', () => {
       prevAvatarInitials.classList.remove('hidden');
 
       // Action Buttons dummy
-      const isPhoneEnabled = companyShowPhoneBtnInput ? companyShowPhoneBtnInput.checked : true;
-      const isEmailEnabled = companyShowEmailBtnInput ? companyShowEmailBtnInput.checked : true;
+      const isPhoneEnabled = getRadioBool('company-show-phone-btn', true);
+      const isEmailEnabled = getRadioBool('company-show-email-btn', true);
 
       if (isPhoneEnabled) {
         prevBtnPhoneText.textContent = 'Mobile';
@@ -2787,7 +2790,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnExportZip.href = '#';
     }
 
-    const isVcfEnabled = companyShowVcfBtnInput ? companyShowVcfBtnInput.checked : true;
+    const isVcfEnabled = getRadioBool('company-show-vcf-btn', true);
     if (prevActionVcard) {
       if (isVcfEnabled) {
         prevActionVcard.classList.remove('hidden');
@@ -3715,20 +3718,25 @@ document.addEventListener('DOMContentLoaded', () => {
         companyShowNameInput.checked = companyInfo.show_name_under_logo !== 0;
       }
 
-      if (companyShowPhoneBtnInput) {
-        companyShowPhoneBtnInput.checked = companyInfo.show_phone_button !== 0;
+      // 1. Télécharger la fiche contact
+      const isVcfBtnChecked = companyInfo.show_vcf_button !== 0;
+      setRadioBool('company-show-vcf-btn', isVcfBtnChecked);
+      if (companyVcfOptionsSection) {
+        companyVcfOptionsSection.classList.toggle('hidden', !isVcfBtnChecked);
       }
 
-      if (companyShowEmailBtnInput) {
-        const isEmailBtnChecked = companyInfo.show_email_button !== 0;
-        companyShowEmailBtnInput.checked = isEmailBtnChecked;
-        if (companyEmailTemplateSection) {
-          if (isEmailBtnChecked) {
-            companyEmailTemplateSection.classList.remove('hidden');
-          } else {
-            companyEmailTemplateSection.classList.add('hidden');
-          }
-        }
+      setRadioBool('company-vcf-annotation-origin', companyInfo.vcf_annotation_origin !== 0);
+      setRadioBool('company-vcf-include-card-url', companyInfo.vcf_include_card_url !== 0);
+
+      // 2. Téléphone / Mobile
+      const isPhoneChecked = companyInfo.show_phone_button !== 0;
+      setRadioBool('company-show-phone-btn', isPhoneChecked);
+
+      // 3. Email
+      const isEmailBtnChecked = companyInfo.show_email_button !== 0;
+      setRadioBool('company-show-email-btn', isEmailBtnChecked);
+      if (companyEmailTemplateSection) {
+        companyEmailTemplateSection.classList.toggle('hidden', !isEmailBtnChecked);
       }
 
       if (companyEmailSubjectInput) {
@@ -3739,26 +3747,6 @@ document.addEventListener('DOMContentLoaded', () => {
         companyEmailBodyInput.value = companyInfo.contact_email_body != null 
           ? companyInfo.contact_email_body 
           : "Bonjour,\r\n\r\nPour faire suite à notre rencontre, je vous adresse mes coordonnées.\r\n\r\nBonne réception.";
-      }
-
-      if (companyShowVcfBtnInput) {
-        const isVcfBtnChecked = companyInfo.show_vcf_button !== 0;
-        companyShowVcfBtnInput.checked = isVcfBtnChecked;
-        if (companyVcfOptionsSection) {
-          if (isVcfBtnChecked) {
-            companyVcfOptionsSection.classList.remove('hidden');
-          } else {
-            companyVcfOptionsSection.classList.add('hidden');
-          }
-        }
-      }
-
-      if (companyVcfAnnotationOriginInput) {
-        companyVcfAnnotationOriginInput.checked = companyInfo.vcf_annotation_origin !== 0;
-      }
-
-      if (companyVcfIncludeCardUrlInput) {
-        companyVcfIncludeCardUrlInput.checked = companyInfo.vcf_include_card_url !== 0;
       }
       
       // Gestion des permissions du message de bas de page (case à cocher, texte et URL) :

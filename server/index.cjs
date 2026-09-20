@@ -1785,11 +1785,14 @@ app.get('/card/:id', async (req, res) => {
 });
 
 async function buildVCardBuffer(collab, company, req = null) {
-  const vcfAnnotationOrigin = company && company.vcf_annotation_origin !== undefined
-    ? (Number(company.vcf_annotation_origin) === 1 || company.vcf_annotation_origin === true)
+  const rawAnnotation = company ? (company.vcf_annotation_origin !== undefined ? company.vcf_annotation_origin : company.vcfAnnotationOrigin) : undefined;
+  const vcfAnnotationOrigin = rawAnnotation !== undefined
+    ? (Number(rawAnnotation) === 1 || rawAnnotation === true || rawAnnotation === '1')
     : true;
-  const vcfIncludeCardUrl = company && company.vcf_include_card_url !== undefined
-    ? (Number(company.vcf_include_card_url) === 1 || company.vcf_include_card_url === true)
+
+  const rawIncludeUrl = company ? (company.vcf_include_card_url !== undefined ? company.vcf_include_card_url : company.vcfIncludeCardUrl) : undefined;
+  const vcfIncludeCardUrl = rawIncludeUrl !== undefined
+    ? (Number(rawIncludeUrl) === 1 || rawIncludeUrl === true || rawIncludeUrl === '1')
     : true;
 
   const companyName = stripBr(company.name || '').trim();

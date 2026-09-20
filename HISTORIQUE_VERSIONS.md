@@ -14,18 +14,21 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ## 📜 Historique Chronologique des Versions
 
 ### 🚀 Version `v2.13.0-options-vcf-entreprise` (Dernière version)
-**Thème : Décentralisation des paramètres d'export vCard (.vcf) au niveau de chaque entreprise, nouveau bouton activable et migration VPS**
+**Thème : Décentralisation des paramètres d'export vCard (.vcf) au niveau de chaque entreprise, boutons radio On/Off et migration VPS**
 * **Décentralisation des paramètres vCard (.vcf) de l'application vers chaque entreprise** :
   * Suppression de l'encart *"Exportation vCard (.vcf)"* de la page des Paramètres Généraux.
-  * Ajout dans le formulaire Entreprise, dans la rubrique *"Boutons de la carte virtuelle"*, d'une nouvelle case à cocher :
-    * **"Télécharger la fiche contact"** (`show_vcf_button`) à côté de *"Téléphone / Mobile"* et *"Email"*.
-  * Affichage conditionnel d'un sous-encart de configuration vCard lorsque la case est cochée :
-    * **"Annotation dans la carte vcf de l'origine du contact"** (`vcf_annotation_origin`) : contrôle la présence de la mention d'origine dans le carnet d'adresses du destinataire.
-    * **"Ajout de l'url de la carte virtuelle dans le vcf"** (`vcf_include_card_url`) : contrôle la présence de l'URL de la carte virtuelle mobile du collaborateur dans le carnet d'adresses.
+  * Réorganisation complète de la rubrique *"Boutons de la carte virtuelle"* dans le formulaire Entreprise avec boutons radio On/Off élégants :
+    * **"Télécharger la fiche contact"** (`show_vcf_button`) placé en tête avec son sélecteur radio On/Off.
+    * Affichage conditionnel de l'encart dédié **"Exportation vCard (.vcf)"** directement sous ce bouton lorsqu'il est On :
+      * **"Annotation dans la carte vcf de l'origine du contact"** (`vcf_annotation_origin`) avec boutons radio On/Off : contrôle l'inclusion de la note d'origine dans le carnet d'adresses.
+      * **"Ajout de l'url de la carte virtuelle dans le vcf"** (`vcf_include_card_url`) avec boutons radio On/Off : contrôle l'inclusion de l'URL mobile de la carte virtuelle.
+    * **"Téléphone / Mobile"** (`show_phone_button`) et **"Email"** (`show_email_button`) modernisés avec les mêmes sélecteurs radio On/Off.
+* **Génération propre et sans doublon du fichier `.vcf`** :
+  * Suppression du lien de la carte virtuelle qui apparaissait en doublon dans la note d'origine (`NOTE`). Le lien de la carte virtuelle est désormais exclusivement positionné dans la propriété standard `URL` (label "Carte de visite").
+  * Si l'annotation d'origine est Off, aucune note n'est inscrite dans le fichier `.vcf`.
+  * Si l'URL de la carte virtuelle est Off, le lien de la carte virtuelle n'est pas inséré dans le fichier `.vcf`.
 * **Affichage conditionnel du bouton VCF sur les cartes virtuelles** :
   * Le bouton *"Télécharger la fiche contact"* n'apparaît sur les cartes virtuelles (publiques, autonomes ZIP et aperçu dans l'application) que si l'entreprise l'a activé (`show_vcf_button = 1`).
-* **Génération personnalisée du fichier `.vcf` par entreprise** :
-  * La fonction `buildVCardBuffer` prend désormais en compte les paramètres `vcf_annotation_origin` et `vcf_include_card_url` spécifiques à l'entreprise du collaborateur.
 * **Migration de base de données & Compatibilité VPS** :
   * Ajout des colonnes `show_vcf_button INT DEFAULT 1`, `vcf_annotation_origin INT DEFAULT 1` et `vcf_include_card_url INT DEFAULT 1` sur la table `company_info`.
   * Auto-migration idempotente au démarrage dans `server/database.cjs` avec initialisation automatique des entreprises existantes.

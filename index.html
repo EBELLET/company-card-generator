@@ -703,45 +703,96 @@
                   <!-- Boutons de la carte virtuelle -->
                   <div class="form-group">
                     <label>Boutons de la carte virtuelle</label>
-                    <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; padding: 0.25rem 0;">
-                      <label class="switch-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; user-select: none; color: var(--text-secondary);">
-                        <input type="checkbox" id="company-show-phone-btn" checked style="width: 16px; height: 16px; cursor: pointer;" />
-                        Téléphone / Mobile
-                      </label>
-                      <label class="switch-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; user-select: none; color: var(--text-secondary);">
-                        <input type="checkbox" id="company-show-email-btn" checked style="width: 16px; height: 16px; cursor: pointer;" />
-                        Email
-                      </label>
-                      <label class="switch-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; user-select: none; color: var(--text-secondary);">
-                        <input type="checkbox" id="company-show-vcf-btn" checked style="width: 16px; height: 16px; cursor: pointer;" />
-                        Télécharger la fiche contact
-                      </label>
-                    </div>
 
-                    <!-- Configuration du mail de réponse au clic sur Email -->
-                    <div id="company-email-template-section" style="margin-top: 0.85rem; padding: 0.85rem 1rem; background: var(--bg-card, rgba(255,255,255,0.03)); border: 1px solid var(--border-color); border-radius: 8px;">
-                      <div class="form-group" style="margin-bottom: 0.75rem;">
-                        <label for="company-email-subject" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Objet du mail</label>
-                        <input type="text" id="company-email-subject" placeholder="Ex: Échange de coordonnées" style="width: 100%; font-size: 0.85rem;" />
+                    <div style="display: flex; flex-direction: column; gap: 0.65rem; padding: 0.25rem 0;">
+                      <!-- 1. Télécharger la fiche contact -->
+                      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.85rem; background: var(--bg-card, rgba(255,255,255,0.03)); border: 1px solid var(--border-color); border-radius: 8px;">
+                        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">Télécharger la fiche contact</span>
+                        <div class="radio-onoff-group">
+                          <label class="radio-onoff-option">
+                            <input type="radio" name="company-show-vcf-btn" id="company-show-vcf-btn-on" value="1" checked />
+                            <span class="radio-onoff-pill on"><span class="radio-dot"></span>On</span>
+                          </label>
+                          <label class="radio-onoff-option">
+                            <input type="radio" name="company-show-vcf-btn" id="company-show-vcf-btn-off" value="0" />
+                            <span class="radio-onoff-pill off"><span class="radio-dot"></span>Off</span>
+                          </label>
+                        </div>
                       </div>
-                      <div class="form-group" style="margin-bottom: 0;">
-                        <label for="company-email-body" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Corps du message</label>
-                        <textarea id="company-email-body" rows="4" placeholder="Ex: Bonjour,&#10;&#10;Pour faire suite à notre rencontre, je vous adresse mes coordonnées.&#10;&#10;Bonne réception." style="width: 100%; font-size: 0.85rem; resize: vertical; line-height: 1.4; font-family: inherit;"></textarea>
-                      </div>
-                    </div>
 
-                    <!-- Options d'exportation vCard (.vcf) -->
-                    <div id="company-vcf-options-section" style="margin-top: 0.85rem; padding: 0.85rem 1rem; background: var(--bg-card, rgba(255,255,255,0.03)); border: 1px solid var(--border-color); border-radius: 8px;">
-                      <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.6rem;">Exportation vCard (.vcf)</div>
-                      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                        <label class="switch-label" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 0.85rem; font-weight: 500; user-select: none; color: var(--text-primary, #e2e8f0);">
-                          <span>Annotation dans la carte vcf de l'origine du contact</span>
-                          <input type="checkbox" id="company-vcf-annotation-origin" checked style="width: 16px; height: 16px; cursor: pointer;" />
-                        </label>
-                        <label class="switch-label" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 0.85rem; font-weight: 500; user-select: none; color: var(--text-primary, #e2e8f0);">
-                          <span>Ajout de l'url de la carte virtuelle dans le vcf</span>
-                          <input type="checkbox" id="company-vcf-include-card-url" checked style="width: 16px; height: 16px; cursor: pointer;" />
-                        </label>
+                      <!-- Options d'exportation vCard (.vcf) si Télécharger la fiche contact est On -->
+                      <div id="company-vcf-options-section" style="margin-left: 1rem; padding: 0.85rem 1rem; background: var(--bg-card, rgba(255,255,255,0.02)); border: 1px dashed var(--border-color); border-radius: 8px;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">Exportation vCard (.vcf)</div>
+                        <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                          <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                            <span style="font-size: 0.82rem; font-weight: 500; color: var(--text-secondary);">Annotation dans la carte vcf de l'origine du contact</span>
+                            <div class="radio-onoff-group">
+                              <label class="radio-onoff-option">
+                                <input type="radio" name="company-vcf-annotation-origin" id="company-vcf-annotation-origin-on" value="1" checked />
+                                <span class="radio-onoff-pill on"><span class="radio-dot"></span>On</span>
+                              </label>
+                              <label class="radio-onoff-option">
+                                <input type="radio" name="company-vcf-annotation-origin" id="company-vcf-annotation-origin-off" value="0" />
+                                <span class="radio-onoff-pill off"><span class="radio-dot"></span>Off</span>
+                              </label>
+                            </div>
+                          </div>
+                          <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                            <span style="font-size: 0.82rem; font-weight: 500; color: var(--text-secondary);">Ajout de l'url de la carte virtuelle dans le vcf</span>
+                            <div class="radio-onoff-group">
+                              <label class="radio-onoff-option">
+                                <input type="radio" name="company-vcf-include-card-url" id="company-vcf-include-card-url-on" value="1" checked />
+                                <span class="radio-onoff-pill on"><span class="radio-dot"></span>On</span>
+                              </label>
+                              <label class="radio-onoff-option">
+                                <input type="radio" name="company-vcf-include-card-url" id="company-vcf-include-card-url-off" value="0" />
+                                <span class="radio-onoff-pill off"><span class="radio-dot"></span>Off</span>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- 2. Téléphone / Mobile -->
+                      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.85rem; background: var(--bg-card, rgba(255,255,255,0.03)); border: 1px solid var(--border-color); border-radius: 8px;">
+                        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">Téléphone / Mobile</span>
+                        <div class="radio-onoff-group">
+                          <label class="radio-onoff-option">
+                            <input type="radio" name="company-show-phone-btn" id="company-show-phone-btn-on" value="1" checked />
+                            <span class="radio-onoff-pill on"><span class="radio-dot"></span>On</span>
+                          </label>
+                          <label class="radio-onoff-option">
+                            <input type="radio" name="company-show-phone-btn" id="company-show-phone-btn-off" value="0" />
+                            <span class="radio-onoff-pill off"><span class="radio-dot"></span>Off</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <!-- 3. Email -->
+                      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.85rem; background: var(--bg-card, rgba(255,255,255,0.03)); border: 1px solid var(--border-color); border-radius: 8px;">
+                        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">Email</span>
+                        <div class="radio-onoff-group">
+                          <label class="radio-onoff-option">
+                            <input type="radio" name="company-show-email-btn" id="company-show-email-btn-on" value="1" checked />
+                            <span class="radio-onoff-pill on"><span class="radio-dot"></span>On</span>
+                          </label>
+                          <label class="radio-onoff-option">
+                            <input type="radio" name="company-show-email-btn" id="company-show-email-btn-off" value="0" />
+                            <span class="radio-onoff-pill off"><span class="radio-dot"></span>Off</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <!-- Configuration du mail de réponse au clic sur Email -->
+                      <div id="company-email-template-section" style="margin-left: 1rem; padding: 0.85rem 1rem; background: var(--bg-card, rgba(255,255,255,0.02)); border: 1px dashed var(--border-color); border-radius: 8px;">
+                        <div class="form-group" style="margin-bottom: 0.75rem;">
+                          <label for="company-email-subject" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Objet du mail</label>
+                          <input type="text" id="company-email-subject" placeholder="Ex: Échange de coordonnées" style="width: 100%; font-size: 0.85rem;" />
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                          <label for="company-email-body" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Corps du message</label>
+                          <textarea id="company-email-body" rows="4" placeholder="Ex: Bonjour,&#10;&#10;Pour faire suite à notre rencontre, je vous adresse mes coordonnées.&#10;&#10;Bonne réception." style="width: 100%; font-size: 0.85rem; resize: vertical; line-height: 1.4; font-family: inherit;"></textarea>
+                        </div>
                       </div>
                     </div>
                   </div>

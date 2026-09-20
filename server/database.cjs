@@ -379,6 +379,12 @@ function formatCompany(row) {
     subscriptionEndDate: subEndDate,
     is_subscription_active: row.is_subscription_active != null ? row.is_subscription_active : 1,
     isSubscriptionActive: row.is_subscription_active != null ? row.is_subscription_active : 1,
+    show_vcf_button: row.show_vcf_button != null ? row.show_vcf_button : 1,
+    showVcfButton: row.show_vcf_button != null ? row.show_vcf_button : 1,
+    vcf_annotation_origin: row.vcf_annotation_origin != null ? row.vcf_annotation_origin : 1,
+    vcfAnnotationOrigin: row.vcf_annotation_origin != null ? row.vcf_annotation_origin : 1,
+    vcf_include_card_url: row.vcf_include_card_url != null ? row.vcf_include_card_url : 1,
+    vcfIncludeCardUrl: row.vcf_include_card_url != null ? row.vcf_include_card_url : 1,
     active_collabs_count: Number(row.active_collabs_count || 0),
     inactive_collabs_count: Number(row.inactive_collabs_count || 0)
   };

@@ -2575,3 +2575,79 @@ input:checked + .slider:before {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(140, 82, 255, 0.45);
 }
+
+/* Radio On/Off Component */
+.radio-onoff-group {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-card, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-color, rgba(55, 53, 52, 0.15));
+  border-radius: 20px;
+  padding: 2px;
+  gap: 2px;
+  user-select: none;
+}
+
+.radio-onoff-option {
+  cursor: pointer;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.radio-onoff-option input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.radio-onoff-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 16px;
+  color: var(--text-secondary, #64748b);
+  transition: all 0.2s ease;
+}
+
+.radio-onoff-pill .radio-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  background: transparent;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.radio-onoff-option input:checked + .radio-onoff-pill.on {
+  background: #10b981;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.3);
+}
+
+.radio-onoff-option input:checked + .radio-onoff-pill.on .radio-dot {
+  background: #ffffff;
+  border-color: #ffffff;
+}
+
+.radio-onoff-option input:checked + .radio-onoff-pill.off {
+  background: #64748b;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(100, 116, 139, 0.25);
+}
+
+.radio-onoff-option input:checked + .radio-onoff-pill.off .radio-dot {
+  background: #ffffff;
+  border-color: #ffffff;
+}
+
+.radio-onoff-option:hover .radio-onoff-pill {
+  color: var(--text-primary, #0f172a);
+}
+
