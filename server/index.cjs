@@ -8,9 +8,57 @@ const mailer = require('./mailer.cjs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// In-memory store for IP registration rate limiting: IP -> Array of timestamps (ms)
+const registrationAttempts = new Map();
+
+// Clean up stale IP records every 30 minutes
+setInterval(() => {
+  const oneHourAgo = Date.now() - 60 * 60 * 1000;
+  for (const [ip, timestamps] of registrationAttempts.entries()) {
+    const recent = timestamps.filter(t => t > oneHourAgo);
+    if (recent.length === 0) registrationAttempts.delete(ip);
+    else registrationAttempts.set(ip, recent);
+  }
+}, 30 * 60 * 1000);
+
+async function checkRegisterRateLimit(req, res, next) {
+  try {
+    const limitStr = await db.getSetting('register_rate_limit_per_hour', '3');
+    const limit = parseInt(limitStr, 10);
+    const maxPerHour = isNaN(limit) ? 3 : limit;
+
+    if (maxPerHour === 0) {
+      return res.status(403).json({
+        error: "Les inscriptions autonomes sont actuellement suspendues. Veuillez contacter l'administrateur."
+      });
+    }
+
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    const now = Date.now();
+    const oneHourAgo = now - 60 * 60 * 1000;
+
+    let attempts = registrationAttempts.get(ip) || [];
+    attempts = attempts.filter(t => t > oneHourAgo);
+
+    if (attempts.length >= maxPerHour) {
+      return res.status(429).json({
+        error: `Trop de créations de compte depuis votre adresse IP (limite de ${maxPerHour} par heure). Veuillez réessayer plus tard.`
+      });
+    }
+
+    attempts.push(now);
+    registrationAttempts.set(ip, attempts);
+    next();
+  } catch (err) {
+    console.error("Erreur rate limit autosouscription:", err.message);
+    next();
+  }
+}
 
 const crypto = require('crypto');
 
@@ -1313,7 +1361,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', checkRegisterRateLimit, async (req, res) => {
   const { companyName, companyDomain, userId, firstName, lastName, email } = req.body;
 
   if (!userId || userId.trim().length < 6) {
@@ -1561,7 +1609,8 @@ app.get('/api/settings', async (req, res) => {
       supportEmail: settings.support_email || 'contact@tdconnect.fr',
       trialPeriodDays: parseInt(settings.trial_period_days || '30', 10),
       trialMessageText: settings.trial_message_text || '',
-      trialMessageUrl: settings.trial_message_url || ''
+      trialMessageUrl: settings.trial_message_url || '',
+      registerRateLimitPerHour: parseInt(settings.register_rate_limit_per_hour !== undefined ? settings.register_rate_limit_per_hour : '3', 10)
     });
   } catch (err) {
     console.error("Erreur GET /api/settings:", err.message);
@@ -1583,7 +1632,7 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
   if (req.user.role !== 'superadmin') {
     return res.status(403).json({ error: "Accès réservé au Super Admin." });
   }
-  const { inactivityTimeoutMinutes, vcfAnnotationOrigin, vcfIncludeCardUrl, supportEmail, trialPeriodDays, trialMessageText, trialMessageUrl } = req.body;
+  const { inactivityTimeoutMinutes, vcfAnnotationOrigin, vcfIncludeCardUrl, supportEmail, trialPeriodDays, trialMessageText, trialMessageUrl, registerRateLimitPerHour } = req.body;
   try {
     if (typeof inactivityTimeoutMinutes === 'number' && inactivityTimeoutMinutes >= 0) {
       await db.setSetting('inactivity_timeout_minutes', inactivityTimeoutMinutes);
@@ -1606,6 +1655,9 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
     if (trialMessageUrl !== undefined) {
       await db.setSetting('trial_message_url', String(trialMessageUrl).trim());
     }
+    if (typeof registerRateLimitPerHour === 'number' && registerRateLimitPerHour >= 0) {
+      await db.setSetting('register_rate_limit_per_hour', Math.round(registerRateLimitPerHour));
+    }
     const currentSettings = await db.getAllSettings();
     res.json({
       success: true,
@@ -1615,7 +1667,8 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
       supportEmail: supportEmail ? supportEmail.trim() : 'contact@tdconnect.fr',
       trialPeriodDays: parseInt(currentSettings.trial_period_days || '30', 10),
       trialMessageText: currentSettings.trial_message_text || '',
-      trialMessageUrl: currentSettings.trial_message_url || ''
+      trialMessageUrl: currentSettings.trial_message_url || '',
+      registerRateLimitPerHour: parseInt(currentSettings.register_rate_limit_per_hour !== undefined ? currentSettings.register_rate_limit_per_hour : '3', 10)
     });
   } catch (err) {
     console.error("Erreur PUT /api/settings:", err.message);

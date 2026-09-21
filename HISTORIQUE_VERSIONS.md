@@ -5,7 +5,7 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.14.0-gestion-admins-statuts-verrouillage`
+* **Version / Tag** : `v2.15.0-rate-limit-autosouscription`
 * **Date** : 21 septembre 2026
 * **Statut** : Version stable / MySQL / Docker
 
@@ -13,7 +13,23 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.14.0-gestion-admins-statuts-verrouillage` (Dernière version)
+### 🚀 Version `v2.15.0-rate-limit-autosouscription` (Dernière version)
+**Thème : Protection anti-robots par Rate Limit strict et paramétrable sur l'autosouscription**
+* **Rate Limiting dynamique par IP sur `/api/auth/register`** :
+  * Mise en place d'un middleware de limitation de débit par fenêtre glissante (1 heure) basé sur l'adresse IP du visiteur (`X-Forwarded-For` ou IP directe).
+  * Nettoyage automatique des fenêtres expirées toutes les 30 minutes en mémoire pour éviter toute fuite mémoire.
+  * Réponse HTTP 429 (Too Many Requests) avec message explicite et décompte du temps d'attente restant en minutes.
+* **Paramétrage dynamique dans les Paramètres Généraux** :
+  * Ajout du réglage *"Limite d'inscriptions / heure / IP"* dans la section "Sécurité & Session" des Paramètres Généraux (accessible au Super Admin).
+  * Valeur par défaut : `3` inscriptions / heure / IP.
+  * **Option de désactivation totale (`0`)** : Si la valeur est définie à `0`, toute autosouscription est suspendue immédiatement (HTTP 403 et blocage préventif dès l'affichage du modal côté client avec alerte informative).
+* **Migration SQL & Préservation VPS** :
+  * Script SQL idempotent `migrations/migration_v2.15.0_register_rate_limit.sql` insérant la clé `register_rate_limit_per_hour` dans la table `app_settings` via `INSERT IGNORE` (garantie zéro perte de données sur le VPS).
+  * Prise en charge automatique dans `initDB()` au démarrage du serveur.
+
+---
+
+### 🚀 Version `v2.14.0-gestion-admins-statuts-verrouillage`
 **Thème : Statut d'autosouscription, Horodatages, Verrouillage/Déverrouillage Super Admin, Ergonomie de la liste et Migration SQL sans perte de données**
 * **Statut de compte en autosouscription** :
   * À la création autonome par `/api/auth/register`, le compte administrateur est initialisé au statut **"En attente de confirmation"** (`pending_confirmation`).

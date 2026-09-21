@@ -412,7 +412,7 @@
                     </div>
                     <div>
                       <h4>Sécurité & Session</h4>
-                      <p>Gestion de la déconnexion automatique des utilisateurs</p>
+                      <p>Gestion de la sécurité, déconnexion automatique et protection anti-robots</p>
                     </div>
                   </div>
 
@@ -430,6 +430,16 @@
                           <option value="120">2 heures</option>
                           <option value="0">Désactivé (Aucune déconnexion)</option>
                         </select>
+                      </div>
+                    </div>
+
+                    <div class="setting-item-row" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(55, 53, 52, 0.08);">
+                      <div class="setting-item-info">
+                        <label for="setting-register-rate-limit" class="setting-label">Limite d'autosouscription par heure et par IP</label>
+                        <p class="setting-help">Nombre maximum de créations de compte autorisées en 1 heure depuis une même adresse IP pour contrer les robots. <strong>Mettre à 0 pour suspendre toute nouvelle autosouscription</strong>.</p>
+                      </div>
+                      <div class="setting-item-control">
+                        <input type="number" id="setting-register-rate-limit" min="0" max="100" class="setting-input" style="width: 100px; text-align: center; padding: 0.4rem; border: 1px solid rgba(55, 53, 52, 0.2); border-radius: 6px; font-weight: 600;" value="3" />
                       </div>
                     </div>
                   </div>
