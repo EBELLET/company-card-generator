@@ -5,7 +5,7 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.15.0-rate-limit-autosouscription`
+* **Version / Tag** : `v2.16.0-filtre-statut-administrateurs`
 * **Date** : 21 septembre 2026
 * **Statut** : Version stable / MySQL / Docker
 
@@ -13,7 +13,20 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.15.0-rate-limit-autosouscription` (Dernière version)
+### 🚀 Version `v2.16.0-filtre-statut-administrateurs` (Dernière version)
+**Thème : Filtre par boutons radio des comptes administrateurs en attente de confirmation**
+* **Filtre dynamique par boutons radio** :
+  * Ajout d'une barre de filtre en haut de la liste des administrateurs (Gestion des Administrateurs).
+  * 3 options de filtrage par boutons radio avec compteurs en temps réel :
+    * 🔘 **Tous** : Affiche la totalité des comptes administrateurs.
+    * 🔘 **En attente de confirmation** : Isole uniquement les comptes créés en autosouscription qui ne se sont pas encore connectés pour valider leur mot de passe.
+    * 🔘 **Confirmés** : Affiche les comptes actifs et confirmés.
+  * Compteurs dynamiques synchronisés avec badges visuels distincts.
+  * Message adapté lorsque le filtre ne renvoie aucun résultat (*"Aucun administrateur ne correspond à ce filtre."*).
+
+---
+
+### 🚀 Version `v2.15.0-rate-limit-autosouscription`
 **Thème : Protection anti-robots par Rate Limit strict et paramétrable par jour sur l'autosouscription**
 * **Rate Limiting dynamique par jour et par IP sur `/api/auth/register`** :
   * Limitation de débit par fenêtre glissante de 24 heures (par jour) basée sur l'adresse IP du visiteur (`X-Forwarded-For` ou IP directe).

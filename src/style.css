@@ -2706,3 +2706,97 @@ input:checked + .slider:before {
   color: var(--text-primary, #0f172a);
 }
 
+/* ==========================================
+   ADMIN STATUS RADIO FILTER TOOLBAR
+   ========================================== */
+.admin-filter-bar {
+  margin-bottom: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  background: #ffffff;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(55, 53, 52, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.admin-filter-label-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  user-select: none;
+}
+
+.admin-status-filter-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.admin-filter-radio-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.admin-filter-radio-label input[type="radio"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  margin: 0;
+}
+
+.admin-filter-radio-label:hover {
+  color: var(--text-primary);
+}
+
+.admin-filter-radio-label .filter-count {
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: 10px;
+  background: rgba(55, 53, 52, 0.08);
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.admin-filter-radio-label .filter-count.pending {
+  background: rgba(217, 119, 6, 0.12);
+  color: #b45309;
+}
+
+.admin-filter-radio-label .filter-count.confirmed {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+.admin-filter-radio-label input[type="radio"]:checked + span {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.admin-filter-radio-label input[type="radio"]:checked ~ .filter-count.pending {
+  background: #fef3c7;
+  color: #b45309;
+  font-weight: 700;
+}
+
+.admin-filter-radio-label input[type="radio"]:checked ~ .filter-count.confirmed {
+  background: #dcfce7;
+  color: #047857;
+  font-weight: 700;
+}
+

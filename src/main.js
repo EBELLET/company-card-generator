@@ -1639,6 +1639,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let allAdmins = [];
   let allCompaniesForAdmin = [];
+  let currentAdminFilter = 'all'; // 'all', 'pending', 'confirmed'
+
   async function loadAdminsList() {
     try {
       const [resAdmins, resCompanies] = await Promise.all([
@@ -1655,13 +1657,38 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderAdminsList() {
+    // 1. Update filter counters
+    const countAllEl = document.getElementById('count-admin-all');
+    const countPendingEl = document.getElementById('count-admin-pending');
+    const countConfirmedEl = document.getElementById('count-admin-confirmed');
+
+    const totalCount = allAdmins.length;
+    const pendingCount = allAdmins.filter(a => a.status === 'pending_confirmation').length;
+    const confirmedCount = allAdmins.filter(a => a.status !== 'pending_confirmation').length;
+
+    if (countAllEl) countAllEl.textContent = totalCount;
+    if (countPendingEl) countPendingEl.textContent = pendingCount;
+    if (countConfirmedEl) countConfirmedEl.textContent = confirmedCount;
+
+    // 2. Filter list according to active radio filter
+    let filteredAdmins = allAdmins;
+    if (currentAdminFilter === 'pending') {
+      filteredAdmins = allAdmins.filter(a => a.status === 'pending_confirmation');
+    } else if (currentAdminFilter === 'confirmed') {
+      filteredAdmins = allAdmins.filter(a => a.status !== 'pending_confirmation');
+    }
+
     adminListContainer.innerHTML = '';
-    if (allAdmins.length === 0) {
-      adminListContainer.innerHTML = '<p class="empty-list-msg">Aucun administrateur créé.</p>';
+    if (filteredAdmins.length === 0) {
+      if (allAdmins.length === 0) {
+        adminListContainer.innerHTML = '<p class="empty-list-msg">Aucun administrateur créé.</p>';
+      } else {
+        adminListContainer.innerHTML = '<p class="empty-list-msg" style="color:var(--text-muted); font-style:italic;">Aucun administrateur ne correspond à ce filtre.</p>';
+      }
       return;
     }
 
-    allAdmins.forEach(admin => {
+    filteredAdmins.forEach(admin => {
       const item = document.createElement('div');
       item.className = `collab-item ${admin.isLocked ? 'admin-locked' : ''}`;
       item.style.cursor = 'pointer';
@@ -1950,6 +1977,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnAddAdmin) btnAddAdmin.addEventListener('click', () => openAdminForm());
   if (btnCancelAdmin) btnCancelAdmin.addEventListener('click', closeAdminForm);
+
+  const adminFilterRadios = document.querySelectorAll('input[name="admin-status-filter"]');
+  adminFilterRadios.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        currentAdminFilter = e.target.value;
+        renderAdminsList();
+      }
+    });
+  });
 
   function renderCompaniesChecklist() {
     adminCompaniesChecklist.innerHTML = '';

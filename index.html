@@ -284,6 +284,31 @@
               </button>
             </div>
 
+            <!-- Filter by confirmation status -->
+            <div class="admin-filter-bar">
+              <span class="admin-filter-label-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                Statut :
+              </span>
+              <div class="admin-status-filter-group">
+                <label class="admin-filter-radio-label">
+                  <input type="radio" name="admin-status-filter" value="all" checked />
+                  <span>Tous</span>
+                  <span id="count-admin-all" class="filter-count">0</span>
+                </label>
+                <label class="admin-filter-radio-label">
+                  <input type="radio" name="admin-status-filter" value="pending" />
+                  <span>En attente de confirmation</span>
+                  <span id="count-admin-pending" class="filter-count pending">0</span>
+                </label>
+                <label class="admin-filter-radio-label">
+                  <input type="radio" name="admin-status-filter" value="confirmed" />
+                  <span>Confirmés</span>
+                  <span id="count-admin-confirmed" class="filter-count confirmed">0</span>
+                </label>
+              </div>
+            </div>
+
             <!-- List of existing admins -->
             <div id="admin-list" class="collab-list">
               <!-- Rendered dynamically -->
