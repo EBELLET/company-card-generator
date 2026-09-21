@@ -16,23 +16,26 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // In-memory store for IP registration rate limiting: IP -> Array of timestamps (ms)
 const registrationAttempts = new Map();
 
-// Clean up stale IP records every 30 minutes
+// Clean up stale IP records older than 24 hours every 60 minutes
 setInterval(() => {
-  const oneHourAgo = Date.now() - 60 * 60 * 1000;
+  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
   for (const [ip, timestamps] of registrationAttempts.entries()) {
-    const recent = timestamps.filter(t => t > oneHourAgo);
+    const recent = timestamps.filter(t => t > oneDayAgo);
     if (recent.length === 0) registrationAttempts.delete(ip);
     else registrationAttempts.set(ip, recent);
   }
-}, 30 * 60 * 1000);
+}, 60 * 60 * 1000);
 
 async function checkRegisterRateLimit(req, res, next) {
   try {
-    const limitStr = await db.getSetting('register_rate_limit_per_hour', '3');
+    let limitStr = await db.getSetting('register_rate_limit_per_day');
+    if (limitStr === null || limitStr === undefined) {
+      limitStr = await db.getSetting('register_rate_limit_per_hour', '5');
+    }
     const limit = parseInt(limitStr, 10);
-    const maxPerHour = isNaN(limit) ? 3 : limit;
+    const maxPerDay = isNaN(limit) ? 5 : limit;
 
-    if (maxPerHour === 0) {
+    if (maxPerDay === 0) {
       return res.status(403).json({
         error: "Les inscriptions autonomes sont actuellement suspendues. Veuillez contacter l'administrateur."
       });
@@ -40,14 +43,14 @@ async function checkRegisterRateLimit(req, res, next) {
 
     const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
     const now = Date.now();
-    const oneHourAgo = now - 60 * 60 * 1000;
+    const oneDayAgo = now - 24 * 60 * 60 * 1000;
 
     let attempts = registrationAttempts.get(ip) || [];
-    attempts = attempts.filter(t => t > oneHourAgo);
+    attempts = attempts.filter(t => t > oneDayAgo);
 
-    if (attempts.length >= maxPerHour) {
+    if (attempts.length >= maxPerDay) {
       return res.status(429).json({
-        error: `Trop de créations de compte depuis votre adresse IP (limite de ${maxPerHour} par heure). Veuillez réessayer plus tard.`
+        error: "Nombre maximum de création atteinte."
       });
     }
 
@@ -1602,6 +1605,12 @@ app.put('/api/auth/me', authenticateToken, async (req, res) => {
 app.get('/api/settings', async (req, res) => {
   try {
     const settings = await db.getAllSettings();
+    const rateLimitDaily = parseInt(
+      settings.register_rate_limit_per_day !== undefined
+        ? settings.register_rate_limit_per_day
+        : (settings.register_rate_limit_per_hour !== undefined ? settings.register_rate_limit_per_hour : '5'),
+      10
+    );
     res.json({
       inactivityTimeoutMinutes: parseInt(settings.inactivity_timeout_minutes || '60', 10),
       vcfAnnotationOrigin: settings.vcf_annotation_origin === '1' || settings.vcf_annotation_origin === 'true',
@@ -1610,7 +1619,8 @@ app.get('/api/settings', async (req, res) => {
       trialPeriodDays: parseInt(settings.trial_period_days || '30', 10),
       trialMessageText: settings.trial_message_text || '',
       trialMessageUrl: settings.trial_message_url || '',
-      registerRateLimitPerHour: parseInt(settings.register_rate_limit_per_hour !== undefined ? settings.register_rate_limit_per_hour : '3', 10)
+      registerRateLimitPerDay: rateLimitDaily,
+      registerRateLimitPerHour: rateLimitDaily
     });
   } catch (err) {
     console.error("Erreur GET /api/settings:", err.message);
@@ -1632,7 +1642,7 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
   if (req.user.role !== 'superadmin') {
     return res.status(403).json({ error: "Accès réservé au Super Admin." });
   }
-  const { inactivityTimeoutMinutes, vcfAnnotationOrigin, vcfIncludeCardUrl, supportEmail, trialPeriodDays, trialMessageText, trialMessageUrl, registerRateLimitPerHour } = req.body;
+  const { inactivityTimeoutMinutes, vcfAnnotationOrigin, vcfIncludeCardUrl, supportEmail, trialPeriodDays, trialMessageText, trialMessageUrl, registerRateLimitPerDay, registerRateLimitPerHour } = req.body;
   try {
     if (typeof inactivityTimeoutMinutes === 'number' && inactivityTimeoutMinutes >= 0) {
       await db.setSetting('inactivity_timeout_minutes', inactivityTimeoutMinutes);
@@ -1655,10 +1665,17 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
     if (trialMessageUrl !== undefined) {
       await db.setSetting('trial_message_url', String(trialMessageUrl).trim());
     }
-    if (typeof registerRateLimitPerHour === 'number' && registerRateLimitPerHour >= 0) {
-      await db.setSetting('register_rate_limit_per_hour', Math.round(registerRateLimitPerHour));
+    const rateLimitVal = registerRateLimitPerDay !== undefined ? registerRateLimitPerDay : registerRateLimitPerHour;
+    if (typeof rateLimitVal === 'number' && rateLimitVal >= 0) {
+      await db.setSetting('register_rate_limit_per_day', Math.round(rateLimitVal));
     }
     const currentSettings = await db.getAllSettings();
+    const finalRateLimit = parseInt(
+      currentSettings.register_rate_limit_per_day !== undefined
+        ? currentSettings.register_rate_limit_per_day
+        : (currentSettings.register_rate_limit_per_hour !== undefined ? currentSettings.register_rate_limit_per_hour : '5'),
+      10
+    );
     res.json({
       success: true,
       inactivityTimeoutMinutes,
@@ -1668,7 +1685,8 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
       trialPeriodDays: parseInt(currentSettings.trial_period_days || '30', 10),
       trialMessageText: currentSettings.trial_message_text || '',
       trialMessageUrl: currentSettings.trial_message_url || '',
-      registerRateLimitPerHour: parseInt(currentSettings.register_rate_limit_per_hour !== undefined ? currentSettings.register_rate_limit_per_hour : '3', 10)
+      registerRateLimitPerDay: finalRateLimit,
+      registerRateLimitPerHour: finalRateLimit
     });
   } catch (err) {
     console.error("Erreur PUT /api/settings:", err.message);

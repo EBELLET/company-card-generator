@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let trialPeriodDays = 30;
   let trialMessageText = '';
   let trialMessageUrl = '';
-  let registerRateLimitPerHour = 3;
+  let registerRateLimitPerDay = 5;
   const rawStoredActivity = sessionStorage.getItem('tdconnect_last_activity') || localStorage.getItem('tdconnect_last_activity') || null;
   let lastActivityTime = rawStoredActivity ? parseInt(rawStoredActivity, 10) : Date.now();
   if (!rawStoredActivity && authToken && currentUser) {
@@ -133,8 +133,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof data.trialMessageUrl === 'string') {
           trialMessageUrl = data.trialMessageUrl;
         }
-        if (typeof data.registerRateLimitPerHour === 'number') {
-          registerRateLimitPerHour = data.registerRateLimitPerHour;
+        if (typeof data.registerRateLimitPerDay === 'number') {
+          registerRateLimitPerDay = data.registerRateLimitPerDay;
+        } else if (typeof data.registerRateLimitPerHour === 'number') {
+          registerRateLimitPerDay = data.registerRateLimitPerHour;
         }
       }
     } catch (e) {
@@ -1135,7 +1137,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Registration View Toggling & Form Submit Handling ---
   function showRegisterView() {
-    if (registerRateLimitPerHour === 0) {
+    if (registerRateLimitPerDay === 0) {
       alert("Les inscriptions autonomes sont actuellement suspendues. Veuillez contacter l'administrateur.");
       return;
     }
@@ -1555,7 +1557,7 @@ document.addEventListener('DOMContentLoaded', () => {
       settingInactivityTimeoutSelect.value = String(inactivityTimeoutMinutes);
     }
     if (settingRegisterRateLimitInput) {
-      settingRegisterRateLimitInput.value = String(registerRateLimitPerHour);
+      settingRegisterRateLimitInput.value = String(registerRateLimitPerDay);
     }
     if (settingSupportEmailInput) {
       settingSupportEmailInput.value = supportEmail;
@@ -1575,7 +1577,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSaveAllSettings.addEventListener('click', async () => {
       if (!settingInactivityTimeoutSelect) return;
       const timeoutVal = parseInt(settingInactivityTimeoutSelect.value, 10);
-      const rateLimitVal = settingRegisterRateLimitInput ? parseInt(settingRegisterRateLimitInput.value, 10) : registerRateLimitPerHour;
+      const rateLimitVal = settingRegisterRateLimitInput ? parseInt(settingRegisterRateLimitInput.value, 10) : registerRateLimitPerDay;
       const supportEmailVal = settingSupportEmailInput ? settingSupportEmailInput.value.trim() : supportEmail;
       const trialDaysVal = settingTrialPeriodDaysInput ? parseInt(settingTrialPeriodDaysInput.value, 10) : trialPeriodDays;
       const trialMsgTextVal = settingTrialMessageTextInput ? settingTrialMessageTextInput.value.trim() : trialMessageText;
@@ -1587,7 +1589,7 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             inactivityTimeoutMinutes: timeoutVal,
-            registerRateLimitPerHour: isNaN(rateLimitVal) ? 3 : Math.max(0, rateLimitVal),
+            registerRateLimitPerDay: isNaN(rateLimitVal) ? 5 : Math.max(0, rateLimitVal),
             supportEmail: supportEmailVal,
             trialPeriodDays: isNaN(trialDaysVal) ? 30 : Math.max(0, trialDaysVal),
             trialMessageText: trialMsgTextVal,
@@ -1598,10 +1600,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.success) {
           inactivityTimeoutMinutes = timeoutVal;
           localStorage.setItem('tdconnect_inactivity_timeout', timeoutVal.toString());
-          if (typeof data.registerRateLimitPerHour === 'number') {
-            registerRateLimitPerHour = data.registerRateLimitPerHour;
+          if (typeof data.registerRateLimitPerDay === 'number') {
+            registerRateLimitPerDay = data.registerRateLimitPerDay;
             if (settingRegisterRateLimitInput) {
-              settingRegisterRateLimitInput.value = String(registerRateLimitPerHour);
+              settingRegisterRateLimitInput.value = String(registerRateLimitPerDay);
             }
           }
           if (data.supportEmail) {
