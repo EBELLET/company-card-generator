@@ -32,3 +32,6 @@ dist-ssr
 # Local Docker override (not deployed to production)
 docker-compose.override.yml
 docker-compose.override.yaml
+
+# Scratch test files
+scratch/
