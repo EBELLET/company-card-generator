@@ -467,6 +467,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminCompaniesChecklist = document.getElementById('admin-companies-checklist');
   const btnSaveAdmin = document.getElementById('btn-save-admin');
   const btnCancelAdmin = document.getElementById('btn-cancel-admin');
+  const adminInfoBanner = document.getElementById('admin-info-banner');
+  const adminInfoStatusBadge = document.getElementById('admin-info-status-badge');
+  const adminInfoLockedBadge = document.getElementById('admin-info-locked-badge');
+  const adminInfoCreatedAt = document.getElementById('admin-info-created-at');
+  const adminInfoConfirmedAt = document.getElementById('admin-info-confirmed-at');
+  const adminLockContainer = document.getElementById('admin-lock-container');
+  const adminIsLockedInput = document.getElementById('admin-is-locked');
+
+  function formatDateTime(dStr) {
+    if (!dStr) return '';
+    const d = new Date(dStr);
+    if (isNaN(d.getTime())) return '';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} à ${hours}:${minutes}`;
+  }
 
   // Registration View Elements
   const registerForm = document.getElementById('register-form');
@@ -1622,12 +1641,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     allAdmins.forEach(admin => {
       const item = document.createElement('div');
-      item.className = 'collab-item';
+      item.className = `collab-item ${admin.isLocked ? 'admin-locked' : ''}`;
+      item.style.cursor = 'pointer';
       
       const isSuper = admin.role === 'superadmin';
       const roleBadge = isSuper 
         ? `<span class="admin-badge superadmin">Super Admin</span>`
         : `<span class="admin-badge admin">Admin</span>`;
+
+      const statusBadge = admin.status === 'pending_confirmation'
+        ? `<span class="admin-badge pending">En attente de confirmation</span>`
+        : `<span class="admin-badge confirmed">Compte Confirmé</span>`;
+
+      const lockedBadge = admin.isLocked
+        ? `<span class="admin-badge locked">Verrouillé</span>`
+        : '';
 
       let compBadges;
       if (isSuper) {
@@ -1642,12 +1670,20 @@ document.addEventListener('DOMContentLoaded', () => {
         compBadges = `<span class="admin-companies-count" style="opacity:0.5;">Aucune entreprise</span>`;
       }
 
+      const createdStr = admin.createdAt ? formatDateTime(admin.createdAt) : '';
+      const confirmedStr = admin.confirmedAt ? formatDateTime(admin.confirmedAt) : '';
+      let datesHtml = '';
+      if (createdStr) {
+        datesHtml = `<div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 0.25rem;">Créé le ${createdStr}${confirmedStr ? ` &middot; Confirmé le ${confirmedStr}` : (admin.status === 'pending_confirmation' ? ' &middot; <span style="color:#d97706; font-weight:500;">Non encore confirmé</span>' : '')}</div>`;
+      }
+
       const canDelete = admin.id !== 'superadm' && (currentUser && admin.id !== currentUser.id);
       const deleteBtnHtml = canDelete 
         ? `<button type="button" class="btn-item-delete" title="Supprimer">
              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
            </button>`
         : '';
+
       const canToggleSuper = admin.id !== 'superadm' && (currentUser && admin.id !== currentUser.id);
       const superToggleHtml = `
         <label title="${isSuper ? 'Rétrograder en administrateur standard' : 'Promouvoir en Super Administrateur'}" style="display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; background: rgba(99, 102, 241, 0.1); padding: 0.3rem 0.55rem; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.25); margin-right: 0.35rem;">
@@ -1656,21 +1692,38 @@ document.addEventListener('DOMContentLoaded', () => {
         </label>
       `;
 
+      const canLock = admin.id !== 'superadm' && (currentUser && admin.id !== currentUser.id);
+      const lockBtnHtml = canLock
+        ? `<button type="button" class="btn-item-lock ${admin.isLocked ? 'locked' : ''}" title="${admin.isLocked ? 'Compte verrouillé - Cliquer pour déverrouiller' : 'Verrouiller ce compte'}" style="margin-right: 0.35rem;">
+            ${admin.isLocked 
+              ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`
+              : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>`
+            }
+           </button>`
+        : '';
+
       item.innerHTML = `
         <div class="collab-item-info">
-          <span class="collab-item-name">${admin.firstName} ${admin.lastName} (${admin.id})</span>
-          <span class="collab-item-role">${roleBadge} &nbsp; ${compBadges} &nbsp; ${admin.email}</span>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span class="collab-item-name">${admin.firstName} ${admin.lastName} (${admin.id})</span>
+            ${statusBadge}
+            ${lockedBadge}
+          </div>
+          <span class="collab-item-role" style="margin-top: 0.2rem;">${roleBadge} &nbsp; ${compBadges} &nbsp; ${admin.email}</span>
+          ${datesHtml}
         </div>
         <div class="collab-item-actions">
           ${superToggleHtml}
-          <button type="button" class="btn-item-edit" title="Modifier">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
-          </button>
+          ${lockBtnHtml}
           ${deleteBtnHtml}
         </div>
       `;
 
-      item.querySelector('.btn-item-edit').addEventListener('click', () => {
+      // Click on row to open form (unless clicked on interactive controls)
+      item.addEventListener('click', (e) => {
+        if (e.target.closest('.collab-item-actions') || e.target.closest('button') || e.target.closest('input') || e.target.closest('label')) {
+          return;
+        }
         openAdminForm(admin);
       });
 
@@ -1701,8 +1754,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
+      if (canLock) {
+        const lockBtn = item.querySelector('.btn-item-lock');
+        if (lockBtn) {
+          lockBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const nextLocked = !admin.isLocked;
+            const confirmMsg = nextLocked 
+              ? `Voulez-vous vraiment verrouiller le compte "${admin.id}" ? Cet administrateur ne pourra plus se connecter.`
+              : `Voulez-vous déverrouiller le compte "${admin.id}" ?`;
+            if (confirm(confirmMsg)) {
+              try {
+                await apiFetch(`${API_BASE}/admin/users/${admin.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ isLocked: nextLocked })
+                });
+                loadAdminsList();
+              } catch (err) {
+                console.error("Erreur verrouillage admin:", err);
+                alert(err.message || "Erreur lors de la modification du verrouillage.");
+              }
+            }
+          });
+        }
+      }
+
       if (canDelete) {
-        item.querySelector('.btn-item-delete').addEventListener('click', () => {
+        item.querySelector('.btn-item-delete').addEventListener('click', (e) => {
+          e.stopPropagation();
           deleteAdmin(admin.id);
         });
       }
@@ -1745,6 +1825,41 @@ document.addEventListener('DOMContentLoaded', () => {
       adminPasswordInput.value = '';
       document.getElementById('admin-password-help').style.display = 'inline';
 
+      // Metadata info banner
+      if (adminInfoBanner) {
+        adminInfoBanner.classList.remove('hidden');
+        if (adminInfoStatusBadge) {
+          adminInfoStatusBadge.innerHTML = admin.status === 'pending_confirmation'
+            ? '<span class="admin-badge pending">En attente de confirmation</span>'
+            : '<span class="admin-badge confirmed">Compte Confirmé</span>';
+        }
+        if (adminInfoLockedBadge) {
+          if (admin.isLocked) {
+            adminInfoLockedBadge.innerHTML = '<span class="admin-badge locked">Verrouillé</span>';
+            adminInfoLockedBadge.classList.remove('hidden');
+          } else {
+            adminInfoLockedBadge.classList.add('hidden');
+          }
+        }
+        if (adminInfoCreatedAt) {
+          adminInfoCreatedAt.textContent = admin.createdAt ? formatDateTime(admin.createdAt) : 'Non renseignée';
+        }
+        if (adminInfoConfirmedAt) {
+          adminInfoConfirmedAt.textContent = admin.confirmedAt 
+            ? formatDateTime(admin.confirmedAt) 
+            : (admin.status === 'pending_confirmation' ? 'En attente (première connexion)' : 'Confirmé');
+        }
+      }
+
+      // Lock checkbox
+      if (adminLockContainer && adminIsLockedInput) {
+        adminLockContainer.classList.remove('hidden');
+        adminIsLockedInput.checked = !!admin.isLocked;
+        const isSelfOrPrimary = admin.id === 'superadm' || (currentUser && admin.id === currentUser.id);
+        adminIsLockedInput.disabled = isSelfOrPrimary;
+        adminIsLockedInput.title = isSelfOrPrimary ? "Ce compte ne peut pas être verrouillé." : "";
+      }
+
       const checklistInputs = adminCompaniesChecklist.querySelectorAll('input[type="checkbox"]');
       checklistInputs.forEach(cb => {
         cb.checked = admin.managedCompanies && admin.managedCompanies.includes(parseInt(cb.value));
@@ -1762,6 +1877,13 @@ document.addEventListener('DOMContentLoaded', () => {
         adminIsSuperadminInput.checked = false;
         adminIsSuperadminInput.disabled = false;
         adminIsSuperadminInput.title = "";
+      }
+      if (adminInfoBanner) adminInfoBanner.classList.add('hidden');
+      if (adminLockContainer) adminLockContainer.classList.add('hidden');
+      if (adminIsLockedInput) {
+        adminIsLockedInput.checked = false;
+        adminIsLockedInput.disabled = false;
+        adminIsLockedInput.title = "";
       }
       document.getElementById('admin-password-help').style.display = 'none';
 
@@ -1796,6 +1918,12 @@ document.addEventListener('DOMContentLoaded', () => {
     adminFormContainer.classList.add('hidden');
     adminForm.reset();
     adminIdInput.disabled = false;
+    if (adminInfoBanner) adminInfoBanner.classList.add('hidden');
+    if (adminLockContainer) adminLockContainer.classList.add('hidden');
+    if (adminIsLockedInput) {
+      adminIsLockedInput.checked = false;
+      adminIsLockedInput.disabled = false;
+    }
   }
 
   if (btnAddAdmin) btnAddAdmin.addEventListener('click', () => openAdminForm());
@@ -1861,7 +1989,8 @@ document.addEventListener('DOMContentLoaded', () => {
         lastName,
         email,
         role,
-        managedCompanies
+        managedCompanies,
+        isLocked: adminIsLockedInput ? adminIsLockedInput.checked : false
       };
       if (password) {
         payload.password = password;

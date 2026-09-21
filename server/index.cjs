@@ -1267,6 +1267,10 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: "Identifiant ou mot de passe incorrect." });
     }
     
+    if (user.is_locked === 1) {
+      return res.status(403).json({ error: "Votre compte administrateur est verrouillé. Veuillez contacter le Super Administrateur." });
+    }
+    
     const isValid = await db.verifyPassword(password, user.password_hash);
     if (!isValid) {
       return res.status(401).json({ error: "Identifiant ou mot de passe incorrect." });
@@ -1637,7 +1641,7 @@ app.post('/api/admin/users', authenticateToken, async (req, res) => {
   if (req.user.role !== 'superadmin') {
     return res.status(403).json({ error: "Accès réservé au Super Admin." });
   }
-  const { id, firstName, lastName, email, role, password, managedCompanies } = req.body;
+  const { id, firstName, lastName, email, role, password, managedCompanies, isLocked } = req.body;
   if (!id || id.trim().length < 6) {
     return res.status(400).json({ error: "L'identifiant doit comporter au moins 6 caractères." });
   }
@@ -1658,7 +1662,8 @@ app.post('/api/admin/users', authenticateToken, async (req, res) => {
       lastName,
       email,
       role,
-      password
+      password,
+      isLocked: !!isLocked
     });
     
     if (role === 'admin' && Array.isArray(managedCompanies)) {
@@ -1686,7 +1691,7 @@ app.put('/api/admin/users/:id', authenticateToken, async (req, res) => {
   if (req.user.role !== 'superadmin') {
     return res.status(403).json({ error: "Accès réservé au Super Admin." });
   }
-  const { firstName, lastName, email, role, password, managedCompanies } = req.body;
+  const { firstName, lastName, email, role, password, managedCompanies, isLocked } = req.body;
   const userId = req.params.id;
   
   try {
@@ -1703,23 +1708,38 @@ app.put('/api/admin/users/:id', authenticateToken, async (req, res) => {
     }
     
     // Prevent self-demotion or self-deletion of Super Admin role if they are the last one
-    if (userId === 'superadm' && role !== 'superadmin') {
+    if (userId === 'superadm' && role && role !== 'superadmin') {
       return res.status(400).json({ error: "Impossible de modifier le rôle du Super Admin principal." });
     }
+
+    // Prevent locking the master Super Admin or locking self
+    if (isLocked) {
+      if (userId === 'superadm') {
+        return res.status(400).json({ error: "Le Super Admin principal ne peut pas être verrouillé." });
+      }
+      if (userId === req.user.id) {
+        return res.status(400).json({ error: "Vous ne pouvez pas verrouiller votre propre compte." });
+      }
+    }
     
+    const targetRole = role !== undefined ? role : user.role;
+
     const updated = await db.updateUser(userId, {
-      firstName,
-      lastName,
-      email,
-      role,
-      password
+      firstName: firstName !== undefined ? firstName : user.first_name,
+      lastName: lastName !== undefined ? lastName : user.last_name,
+      email: email !== undefined ? email : user.email,
+      role: targetRole,
+      password,
+      isLocked: isLocked !== undefined ? (isLocked ? 1 : 0) : undefined
     });
     
-    if (role === 'admin' && Array.isArray(managedCompanies)) {
-      await db.assignCompaniesToUser(userId, managedCompanies);
-    } else if (role === 'superadmin') {
-      // Clear associations for superadmins as they have access to all
-      await db.assignCompaniesToUser(userId, []);
+    if (managedCompanies !== undefined) {
+      if (targetRole === 'admin' && Array.isArray(managedCompanies)) {
+        await db.assignCompaniesToUser(userId, managedCompanies);
+      } else if (targetRole === 'superadmin') {
+        // Clear associations for superadmins as they have access to all
+        await db.assignCompaniesToUser(userId, []);
+      }
     }
     
     res.json(updated);

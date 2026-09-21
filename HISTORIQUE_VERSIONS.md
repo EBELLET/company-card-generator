@@ -5,15 +5,40 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.13.0-options-vcf-entreprise`
-* **Date** : 20 septembre 2026
+* **Version / Tag** : `v2.14.0-gestion-admins-statuts-verrouillage`
+* **Date** : 21 septembre 2026
 * **Statut** : Version stable / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.13.0-options-vcf-entreprise` (Dernière version)
+### 🚀 Version `v2.14.0-gestion-admins-statuts-verrouillage` (Dernière version)
+**Thème : Statut d'autosouscription, Horodatages, Verrouillage/Déverrouillage Super Admin, Ergonomie de la liste et Migration SQL sans perte de données**
+* **Statut de compte en autosouscription** :
+  * À la création autonome par `/api/auth/register`, le compte administrateur est initialisé au statut **"En attente de confirmation"** (`pending_confirmation`).
+  * Dès que l'administrateur se connecte et remplace obligatoirement son mot de passe temporaire (via `PUT /api/auth/me`), le statut bascule automatiquement à **"Compte Confirmé"** (`confirmed`).
+* **Horodatages précis de création et confirmation** :
+  * Enregistrement en base de la date et de l'heure de création (`created_at`) lors de l'autosouscription.
+  * Enregistrement de la date et de l'heure de confirmation (`confirmed_at`) lors du premier changement de mot de passe.
+  * Affichage clair sous chaque administrateur dans la liste (`Créé le JJ/MM/AAAA à HH:mm` et `Confirmé le JJ/MM/AAAA à HH:mm`).
+* **Verrouillage et Déverrouillage des comptes par le Super Admin** :
+  * Ajout d'un bouton d'action rapide avec icône cadenas (ouvert / fermé) dans la liste des administrateurs.
+  * Ajout d'une case à cocher de verrouillage dans le formulaire d'édition de compte.
+  * Toute tentative de connexion avec un compte verrouillé est immédiatement bloquée avec un code HTTP 403 et le message explicite : *"Votre compte administrateur est verrouillé. Veuillez contacter le Super Administrateur."*
+  * **Sécurités intégrées** : Le compte Super Admin principal (`superadm`) et le compte actuellement connecté ne peuvent jamais être verrouillés.
+* **Refonte ergonomique de la page des Administrateurs** :
+  * **Suppression de l'icône stylo** de chaque ligne.
+  * **Accès direct au compte par clic sur toute la ligne**, avec curseur pointeur et survol fluide.
+  * Ajout d'un bandeau d'information récapitulatif dans le formulaire affichant le statut du compte, la date de création et la date de confirmation.
+* **Migration SQL & Préservation des données VPS** :
+  * Ajout des colonnes `is_locked`, `status`, `created_at`, `confirmed_at` sur la table `users`.
+  * Script SQL idempotent `migrations/migration_v2.14.0_admin_status_and_lock.sql` conçu avec `INFORMATION_SCHEMA.COLUMNS` pour s'exécuter sans aucun risque ni altération de données existantes.
+  * Auto-migration idempotente au démarrage du serveur Node.js.
+
+---
+
+### 🚀 Version `v2.13.0-options-vcf-entreprise`
 **Thème : Décentralisation des paramètres d'export vCard (.vcf) au niveau de chaque entreprise, boutons radio On/Off et migration VPS**
 * **Décentralisation des paramètres vCard (.vcf) de l'application vers chaque entreprise** :
   * Suppression de l'encart *"Exportation vCard (.vcf)"* de la page des Paramètres Généraux.

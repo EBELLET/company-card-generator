@@ -2269,6 +2269,61 @@ input:checked + .slider:before {
   color: var(--dark-color);
 }
 
+.admin-badge.pending {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #b45309;
+}
+
+.admin-badge.confirmed {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #047857;
+}
+
+.admin-badge.locked {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #b91c1c;
+}
+
+.btn-item-lock {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(55, 53, 52, 0.05);
+  border: 1px solid rgba(55, 53, 52, 0.12);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-item-lock:hover {
+  background: rgba(55, 53, 52, 0.1);
+  color: var(--text-primary);
+  border-color: rgba(55, 53, 52, 0.25);
+}
+
+.btn-item-lock.locked {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #dc2626;
+}
+
+.btn-item-lock.locked:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #b91c1c;
+}
+
+.collab-item.admin-locked {
+  background: #fff8f8;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
 .admin-companies-count {
   font-size: 0.75rem;
   color: var(--text-secondary);

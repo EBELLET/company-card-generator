@@ -294,6 +294,18 @@
             <div id="admin-form-container" class="collab-form-container hidden">
               <hr class="form-divider" />
               <h4 id="admin-form-title">Détails de l'administrateur</h4>
+
+              <!-- Account info banner (Status, Creation date, Confirmation date) -->
+              <div id="admin-info-banner" class="admin-info-banner hidden" style="margin-bottom: 1rem; padding: 0.85rem 1rem; background: #FAF6F0; border: 1px solid rgba(55, 53, 52, 0.12); border-radius: 8px; font-size: 0.82rem; display: flex; flex-direction: column; gap: 0.4rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                  <span><strong>Statut du compte :</strong> <span id="admin-info-status-badge"></span></span>
+                  <span id="admin-info-locked-badge" class="hidden"></span>
+                </div>
+                <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; color: var(--text-secondary); font-size: 0.78rem;">
+                  <span>📅 <strong>Créé le :</strong> <span id="admin-info-created-at">-</span></span>
+                  <span>✅ <strong>Confirmé le :</strong> <span id="admin-info-confirmed-at">-</span></span>
+                </div>
+              </div>
               
               <form id="admin-form" class="editor-form" autocomplete="off" onsubmit="event.preventDefault();">
                 <input type="hidden" id="admin-mode" value="create" /> <!-- 'create' or 'edit' -->
@@ -349,6 +361,17 @@
                     <input type="password" id="admin-password" placeholder="••••••••" />
                     <span class="focus-border"></span>
                   </div>
+                </div>
+
+                <!-- Lock admin toggle -->
+                <div class="form-group" id="admin-lock-container">
+                  <label class="switch-label" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.6rem 0.85rem; border-radius: 8px; width: 100%;">
+                    <input type="checkbox" id="admin-is-locked" style="width: 18px; height: 18px; accent-color: #ef4444; cursor: pointer;" />
+                    <div>
+                      <span style="font-weight: 600; font-size: 0.88rem; color: #b91c1c;">Verrouiller ce compte</span>
+                      <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">Interdit toute connexion pour cet administrateur.</p>
+                    </div>
+                  </label>
                 </div>
 
                 <!-- Managed companies checklist -->

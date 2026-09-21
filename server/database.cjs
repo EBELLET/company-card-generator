@@ -221,9 +221,19 @@ async function initializeDatabase() {
       last_name VARCHAR(100) NOT NULL,
       email VARCHAR(255) NOT NULL,
       role VARCHAR(50) DEFAULT 'admin',
-      is_temp_password INT DEFAULT 0
+      is_temp_password INT DEFAULT 0,
+      is_locked INT DEFAULT 0,
+      status VARCHAR(50) DEFAULT 'confirmed',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      confirmed_at DATETIME NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
+
+  try { await pool.query(`ALTER TABLE users ADD COLUMN is_locked INT DEFAULT 0`); } catch (e) {}
+  try { await pool.query(`ALTER TABLE users ADD COLUMN status VARCHAR(50) DEFAULT 'confirmed'`); } catch (e) {}
+  try { await pool.query(`ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP`); } catch (e) {}
+  try { await pool.query(`ALTER TABLE users ADD COLUMN confirmed_at DATETIME NULL`); } catch (e) {}
+
 
   // 4. Create user_companies table
   await pool.query(`
@@ -762,6 +772,10 @@ const getUsers = async () => {
       lastName: user.last_name,
       email: user.email,
       role: user.role,
+      status: user.status || 'confirmed',
+      isLocked: user.is_locked === 1,
+      createdAt: user.created_at,
+      confirmedAt: user.confirmed_at,
       managedCompanies: managed
     };
   });
@@ -769,11 +783,22 @@ const getUsers = async () => {
 
 const addUser = async (u) => {
   const hash = await hashPassword(u.password);
+  const lockedVal = u.isLocked ? 1 : 0;
   await pool.query(`
-    INSERT INTO users (id, password_hash, first_name, last_name, email, role)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `, [u.id, hash, u.firstName, u.lastName, u.email, u.role || 'admin']);
-  return { id: u.id, firstName: u.firstName, lastName: u.lastName, email: u.email, role: u.role || 'admin' };
+    INSERT INTO users (id, password_hash, first_name, last_name, email, role, is_temp_password, status, is_locked, created_at, confirmed_at)
+    VALUES (?, ?, ?, ?, ?, ?, 0, 'confirmed', ?, NOW(), NOW())
+  `, [u.id, hash, u.firstName, u.lastName, u.email, u.role || 'admin', lockedVal]);
+  return {
+    id: u.id,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    email: u.email,
+    role: u.role || 'admin',
+    status: 'confirmed',
+    isLocked: lockedVal === 1,
+    createdAt: new Date(),
+    confirmedAt: new Date()
+  };
 };
 
 const updateUser = async (id, u) => {
@@ -786,9 +811,19 @@ const updateUser = async (id, u) => {
   `;
   const params = [u.firstName, u.lastName, u.email, u.role || 'admin'];
 
+  if (u.isLocked !== undefined) {
+    query += `, is_locked = ?`;
+    params.push(u.isLocked ? 1 : 0);
+  }
+
+  if (u.status !== undefined) {
+    query += `, status = ?`;
+    params.push(u.status);
+  }
+
   if (u.password) {
     const hash = await hashPassword(u.password);
-    query += `, password_hash = ?, is_temp_password = 0`;
+    query += `, password_hash = ?, is_temp_password = 0, status = IF(status = 'pending_confirmation', 'confirmed', status), confirmed_at = IF(confirmed_at IS NULL, NOW(), confirmed_at)`;
     params.push(hash);
   }
 
@@ -796,7 +831,18 @@ const updateUser = async (id, u) => {
   params.push(id);
 
   await pool.query(query, params);
-  return { id, firstName: u.firstName, lastName: u.lastName, email: u.email, role: u.role || 'admin' };
+  const updatedUser = await getUserById(id);
+  return {
+    id,
+    firstName: updatedUser ? updatedUser.first_name : u.firstName,
+    lastName: updatedUser ? updatedUser.last_name : u.lastName,
+    email: updatedUser ? updatedUser.email : u.email,
+    role: updatedUser ? updatedUser.role : (u.role || 'admin'),
+    status: updatedUser ? (updatedUser.status || 'confirmed') : 'confirmed',
+    isLocked: updatedUser ? updatedUser.is_locked === 1 : false,
+    createdAt: updatedUser ? updatedUser.created_at : null,
+    confirmedAt: updatedUser ? updatedUser.confirmed_at : null
+  };
 };
 
 const deleteUser = async (id) => {
@@ -868,8 +914,8 @@ const registerUserWithCompany = async (userData, companyData) => {
     }
 
     await connection.query(`
-      INSERT INTO users (id, password_hash, first_name, last_name, email, role, is_temp_password)
-      VALUES (?, ?, ?, ?, ?, 'admin', ?)
+      INSERT INTO users (id, password_hash, first_name, last_name, email, role, is_temp_password, status, is_locked, created_at, confirmed_at)
+      VALUES (?, ?, ?, ?, ?, 'admin', ?, 'pending_confirmation', 0, NOW(), NULL)
     `, [
       userData.id.trim(),
       userData.passwordHash,
