@@ -88,11 +88,11 @@
             </div>
 
             <div class="feature-card">
-              <div class="feature-icon-wrapper color-pink">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <div class="feature-icon-wrapper color-purple">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"></rect><circle cx="8" cy="12" r="2"></circle><path d="M14 9.5a3.5 3.5 0 0 1 0 5"></path><path d="M17 7a7 7 0 0 1 0 10"></path></svg>
               </div>
-              <h4>Export ZIP Autonome</h4>
-              <p>Téléchargez un pack de fichiers autonome prêt à être hébergé n'importe où (cPanel, FTP, Vercel) de manière indépendante.</p>
+              <h4>Cartes Signature & Matériaux Nobles</h4>
+              <p>Associez votre profil virtuel à des cartes physiques d'exception (bois précieux, métal brossé, matières durables) intégrant la technologie NFC sans contact pour marquer durablement les esprits.</p>
             </div>
 
           </div>
@@ -188,6 +188,78 @@
               Déjà un compte ? <a href="#" id="link-goto-login" style="color: #818cf8; text-decoration: none; font-weight: 600;">Se connecter</a>
             </p>
           </form>
+        </div>
+      </div>
+
+      <!-- MENTIONS LEGALES VIEW -->
+      <div id="view-mentions-legales" class="landing-view hidden">
+        <div class="modal-card glass-panel mentions-panel" style="max-width: 900px; width: 100%; margin: 1.5rem auto; padding: 2.5rem 2rem; border-radius: 28px; text-align: left; background: #ffffff; box-shadow: 0 16px 40px -5px rgba(55, 53, 52, 0.1);">
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid rgba(55, 53, 52, 0.1); padding-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h1 style="font-family: 'Raleway', sans-serif; font-size: 2rem; font-weight: 800; color: #373534; margin: 0;">Mentions Légales</h1>
+              <p style="font-size: 0.9rem; color: #787573; margin-top: 0.25rem;">Informations légales relatives au site et à l'application TDConnect</p>
+            </div>
+            <button type="button" id="btn-back-mentions-top" class="btn-back" onclick="window.history.back && window.history.length > 1 ? window.history.back() : (window.location.hash = '#home');" style="align-self: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+              <span>Retour à l'accueil</span>
+            </button>
+          </div>
+
+          <div class="mentions-content" style="display: flex; flex-direction: column; gap: 1.5rem; font-size: 0.95rem; color: #373534; line-height: 1.6;">
+            
+            <div class="mentions-section-box" style="background: rgba(140, 82, 255, 0.04); border: 1px solid rgba(140, 82, 255, 0.15); border-radius: 16px; padding: 1.25rem 1.5rem;">
+              <h3 style="font-family: 'Raleway', sans-serif; font-size: 1.1rem; font-weight: 700; color: #8C52FF; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                <span>Éditeur du site et de l'application</span>
+              </h3>
+              <p style="margin: 0 0 0.5rem 0; font-weight: 600;">
+                TDConnect est une marque de la SAS TDC Création – SAS au capital de 3000 Euros – Située à Antony (92160)
+              </p>
+              <p style="margin: 0 0 0.5rem 0;">
+                Immatriculée au Registre du Commerce et des Sociétés de Nanterre sous le numéro <span style="white-space: nowrap;">883 418 451</span>.
+              </p>
+              <p style="margin: 0;">
+                TVA intracommunautaire : <span style="white-space: nowrap;">FR 25 883 418 451</span>
+              </p>
+            </div>
+
+            <div class="mentions-section-box" style="background: rgba(140, 82, 255, 0.04); border: 1px solid rgba(140, 82, 255, 0.15); border-radius: 16px; padding: 1.25rem 1.5rem;">
+              <h3 style="font-family: 'Raleway', sans-serif; font-size: 1.1rem; font-weight: 700; color: #8C52FF; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Directrice de la publication</span>
+              </h3>
+              <p style="margin: 0;">
+                Le responsable de la publication du site est : <strong>Cécile BELLET/ Directrice</strong>
+              </p>
+            </div>
+
+            <div class="mentions-section-box" style="background: rgba(140, 82, 255, 0.04); border: 1px solid rgba(140, 82, 255, 0.15); border-radius: 16px; padding: 1.25rem 1.5rem;">
+              <h3 style="font-family: 'Raleway', sans-serif; font-size: 1.1rem; font-weight: 700; color: #8C52FF; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                <span>Hébergement</span>
+              </h3>
+              <p style="margin: 0;">
+                L’hébergement du site Web et de l'application SAAS est assurée par <strong>OVH</strong>.
+              </p>
+            </div>
+
+            <!-- Image sympa à la fin -->
+            <div class="mentions-art-container" style="margin-top: 1rem; text-align: center;">
+              <img src="/mentions-legales-art.jpg" alt="TDConnect - Cartes de visite connectées en bois et innovation française" style="width: 100%; max-height: 420px; object-fit: cover; border-radius: 20px; box-shadow: 0 10px 30px rgba(55, 53, 52, 0.12); border: 1px solid rgba(55, 53, 52, 0.08);" />
+              <p style="margin-top: 0.75rem; font-size: 0.85rem; color: #787573; font-style: italic;">
+                L'artisanat d'exception au service de vos cartes professionnelles connectées.
+              </p>
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-top: 1.25rem;">
+              <button type="button" class="btn-cta" onclick="window.history.back && window.history.length > 1 ? window.history.back() : (window.location.hash = '#home');">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <span>Retour à l'accueil</span>
+              </button>
+            </div>
+
+          </div>
         </div>
       </div>
 
@@ -1331,68 +1403,73 @@
           </div>
         </section>
       </main>
-
-      <footer class="app-footer">
-        <p>&copy; 2026 TDConnect. Conçu avec soin pour une esthétique web d'exception. TDConnect est une marque de TDC Création</p>
-        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
-          Pour tout contact avec TDConnect, suivez ce <a href="javascript:void(0);" id="link-tdconnect-contact" class="link-tdconnect-contact" onclick="window.openContactEncart && window.openContactEncart(); return false;" style="color: #818cf8; text-decoration: underline; font-weight: 600; cursor: pointer; display: inline-block; padding: 2px 4px;">lien</a>
-        </p>
-
-        <!-- Inline Contact Encart (Card box appearing directly on the page) -->
-        <div id="footer-contact-encart" class="hidden" style="position: relative; max-width: 460px; margin: 1.25rem auto 0; padding: 1.5rem; background: #FFFFFF; border: 1px solid rgba(140, 82, 255, 0.3); border-radius: 20px; backdrop-filter: blur(12px); box-shadow: 0 15px 35px rgba(55, 53, 52, 0.12); text-align: center;">
-          
-          <!-- Close Cross Button (Croix) -->
-          <button type="button" onclick="window.closeContactEncart && window.closeContactEncart();" aria-label="Fermer l'encart de contact" title="Fermer" style="position: absolute; top: 12px; right: 14px; background: rgba(55, 53, 52, 0.08); border: none; font-size: 1rem; font-weight: bold; color: #373534; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
-            ✕
-          </button>
-
-          <!-- Step 1: Verification -->
-          <div id="encart-step-verify">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem; color: #818cf8; font-weight: 700; font-size: 1rem;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-              <span>Vérification de sécurité</span>
-            </div>
-            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4;">
-              Veuillez confirmer que vous n'êtes pas un robot pour afficher l'adresse email de contact.
-            </p>
-
-            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
-              <label style="display: flex; align-items: center; gap: 0.65rem; cursor: pointer; user-select: none;">
-                <input type="checkbox" id="chk-encart-human" style="width: 20px; height: 20px; cursor: pointer; accent-color: #6366f1;" />
-                <span style="font-size: 0.9rem; font-weight: 600; color: #f8fafc;">Je ne suis pas un robot</span>
-              </label>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-            </div>
-
-            <div id="encart-error-msg" class="hidden" style="color: #f43f5e; font-size: 0.8rem; margin-bottom: 0.75rem; background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3); padding: 0.5rem; border-radius: 8px;">
-              Veuillez cocher la case pour valider.
-            </div>
-
-            <button type="button" onclick="window.submitEncartCaptcha && window.submitEncartCaptcha();" class="btn-submit-full" style="width: 100%; padding: 0.75rem; font-size: 0.9rem;">
-              Valider et afficher l'adresse email
-            </button>
-          </div>
-
-          <!-- Step 2: Result (Contact Email) -->
-          <div id="encart-step-result" class="hidden">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem; color: #10b981; font-weight: 700; font-size: 1rem;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              <span>Vérification réussie</span>
-            </div>
-
-            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 1rem; margin-bottom: 1rem;">
-              <p style="font-size: 0.85rem; color: #373534; margin-bottom: 0.35rem;">Envoyez un mail à :</p>
-              <a id="encart-support-email-link" href="#" target="_blank" rel="noopener noreferrer" style="color: #6366f1; font-size: 1.1rem; font-weight: 700; text-decoration: underline;"></a>
-            </div>
-
-            <button type="button" onclick="window.closeContactEncart && window.closeContactEncart();" style="background: rgba(55, 53, 52, 0.08); border: 1px solid rgba(55, 53, 52, 0.15); color: #373534; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.82rem; cursor: pointer; font-weight: 600;">
-              Fermer l'encart
-            </button>
-          </div>
-
-        </div>
-      </footer>
     </div>
+
+    <!-- APPLICATION FOOTER -->
+    <footer class="app-footer">
+      <p>&copy; 2026 TDConnect. Conçu avec soin pour une esthétique web d'exception. TDConnect est une marque de TDC Création</p>
+      <p style="margin-top: 0.55rem; font-size: 0.88rem;">
+        <a href="#mentions-legales" id="link-mentions-legales" style="color: var(--primary-color, #8C52FF); text-decoration: underline; font-weight: 600; cursor: pointer;">Mentions Légales</a>
+      </p>
+      <p style="margin-top: 0.35rem; font-size: 0.85rem; color: var(--text-muted);">
+        Pour tout contact avec TDConnect, suivez ce <a href="javascript:void(0);" id="link-tdconnect-contact" class="link-tdconnect-contact" onclick="window.openContactEncart && window.openContactEncart(); return false;" style="color: var(--primary-color, #8C52FF); text-decoration: underline; font-weight: 600; cursor: pointer; display: inline-block; padding: 2px 4px;">lien</a>
+      </p>
+
+      <!-- Inline Contact Encart (Card box appearing directly on the page) -->
+      <div id="footer-contact-encart" class="hidden" style="position: relative; max-width: 460px; margin: 1.25rem auto 0; padding: 1.5rem; background: #FFFFFF; border: 1px solid rgba(140, 82, 255, 0.3); border-radius: 20px; backdrop-filter: blur(12px); box-shadow: 0 15px 35px rgba(55, 53, 52, 0.12); text-align: center;">
+        
+        <!-- Close Cross Button (Croix) -->
+        <button type="button" onclick="window.closeContactEncart && window.closeContactEncart();" aria-label="Fermer l'encart de contact" title="Fermer" style="position: absolute; top: 12px; right: 14px; background: rgba(55, 53, 52, 0.08); border: none; font-size: 1rem; font-weight: bold; color: #373534; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+          ✕
+        </button>
+
+        <!-- Step 1: Verification -->
+        <div id="encart-step-verify">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem; color: #818cf8; font-weight: 700; font-size: 1rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <span>Vérification de sécurité</span>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4;">
+            Veuillez confirmer que vous n'êtes pas un robot pour afficher l'adresse email de contact.
+          </p>
+
+          <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+            <label style="display: flex; align-items: center; gap: 0.65rem; cursor: pointer; user-select: none;">
+              <input type="checkbox" id="chk-encart-human" style="width: 20px; height: 20px; cursor: pointer; accent-color: #6366f1;" />
+              <span style="font-size: 0.9rem; font-weight: 600; color: #f8fafc;">Je ne suis pas un robot</span>
+            </label>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          </div>
+
+          <div id="encart-error-msg" class="hidden" style="color: #f43f5e; font-size: 0.8rem; margin-bottom: 0.75rem; background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3); padding: 0.5rem; border-radius: 8px;">
+            Veuillez cocher la case pour valider.
+          </div>
+
+          <button type="button" onclick="window.submitEncartCaptcha && window.submitEncartCaptcha();" class="btn-submit-full" style="width: 100%; padding: 0.75rem; font-size: 0.9rem;">
+            Valider et afficher l'adresse email
+          </button>
+        </div>
+
+        <!-- Step 2: Result (Contact Email) -->
+        <div id="encart-step-result" class="hidden">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem; color: #10b981; font-weight: 700; font-size: 1rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <span>Vérification réussie</span>
+          </div>
+
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 1rem; margin-bottom: 1rem;">
+            <p style="font-size: 0.85rem; color: #373534; margin-bottom: 0.35rem;">Envoyez un mail à :</p>
+            <a id="encart-support-email-link" href="#" target="_blank" rel="noopener noreferrer" style="color: #6366f1; font-size: 1.1rem; font-weight: 700; text-decoration: underline;"></a>
+          </div>
+
+          <button type="button" onclick="window.closeContactEncart && window.closeContactEncart();" style="background: rgba(55, 53, 52, 0.08); border: 1px solid rgba(55, 53, 52, 0.15); color: #373534; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.82rem; cursor: pointer; font-weight: 600;">
+            Fermer l'encart
+          </button>
+        </div>
+
+      </div>
+    </footer>
+  </div>
 
     <!-- LOGIN MODAL -->
     <div id="login-modal" class="modal-overlay hidden">
@@ -1557,6 +1634,8 @@
           </button>
           <button type="button" id="btn-cancel-my-account" class="btn-submit-full" style="margin-top: 0.5rem; background: transparent; border: 1px solid rgba(255, 255, 255, 0.15); color: var(--text-secondary);">
             Annuler
+          </button>
+        </form>
       </div>
     </div>
 

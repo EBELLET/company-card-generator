@@ -259,6 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewAdminPanel = document.getElementById('view-admin-panel');
   const viewSettingsPanel = document.getElementById('view-settings-panel');
   const viewRegister = document.getElementById('view-register');
+  const viewMentionsLegales = document.getElementById('view-mentions-legales');
 
   const mainContent = document.querySelector('.main-content');
   function updateLayoutMode() {
@@ -716,6 +717,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    if (cleanHash === '#mentions-legales') {
+      showMentionsLegalesView();
+      return;
+    }
+
     if (cleanHash === '#dashboard' || cleanHash === '#companies') {
       if (isLoggedIn) {
         toggleAppView(true);
@@ -731,6 +737,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Default: Home Landing view
     toggleAppView(false);
+  }
+
+  function showMentionsLegalesView() {
+    viewLanding.classList.add('hidden');
+    if (viewRegister) viewRegister.classList.add('hidden');
+    viewDashboard.classList.add('hidden');
+    if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
+    if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
+    if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
+    if (viewMentionsLegales) viewMentionsLegales.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function toggleAppView(toDashboard) {
@@ -751,6 +768,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnSettingsPanelShow) {
       if (isLoggedIn && currentUser && currentUser.role === 'superadmin') btnSettingsPanelShow.classList.remove('hidden');
       else btnSettingsPanelShow.classList.add('hidden');
+    }
+
+    if (viewMentionsLegales) {
+      viewMentionsLegales.classList.add('hidden');
     }
 
     if (toDashboard && isLoggedIn) {
@@ -1488,6 +1509,22 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         showLoginModal();
       }
+    });
+  }
+
+  const linkMentionsLegales = document.getElementById('link-mentions-legales');
+  if (linkMentionsLegales) {
+    linkMentionsLegales.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigateTo('#mentions-legales');
+    });
+  }
+
+  const btnBackMentionsTop = document.getElementById('btn-back-mentions-top');
+  if (btnBackMentionsTop) {
+    btnBackMentionsTop.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigateTo('#home');
     });
   }
 

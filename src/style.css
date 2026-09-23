@@ -2006,6 +2006,18 @@ body.theme-obsidian .preview-share-contact-text {
   border: 1px solid rgba(236, 72, 153, 0.15);
 }
 
+.feature-icon-wrapper.color-purple {
+  background: rgba(140, 82, 255, 0.08);
+  color: #8C52FF;
+  border: 1px solid rgba(140, 82, 255, 0.2);
+}
+
+.feature-icon-wrapper.color-amber {
+  background: rgba(245, 158, 11, 0.08);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
 .feature-card h4 {
   font-size: 1.35rem;
   font-weight: 800;
@@ -2799,4 +2811,29 @@ input:checked + .slider:before {
   color: #047857;
   font-weight: 700;
 }
+
+/* ==========================================
+   MENTIONS LÉGALES VIEW STYLES
+   ========================================== */
+.mentions-panel {
+  animation: fade-in-up 0.4s ease-out;
+}
+
+.mentions-section-box {
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.mentions-section-box:hover {
+  border-color: rgba(140, 82, 255, 0.35);
+  transform: translateY(-2px);
+}
+
+.mentions-art-container img {
+  transition: transform 0.3s ease;
+}
+
+.mentions-art-container img:hover {
+  transform: scale(1.01);
+}
+
 

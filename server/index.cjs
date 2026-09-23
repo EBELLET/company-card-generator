@@ -139,6 +139,16 @@ app.get(['/contact', '/contact.html'], (req, res) => {
   res.sendFile(contactRoot);
 });
 
+app.get(['/mentions-legales', '/mentions-legales.html'], (req, res) => {
+  const fs = require('fs');
+  const mentionsDist = path.resolve(__dirname, '../dist/mentions-legales.html');
+  const mentionsRoot = path.resolve(__dirname, '../mentions-legales.html');
+  if (fs.existsSync(mentionsDist)) {
+    return res.sendFile(mentionsDist);
+  }
+  res.sendFile(mentionsRoot);
+});
+
 function checkCardStatus(collab, company) {
   let isExpired = false;
   let isInactive = false;

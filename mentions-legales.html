@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mentions Légales - TDConnect</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Raleway:wght@700;800&display=swap" rel="stylesheet">
+
+    <style>
+      :root {
+        --bg-main: #F6E1C4;
+        --accent: #8C52FF;
+        --accent-hover: #793ee6;
+        --text-primary: #373534;
+        --text-muted: #787573;
+        --glass-bg: #FFFFFF;
+        --glass-border: rgba(55, 53, 52, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: 'Quicksand', sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-primary);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1.25rem;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      h1, h2, h3, h4, .logo-text {
+        font-family: 'Raleway', sans-serif;
+      }
+
+      .glow-sphere {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(90px);
+        opacity: 0.2;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .glow-1 {
+        top: -10%;
+        left: 20%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(140, 82, 255, 0.4), transparent 70%);
+      }
+      .glow-2 {
+        bottom: -10%;
+        right: 15%;
+        width: 450px;
+        height: 450px;
+        background: radial-gradient(circle, rgba(55, 53, 52, 0.15), transparent 70%);
+      }
+
+      .mentions-card {
+        width: 100%;
+        max-width: 900px;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 28px;
+        padding: 2.5rem 2rem;
+        text-align: left;
+        box-shadow: 0 16px 40px -5px rgba(55, 53, 52, 0.1);
+        position: relative;
+        z-index: 10;
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(55, 53, 52, 0.1);
+        padding-bottom: 1.25rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .logo-text {
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--text-primary);
+      }
+      .logo-text span {
+        color: var(--accent);
+      }
+
+      .page-subtitle {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+      }
+
+      .mentions-body {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        font-size: 0.95rem;
+        line-height: 1.6;
+      }
+
+      .mentions-section-box {
+        background: rgba(140, 82, 255, 0.04);
+        border: 1px solid rgba(140, 82, 255, 0.15);
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+      }
+      .mentions-section-box:hover {
+        border-color: rgba(140, 82, 255, 0.35);
+        transform: translateY(-2px);
+      }
+
+      .section-title {
+        font-family: 'Raleway', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .btn-cta {
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-size: 0.92rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 14px rgba(140, 82, 255, 0.35);
+      }
+      .btn-cta:hover {
+        background: var(--accent-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(140, 82, 255, 0.45);
+      }
+
+      .mentions-art {
+        width: 100%;
+        max-height: 420px;
+        object-fit: cover;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(55, 53, 52, 0.12);
+        border: 1px solid rgba(55, 53, 52, 0.08);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="glow-sphere glow-1"></div>
+    <div class="glow-sphere glow-2"></div>
+
+    <div class="mentions-card">
+      <div class="card-header">
+        <div>
+          <h1 class="logo-text">Mentions <span>Légales</span></h1>
+          <p class="page-subtitle">Informations légales relatives au site et à l'application TDConnect</p>
+        </div>
+        <a href="/" class="btn-cta">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          <span>Retour à l'accueil</span>
+        </a>
+      </div>
+
+      <div class="mentions-body">
+        <div class="mentions-section-box">
+          <h3 class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            <span>Éditeur du site et de l'application</span>
+          </h3>
+          <p style="margin-bottom: 0.5rem; font-weight: 600;">
+            TDConnect est une marque de la SAS TDC Création – SAS au capital de 3000 Euros – Située à Antony (92160)
+          </p>
+          <p style="margin-bottom: 0.5rem;">
+            Immatriculée au Registre du Commerce et des Sociétés de Nanterre sous le numéro <span style="white-space: nowrap;">883 418 451</span>.
+          </p>
+          <p>
+            TVA intracommunautaire : <span style="white-space: nowrap;">FR 25 883 418 451</span>
+          </p>
+        </div>
+
+        <div class="mentions-section-box">
+          <h3 class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Directrice de la publication</span>
+          </h3>
+          <p>
+            Le responsable de la publication du site est : <strong>Cécile BELLET/ Directrice</strong>
+          </p>
+        </div>
+
+        <div class="mentions-section-box">
+          <h3 class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+            <span>Hébergement</span>
+          </h3>
+          <p>
+            L’hébergement du site Web et de l'application SAAS est assurée par <strong>OVH</strong>.
+          </p>
+        </div>
+
+        <!-- Image sympa à la fin -->
+        <div style="margin-top: 1rem; text-align: center;">
+          <img src="/mentions-legales-art.jpg" alt="TDConnect - Cartes de visite connectées en bois et innovation française" class="mentions-art" />
+          <p style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+            L'artisanat d'exception au service de vos cartes professionnelles connectées.
+          </p>
+        </div>
+
+        <div style="display: flex; justify-content: center; margin-top: 1.25rem;">
+          <a href="/" class="btn-cta">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <span>Retour à l'accueil</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
