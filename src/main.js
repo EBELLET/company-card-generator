@@ -769,6 +769,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isLoggedIn && currentUser && currentUser.role === 'superadmin') btnSettingsPanelShow.classList.remove('hidden');
       else btnSettingsPanelShow.classList.add('hidden');
     }
+    const isSuperAdmin = isLoggedIn && currentUser && currentUser.role === 'superadmin';
+    if (btnExcelImport) {
+      if (isSuperAdmin) btnExcelImport.classList.remove('hidden');
+      else btnExcelImport.classList.add('hidden');
+    }
+    if (btnExcelExport) {
+      if (isSuperAdmin) btnExcelExport.classList.remove('hidden');
+      else btnExcelExport.classList.add('hidden');
+    }
 
     if (viewMentionsLegales) {
       viewMentionsLegales.classList.add('hidden');
@@ -2728,6 +2737,19 @@ document.addEventListener('DOMContentLoaded', () => {
     return lines.join('<br/>');
   }
 
+  // Public URL helper for a collaborator virtual card
+  function getCollabPublicUrl(collab) {
+    if (!collab) return '';
+    const urlId = collab.customSlug || collab.id;
+    let publicUrlBase = PUBLIC_URL_BASE;
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      if (serverLocalIP && serverLocalIP !== 'localhost') {
+        publicUrlBase = `${window.location.protocol}//${serverLocalIP}:3000`;
+      }
+    }
+    return `${publicUrlBase}/card/${urlId}`;
+  }
+
   // --- Collaborator Card Preview Rendering inside Mockup ---
 
   function updateMockupPreview() {
@@ -2935,15 +2957,9 @@ document.addEventListener('DOMContentLoaded', () => {
       btnExportZip.href = `${API_BASE}/collaborators/${urlId}/export?token=${authToken}`;
 
       // Sharing Panel Info
-      let publicUrlBase = PUBLIC_URL_BASE;
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        if (serverLocalIP && serverLocalIP !== 'localhost') {
-          publicUrlBase = `${window.location.protocol}//${serverLocalIP}:3000`;
-        }
-      }
-      const publicUrl = `${publicUrlBase}/card/${urlId}`;
+      const publicUrl = getCollabPublicUrl(collab);
       collabPublicUrl.value = publicUrl;
-      collabQrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(publicUrl)}`;
+      collabQrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(publicUrl)}`;
     } else {
       sharingPanel.classList.add('hidden');
 
@@ -3163,6 +3179,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Render Collaborators UI List
   function renderCollaboratorsList(filterQuery = '') {
     collabListContainer.innerHTML = '';
+
+    const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
+    if (btnExcelImport) btnExcelImport.classList.toggle('hidden', !isSuperAdmin);
+    if (btnExcelExport) btnExcelExport.classList.toggle('hidden', !isSuperAdmin);
     
     // Update summary counts
     const countTotalEl = document.getElementById('collab-count-total');
@@ -3880,6 +3900,13 @@ document.addEventListener('DOMContentLoaded', () => {
       companyCityInput.value = companyInfo.city || '';
       companyCountryInput.value = companyInfo.country || '';
       const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
+
+      if (btnExcelImport) {
+        btnExcelImport.classList.toggle('hidden', !isSuperAdmin);
+      }
+      if (btnExcelExport) {
+        btnExcelExport.classList.toggle('hidden', !isSuperAdmin);
+      }
       
       if (companySubscriptionEndInput) {
         companySubscriptionEndInput.value = companyInfo.subscriptionEndDate || companyInfo.subscription_end_date || '';
@@ -4162,6 +4189,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnExcelExport) {
     btnExcelExport.addEventListener('click', () => {
+      const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
+      if (!isSuperAdmin) {
+        alert("L'exportation Excel est réservée au Super Administrateur.");
+        return;
+      }
       console.log('Export Excel cliqué', { currentCompanyId, collaboratorsCount: collaborators.length });
       try {
         if (!currentCompanyId) {
@@ -4188,6 +4220,7 @@ document.addEventListener('DOMContentLoaded', () => {
           'Fax': c.phoneFax || '',
           'Téléphone par Défaut': c.phoneDefault || 'mobile',
           'Adresse': c.address || '',
+          'URL Publique Carte Virtuelle': getCollabPublicUrl(c),
           'Lien Clic Photo': c.photoClickUrl || '',
           'Lien Web Personnalisé': c.customSlug || '',
           'Photo URL': (c.photoUrl && c.photoUrl.startsWith('data:')) ? '[Photo Base64]' : (c.photoUrl || ''),
@@ -4220,6 +4253,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnExcelImport) {
     btnExcelImport.addEventListener('click', () => {
+      const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
+      if (!isSuperAdmin) {
+        alert("L'importation Excel est réservée au Super Administrateur.");
+        return;
+      }
       if (!currentCompanyId) {
         alert("Veuillez sélectionner une entreprise d'abord.");
         return;
@@ -4230,6 +4268,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (excelImportFile) {
     excelImportFile.addEventListener('change', (e) => {
+      const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
+      if (!isSuperAdmin) {
+        alert("L'importation Excel est réservée au Super Administrateur.");
+        excelImportFile.value = '';
+        return;
+      }
       const file = e.target.files[0];
       if (!file) return;
 

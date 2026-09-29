@@ -1529,11 +1529,11 @@ body.theme-obsidian .preview-share-contact-text {
 }
 
 .qr-container img {
-  width: 100px;
-  height: 100px;
+  width: 150px;
+  height: 150px;
   background: white;
-  padding: 6px;
-  border-radius: 8px;
+  padding: 8px;
+  border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 

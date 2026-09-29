@@ -5,15 +5,29 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.16.0-filtre-statut-administrateurs`
-* **Date** : 21 septembre 2026
+* **Version / Tag** : `v2.18.0-restriction-import-export-superadmin`
+* **Date** : 29 septembre 2026
 * **Statut** : Version stable / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.16.0-filtre-statut-administrateurs` (Dernière version)
+### 🚀 Version `v2.18.0-restriction-import-export-superadmin` (Dernière version)
+**Thème : Réservation de l'import/export Excel au Super Administrateur et ajout de l'URL publique de la carte virtuelle dans l'export**
+* **Restriction stricte des boutons Import Excel et Export Excel** :
+  * Dans la fiche d'une entreprise (onglet Collaborateurs), les boutons *"Import Excel"* et *"Export Excel"* ne sont affichés que pour le rôle **Super Admin**.
+  * Masquage complet pour les administrateurs d'entreprise.
+  * Blocage de sécurité côté client si déclenchement non autorisé (`currentUser.role === 'superadmin'`).
+* **Enrichissement de l'Exportation Excel (`.xlsx`)** :
+  * Ajout de la colonne **"URL Publique Carte Virtuelle"** fournissant directement l'URL d'accès public à la carte de visite de chaque collaborateur (prenant en compte le `customSlug` ou l'identifiant ainsi que le nom de domaine/IP du serveur).
+* **Agrandissement du QR Code de partage (x 1.5)** :
+  * Augmentation de la taille d'affichage du QR Code de 100px à 150px dans le panneau de partage de la carte virtuelle.
+  * Résolution de génération augmentée à 300x300 px pour une netteté optimale sur tous les écrans haute densité (Retina).
+
+---
+
+### 🚀 Version `v2.16.0-filtre-statut-administrateurs`
 **Thème : Filtre par boutons radio des comptes administrateurs en attente de confirmation**
 * **Filtre dynamique par boutons radio** :
   * Ajout d'une barre de filtre en haut de la liste des administrateurs (Gestion des Administrateurs).

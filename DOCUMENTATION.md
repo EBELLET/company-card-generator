@@ -1,6 +1,6 @@
 # Documentation Générale - TDConnect
 **Générateur et Gestionnaire de Cartes de Visite Virtuelles**  
-*Version de l'application : v2.13.0*
+*Version de l'application : v2.18.0*
 
 ---
 
@@ -15,14 +15,14 @@
    - [2.2 Personnalisation de l'Identité Visuelle de l'Entreprise](#22-personnalisation-de-lidentité-visuelle-de-lentreprise)
    - [2.3 Configuration des Boutons d'Action de la Carte Virtuelle](#23-configuration-des-boutons-daction-de-la-carte-virtuelle)
    - [2.4 Gestion des Collaborateurs](#24-gestion-des-collaborateurs)
-   - [2.5 Import et Export de Données (Excel)](#25-import-et-export-de-données-excel)
-   - [2.6 Suivi de l'Abonnement et Sécurité du Compte](#26-suivi-de-labonnement-et-sécurité-du-compte)
+   - [2.5 Suivi de l'Abonnement et Sécurité du Compte](#25-suivi-de-labonnement-et-sécurité-du-compte)
 3. [Partie 3 : Fonctions du Super Administrateur](#partie-3--fonctions-du-super-administrateur)
    - [3.1 Périmètre Global](#31-périmètre-global)
    - [3.2 Supervision Multi-Entreprises](#32-supervision-multi-entreprises)
    - [3.3 Gestion des Abonnements et des Droits Avancés](#33-gestion-des-abonnements-et-des-droits-avancés)
-   - [3.4 Administration des Utilisateurs](#34-administration-des-utilisateurs)
-   - [3.5 Paramètres Généraux de la Plateforme](#35-paramètres-généraux-de-la-plateforme)
+   - [3.4 Importation et Exportation de Données (Excel & ZIP)](#34-importation-et-exportation-de-données-excel--zip)
+   - [3.5 Administration des Utilisateurs](#35-administration-des-utilisateurs)
+   - [3.6 Paramètres Généraux de la Plateforme](#36-paramètres-généraux-de-la-plateforme)
 
 ---
 
@@ -121,6 +121,7 @@ La rubrique **"Boutons de la carte virtuelle"** utilise des sélecteurs radio `O
 
 ### 2.4 Gestion des Collaborateurs
 Dans l'onglet **Collaborateurs**, l'administrateur gère les fiches individuelles :
+* **Périmètre d'action** : L'administrateur d'entreprise procède à l'ajout manuel et à la modification individuelle de ses collaborateurs via le bouton **+ Ajouter**. Les opérations de traitement par fichiers (Importation et Exportation Excel) sont strictement réservées au Super Administrateur (les boutons correspondants ne sont pas affichés aux administrateurs d'entreprise).
 * **Informations d'Identité** : Civilité (M., Mme), Prénom, Nom, Titre ou Fonction.
 * **Multi-Numéros de Téléphone** :
   * Saisie indépendante du numéro de Mobile, de Fixe professionnel et de Fax.
@@ -138,16 +139,7 @@ Dans l'onglet **Collaborateurs**, l'administrateur gère les fiches individuelle
 
 ---
 
-### 2.5 Import et Export de Données (Excel)
-* **Importation Massive Excel (`.xlsx`)** :
-  * Création automatique d'une série de collaborateurs à partir d'un fichier tableur.
-  * Détection automatique des colonnes (Nom, Prénom, Rôle, Téléphones, E-mail, Ville...).
-* **Exportation Excel** : Téléchargement de la base complète des collaborateurs de l'entreprise au format `.xlsx`.
-* **Exportation ZIP Autonome** : Téléchargement du package autonome de chaque collaborateur pour hébergement indépendant sur tout serveur web.
-
----
-
-### 2.6 Suivi de l'Abonnement et Sécurité du Compte
+### 2.5 Suivi de l'Abonnement et Sécurité du Compte
 * **Bannière d'Abonnement** :
   * L'administrateur visualise l'état de son offre (Période offerte ou Abonnement payant) et sa date de fin.
   * **Gestion des permissions du message de bas de page** :
@@ -196,7 +188,23 @@ Sur la fiche de chaque entreprise, le Super Admin est le seul à pouvoir modifie
 
 ---
 
-### 3.4 Administration des Utilisateurs
+### 3.4 Importation et Exportation de Données (Excel & ZIP)
+Le Super Administrateur dispose du contrôle exclusif sur les flux de données entrantes et sortantes des entreprises :
+* **Réservation exclusive des boutons d'action** :
+  * Les boutons **"Import Excel"** et **"Export Excel"** dans l'onglet *Membres de l'équipe* de la fiche entreprise ne sont visibles et actionnables que par le Super Administrateur.
+  * Ils sont totalement invisibles pour les administrateurs d'entreprise.
+* **Importation Massive Excel (`.xlsx`)** :
+  * Création et mise à jour en masse des collaborateurs à partir d'un fichier tableur.
+  * Détection automatique et tolérante des en-têtes de colonnes (Nom, Prénom, Civilité, Poste, Téléphones, E-mail, Adresse, Photo, Cadrage, etc.).
+* **Exportation Excel Complète (`.xlsx`)** :
+  * Téléchargement de la base complète des collaborateurs de l'entreprise au format `.xlsx`.
+  * **Colonne URL Publique Carte Virtuelle** : Intégration de la colonne de l'adresse web publique de la carte virtuelle pour chaque collaborateur (ex. `https://tdconnect.fr/card/jean-dupont`), permettant d'exploiter ou de diffuser directement les liens sans devoir les ouvrir un par un.
+* **Exportation ZIP Autonome** :
+  * Téléchargement de l'archive autonome d'un collaborateur contenant le site web statique autonome (`index.html` + logo + `.vcf`) prêt à être hébergé sur n'importe quel serveur web externe sans dépendance technique.
+
+---
+
+### 3.5 Administration des Utilisateurs
 Dans la modale de **Gestion des Utilisateurs** :
 * **Création d'Utilisateurs** : Attribution du nom, prénom, e-mail et rôle (`admin` ou `superadmin`).
 * **Liaison Utilisateur - Entreprise** : Association d'un administrateur à une ou plusieurs entreprises.
@@ -207,7 +215,7 @@ Dans la modale de **Gestion des Utilisateurs** :
 
 ---
 
-### 3.5 Paramètres Généraux de la Plateforme
+### 3.6 Paramètres Généraux de la Plateforme
 Accessible uniquement aux Super Administrateurs via le bouton **Paramètres Généraux** :
 
 1. **Délai d'Inactivité de Session** :
