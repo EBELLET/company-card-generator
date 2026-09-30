@@ -295,6 +295,12 @@ button, input, select, textarea {
   flex-direction: column;
 }
 
+.admin-tab-pane {
+  display: flex;
+  flex-direction: column;
+  animation: fade-in 0.3s ease-out;
+}
+
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
@@ -786,14 +792,24 @@ label {
   overflow-y: auto;
   padding-right: 4px;
   margin-bottom: 1.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 82, 255, 0.45) rgba(55, 53, 52, 0.05);
 }
 
 .companies-grid::-webkit-scrollbar {
-  width: 5px;
+  width: 8px;
+}
+.companies-grid::-webkit-scrollbar-track {
+  background: rgba(55, 53, 52, 0.05);
+  border-radius: 8px;
 }
 .companies-grid::-webkit-scrollbar-thumb {
-  background: rgba(55, 53, 52, 0.15);
-  border-radius: 10px;
+  background: rgba(140, 82, 255, 0.45);
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+.companies-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
 }
 
 /* Company grid item card */
@@ -1030,20 +1046,32 @@ body:not(.dark) .company-meta-badge.sub-badge-expired {
   gap: 0.75rem;
   max-height: 450px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 6px;
   margin-bottom: 1.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 82, 255, 0.45) rgba(55, 53, 52, 0.06);
+}
+
+/* When editor form is open, adapt list height for optimal viewport visibility */
+.tab-content:has(#collab-form-container:not(.hidden)) .collab-list,
+.app-view:has(#admin-form-container:not(.hidden)) .collab-list {
+  max-height: 250px;
 }
 
 .collab-list::-webkit-scrollbar {
-  width: 5px;
+  width: 8px;
 }
 .collab-list::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 10px;
+  background: rgba(55, 53, 52, 0.05);
+  border-radius: 8px;
 }
 .collab-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  background: rgba(140, 82, 255, 0.45);
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+.collab-list::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
 }
 
 .empty-list-msg {
@@ -2834,6 +2862,351 @@ input:checked + .slider:before {
 
 .mentions-art-container img:hover {
   transform: scale(1.01);
+}
+
+/* ==========================================
+   RICH TEXT EDITOR STYLES (CGU - CGV)
+   ========================================== */
+.rich-editor-wrapper {
+  border: 1px solid rgba(55, 53, 52, 0.18);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(55, 53, 52, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.rich-editor-wrapper:focus-within {
+  border-color: #8C52FF;
+  box-shadow: 0 0 0 3px rgba(140, 82, 255, 0.15);
+}
+
+.rich-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-bottom: 1px solid rgba(55, 53, 52, 0.1);
+  user-select: none;
+}
+
+.rich-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #373534;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rich-btn:hover {
+  background: rgba(140, 82, 255, 0.1);
+  color: #8C52FF;
+  border-color: rgba(140, 82, 255, 0.2);
+}
+
+.rich-btn.active {
+  background: rgba(140, 82, 255, 0.2);
+  color: #8C52FF;
+  border-color: rgba(140, 82, 255, 0.35);
+}
+
+.rich-select {
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(55, 53, 52, 0.18);
+  background: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #373534;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.rich-select:focus {
+  border-color: #8C52FF;
+}
+
+.rich-color-picker-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 4px;
+}
+
+.rich-color-chip {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(55, 53, 52, 0.25);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rich-color-chip:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 2px #8C52FF;
+}
+
+.rich-color-custom-btn {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid rgba(55, 53, 52, 0.2);
+  background: #ffffff;
+  margin-left: 2px;
+  transition: all 0.15s ease;
+}
+
+.rich-color-custom-btn:hover {
+  background: rgba(140, 82, 255, 0.1);
+  border-color: #8C52FF;
+}
+
+.rich-color-bar {
+  display: block;
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  margin-top: 2px;
+}
+
+.rich-separator {
+  display: inline-block;
+  width: 1px;
+  height: 20px;
+  background: rgba(55, 53, 52, 0.15);
+  margin: 0 4px;
+}
+
+.rich-editor-content {
+  min-height: 280px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding: 16px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #373534;
+  outline: none;
+  background: #ffffff;
+}
+
+.rich-editor-content:empty:before {
+  content: attr(placeholder);
+  color: #94a3b8;
+  pointer-events: none;
+  display: block;
+}
+
+/* Typography inside rich text content (Editor & Modal) */
+.rich-editor-content h1,
+.cgu-modal-body h1 {
+  font-family: var(--font-title);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #8C52FF;
+  margin: 1.35rem 0 0.55rem 0;
+  border-bottom: 2px solid rgba(140, 82, 255, 0.22);
+  padding-bottom: 0.35rem;
+}
+
+.rich-editor-content h1:first-child,
+.cgu-modal-body h1:first-child {
+  margin-top: 0;
+}
+
+.rich-editor-content h2,
+.cgu-modal-body h2 {
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #8C52FF;
+  margin: 1.1rem 0 0.45rem 0;
+  border-bottom: 1px solid rgba(140, 82, 255, 0.18);
+  padding-bottom: 0.3rem;
+}
+
+.rich-editor-content h2:first-child,
+.cgu-modal-body h2:first-child {
+  margin-top: 0;
+}
+
+.rich-editor-content h3,
+.cgu-modal-body h3 {
+  font-family: var(--font-title);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #8C52FF;
+  margin: 0.95rem 0 0.35rem 0;
+}
+
+.rich-editor-content h4,
+.cgu-modal-body h4 {
+  font-family: var(--font-title);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #8C52FF;
+  margin: 0.8rem 0 0.25rem 0;
+}
+
+.rich-editor-content p,
+.cgu-modal-body p {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+  color: #373534;
+  font-size: 0.88rem;
+}
+
+.rich-editor-content ul,
+.cgu-modal-body ul,
+.rich-editor-content ol,
+.cgu-modal-body ol {
+  padding-left: 1.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.rich-editor-content li,
+.cgu-modal-body li {
+  margin-bottom: 0.35rem;
+  line-height: 1.6;
+}
+
+.rich-editor-content a,
+.cgu-modal-body a {
+  color: #8C52FF;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.rich-editor-content blockquote,
+.cgu-modal-body blockquote {
+  border-left: 3px solid #8C52FF;
+  padding: 0.5rem 1rem;
+  margin: 0.85rem 0;
+  background: rgba(140, 82, 255, 0.04);
+  color: #575554;
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+}
+
+.rich-editor-content hr,
+.cgu-modal-body hr {
+  border: none;
+  border-top: 1px solid rgba(55, 53, 52, 0.12);
+  margin: 1.5rem 0;
+}
+
+/* ==========================================
+   CGU - CGV MODAL STYLES
+   ========================================== */
+.cgu-modal-card {
+  max-width: 920px;
+  width: 95%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 2.25rem;
+  border-radius: 26px;
+  background: #ffffff;
+  color: #373534;
+  box-shadow: 0 25px 60px rgba(55, 53, 52, 0.25);
+  text-align: left;
+  animation: fade-in-up 0.3s ease-out;
+}
+
+.cgu-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(55, 53, 52, 0.1);
+  padding-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.cgu-modal-title {
+  font-family: var(--font-title);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #373534;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.cgu-modal-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0.5rem 1.25rem 1rem 0.25rem;
+  line-height: 1.6;
+  font-size: 0.88rem;
+  color: #373534;
+}
+
+.cgu-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cgu-modal-body::-webkit-scrollbar-track {
+  background: rgba(55, 53, 52, 0.05);
+  border-radius: 4px;
+}
+
+.cgu-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(140, 82, 255, 0.3);
+  border-radius: 4px;
+}
+
+.cgu-modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 82, 255, 0.5);
+}
+
+.cgu-modal-footer {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(55, 53, 52, 0.08);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Ensure .btn-back has great contrast in light cards */
+.mentions-panel .btn-back,
+.cgu-modal-card .btn-back,
+.settings-page-container .btn-back {
+  background: rgba(55, 53, 52, 0.06);
+  border: 1px solid rgba(55, 53, 52, 0.12);
+  color: #373534;
+}
+
+.mentions-panel .btn-back:hover,
+.cgu-modal-card .btn-back:hover,
+.settings-page-container .btn-back:hover {
+  background: rgba(140, 82, 255, 0.12);
+  border-color: rgba(140, 82, 255, 0.3);
+  color: #8C52FF;
 }
 
 

@@ -1,6 +1,6 @@
 # Documentation Générale - TDConnect
 **Générateur et Gestionnaire de Cartes de Visite Virtuelles**  
-*Version de l'application : v2.18.0*
+*Version de l'application : v2.19.0*
 
 ---
 
@@ -202,32 +202,44 @@ Le Super Administrateur dispose du contrôle exclusif sur les flux de données e
 * **Exportation ZIP Autonome** :
   * Téléchargement de l'archive autonome d'un collaborateur contenant le site web statique autonome (`index.html` + logo + `.vcf`) prêt à être hébergé sur n'importe quel serveur web externe sans dépendance technique.
 
----
+### 3.5 Espace Administration Unifié
+Le Super Administrateur dispose d'un bouton dédié **"Administration"** positionné directement dans la barre de navigation principale (en haut à droite, entre *"Mon Compte"* et *"Quitter"*).  
+Cet espace centralise deux onglets de gestion :
 
-### 3.5 Administration des Utilisateurs
-Dans la modale de **Gestion des Utilisateurs** :
+#### Onglet 1 : Gestion des Administrateurs
 * **Création d'Utilisateurs** : Attribution du nom, prénom, e-mail et rôle (`admin` ou `superadmin`).
 * **Liaison Utilisateur - Entreprise** : Association d'un administrateur à une ou plusieurs entreprises.
-* **Gestion des Mots de Passe** :
+* **Filtres Dynamiques par Boutons Radio** :
+  * Filtrage rapide : *Tous*, *En attente de confirmation* (autosouscription en attente de premier mot de passe), et *Confirmés*.
+* **Gestion des Mots de Passe & Sécurité** :
   * Attribution manuelle d'un mot de passe initial ou temporaire.
-  * Déclenchement de l'envoi d'un e-mail sécurisé de réinitialisation de mot de passe avec lien à usage unique direct vers la modale de modification.
+  * Envoi d'un e-mail sécurisé de réinitialisation avec lien direct à usage unique.
+  * Verrouillage / déverrouillage de compte en cas de besoin.
 * **Suppression de Comptes** : Retrait immédiat des accès d'un utilisateur sans altérer les données de l'entreprise.
 
 ---
 
-### 3.6 Paramètres Généraux de la Plateforme
-Accessible uniquement aux Super Administrateurs via le bouton **Paramètres Généraux** :
+### 3.6 Paramètres Généraux de la Plateforme (Onglet 2)
+Accessible dans le deuxième onglet de la vue Administration :
 
 1. **Délai d'Inactivité de Session** :
    * Configuration de la temporisation d'inactivité avant déconnexion automatique (15 min, 30 min, 1 heure, 2 heures, 4 heures...).
 2. **Support Technique et Contact** :
    * Définition de l'adresse e-mail de support globale (ex. `contact@tdconnect.fr`).
-   * Cette adresse est automatiquement mise à jour dans tous les encarts d'aide et liens de contact de l'application.
-3. **Abonnements & Période Offerte (Modèle par défaut)** :
-   * **Durée de la période offerte** : nombre de jours offerts lors de la création d'une nouvelle entreprise (par défaut : 30 jours).
-   * **Texte dans le bas de la carte en période offerte** : modèle de message promotionnel (ex. *"Créez votre propre carte sur TDConnect"*).
-   * **URL de redirection au clic sur le message** : lien vers lequel le contact est redirigé s'il clique sur le bas de carte.
-   * *Rôle clé :* Ces paramètres constituent le **modèle d'initialisation automatique** injecté dans toute nouvelle entreprise créée manuellement ou par autosouscription.
+   * Mise à jour répercutée dans tous les encarts d'aide et liens de contact.
+3. **Protection & Anti-Robot (Rate Limit)** :
+   * Définition du quota journalier d'inscriptions par IP (`0` pour désactiver totalement l'autosouscription).
+4. **Abonnements & Période Offerte (Modèle par défaut)** :
+   * **Durée de la période offerte** : nombre de jours offerts lors de la création d'une nouvelle structure (ex. 30 jours).
+   * **Texte dans le bas de la carte en période offerte** : modèle de message promotionnel par défaut.
+   * **URL de redirection au clic sur le message** : lien cible par défaut.
+5. **Gestionnaire de Contenu CGU - CGV (Conditions Générales)** :
+   * **Éditeur de texte enrichi WYSIWYG** intégré :
+     * Sélection hiérarchique de titres (Normal, H1, H2, H3, H4).
+     * Réglage fin de la taille de police en pixels (de 11px à 24px).
+     * Sélecteur de couleur personnalisée avec palette HTML5 intégrée (pour teinter les titres en violet institutionnel `#8C52FF`, etc.).
+     * Mises en forme courantes : gras, italique, souligné, barré, listes à puces/numérotées, liens hypertextes.
+   * **Publication publique** : Les conditions enregistrées sont immédiatement consultables par les visiteurs et clients via la page **Mentions Légales** (`mentions-legales.html`) dans une modale déroulante dédiée avec flèche de retour.
 
 ---
 

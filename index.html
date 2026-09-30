@@ -41,6 +41,10 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <span>Mon compte</span>
           </button>
+          <button type="button" class="btn-nav-action hidden" id="btn-nav-admin">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span>Administration</span>
+          </button>
           <button type="button" class="btn-nav-action" id="btn-login-toggle">
             <svg class="icon-login" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <svg class="icon-logout hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -244,6 +248,20 @@
               </p>
             </div>
 
+            <div class="mentions-section-box" style="background: rgba(140, 82, 255, 0.04); border: 1px solid rgba(140, 82, 255, 0.15); border-radius: 16px; padding: 1.25rem 1.5rem;">
+              <h3 style="font-family: 'Raleway', sans-serif; font-size: 1.1rem; font-weight: 700; color: #8C52FF; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <span>CGU - CGV</span>
+              </h3>
+              <p style="margin: 0 0 1rem 0;">
+                Conditions Générales d'Utilisation des services TDConnect et Conditions Générales de Vente applicables aux abonnements et supports connectés.
+              </p>
+              <button type="button" id="btn-show-cgu-cgv" class="btn-primary-action" style="display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.65rem 1.35rem; font-size: 0.92rem; font-weight: 700; border-radius: 12px; cursor: pointer; background: linear-gradient(135deg, #8C52FF, #6366f1); color: #ffffff; border: none; box-shadow: 0 4px 14px rgba(140, 82, 255, 0.3); transition: all 0.2s ease;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <span>Afficher les CGU - CGV</span>
+              </button>
+            </div>
+
             <!-- Image sympa à la fin -->
             <div class="mentions-art-container" style="margin-top: 1rem; text-align: center;">
               <img src="/mentions-legales-art.jpg" alt="TDConnect - Cartes de visite connectées en bois et innovation française" style="width: 100%; max-height: 420px; object-fit: cover; border-radius: 20px; box-shadow: 0 10px 30px rgba(55, 53, 52, 0.12); border: 1px solid rgba(55, 53, 52, 0.08);" />
@@ -274,14 +292,6 @@
             <div class="companies-section-header">
               <h2>Vos Entreprises</h2>
               <div style="display: flex; gap: 0.5rem;">
-                <button type="button" id="btn-admin-panel-show" class="btn-secondary-badge hidden" title="Gérer les Administrateurs">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                  <span>Administrateurs</span>
-                </button>
-                <button type="button" id="btn-settings-panel-show" class="btn-secondary-badge hidden" title="Paramètres Généraux">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                  <span>Paramètres</span>
-                </button>
                 <button type="button" id="btn-add-company-show" class="btn-add-badge">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                   <span>Nouvelle</span>
@@ -345,8 +355,23 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                 <span>Retour aux entreprises</span>
               </button>
-              <h2>Gestion des Administrateurs</h2>
+              <h2>Administration</h2>
             </div>
+
+            <!-- Administration Tab Headers -->
+            <div class="tabs-header admin-tabs-header">
+              <button type="button" class="tab-btn active" id="tab-btn-admin-users" data-admin-tab="tab-pane-admins">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span>Administrateurs</span>
+              </button>
+              <button type="button" class="tab-btn" id="tab-btn-admin-settings" data-admin-tab="tab-pane-settings">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Paramètres</span>
+              </button>
+            </div>
+
+            <!-- Tab 1: Administrateurs -->
+            <div id="tab-pane-admins" class="admin-tab-pane">
 
             <div class="collab-section-header">
               <h3>Administrateurs</h3>
@@ -485,18 +510,11 @@
                 </div>
               </form>
             </div>
-          </div>
-
-          <!-- VIEW D: GENERAL SETTINGS PANEL (SUPER ADMIN ONLY) -->
-          <div id="view-settings-panel" class="app-view hidden">
-            <!-- Back Navigation bar -->
-            <div class="detail-back-bar">
-              <button type="button" id="btn-back-from-settings" class="btn-back">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                <span>Retour aux entreprises</span>
-              </button>
-              <h2>Paramètres Généraux de l'Application</h2>
             </div>
+            <!-- End Tab 1: Administrateurs -->
+
+            <!-- Tab 2: Paramètres -->
+            <div id="tab-pane-settings" class="admin-tab-pane hidden">
 
             <div class="settings-page-container">
               <form id="settings-form" autocomplete="off" onsubmit="event.preventDefault();">
@@ -619,6 +637,103 @@
                   </div>
                 </div>
 
+                <!-- CARD 5: CGU - CGV (Texte Riche) -->
+                <div class="settings-card">
+                  <div class="settings-card-header">
+                    <div class="settings-card-icon color-indigo" style="background: rgba(140, 82, 255, 0.12); color: #8C52FF;">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </div>
+                    <div>
+                      <h4>CGU - CGV</h4>
+                      <p>Conditions Générales d'Utilisation et Conditions Générales de Vente (champ en texte riche)</p>
+                    </div>
+                  </div>
+
+                  <div class="settings-card-body">
+                    <div class="setting-item-row" style="flex-direction: column; align-items: stretch; gap: 0.75rem;">
+                      <div class="setting-item-info">
+                        <label class="setting-label">Contenu des CGU et CGV :</label>
+                        <p class="setting-help">Rédigez et mettez en forme les Conditions Générales d'Utilisation et de Vente. Ce texte est mis à disposition des utilisateurs et visiteurs depuis la rubrique Mentions Légales.</p>
+                      </div>
+                      <div class="rich-editor-wrapper">
+                        <div class="rich-editor-toolbar" id="toolbar-cgu-cgv">
+                          <button type="button" class="rich-btn" data-command="bold" title="Gras (Ctrl+B)"><strong>B</strong></button>
+                          <button type="button" class="rich-btn" data-command="italic" title="Italique (Ctrl+I)"><em>I</em></button>
+                          <button type="button" class="rich-btn" data-command="underline" title="Souligné (Ctrl+U)"><span style="text-decoration: underline;">U</span></button>
+                          <button type="button" class="rich-btn" data-command="strikeThrough" title="Barré"><span style="text-decoration: line-through;">S</span></button>
+                          
+                          <span class="rich-separator"></span>
+
+                          <select class="rich-select" id="cgu-heading-select" title="Style de paragraphe / titre">
+                            <option value="p">Texte normal</option>
+                            <option value="h1">Titre 1 (Principal - Violet)</option>
+                            <option value="h2">Titre 2 (Section - Violet)</option>
+                            <option value="h3">Titre 3 (Sous-titre - Violet)</option>
+                            <option value="h4">Titre 4 (Paragraphe - Violet)</option>
+                            <option value="blockquote">Citation</option>
+                          </select>
+
+                          <select class="rich-select" id="cgu-fontsize-select" title="Taille des caractères">
+                            <option value="">Taille</option>
+                            <option value="11px">11 px (Très fin)</option>
+                            <option value="12px">12 px (Petit)</option>
+                            <option value="13px">13 px (Discret)</option>
+                            <option value="14px">14 px (Normal)</option>
+                            <option value="16px">16 px (Moyen)</option>
+                            <option value="18px">18 px (Sous-titre)</option>
+                            <option value="20px">20 px (Titre)</option>
+                            <option value="24px">24 px (Grand titre)</option>
+                          </select>
+
+                          <div class="rich-color-picker-group" title="Couleur des caractères">
+                            <button type="button" class="rich-color-chip" data-color="#8C52FF" title="Violet Titre (#8C52FF)" style="background-color: #8C52FF;"></button>
+                            <button type="button" class="rich-color-chip" data-color="#373534" title="Noir Corps (#373534)" style="background-color: #373534;"></button>
+                            <button type="button" class="rich-color-chip" data-color="#64748b" title="Gris (#64748b)" style="background-color: #64748b;"></button>
+                            <button type="button" class="rich-color-chip" data-color="#2563eb" title="Bleu (#2563eb)" style="background-color: #2563eb;"></button>
+                            <label class="rich-color-custom-btn" title="Palette de couleurs personnalisée">
+                              <input type="color" id="cgu-custom-color" value="#8C52FF" style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;" />
+                              <span style="font-weight: 800; font-size: 0.85rem; line-height: 1;">A</span>
+                              <span class="rich-color-bar" id="cgu-color-bar" style="background-color: #8C52FF;"></span>
+                            </label>
+                          </div>
+
+                          <span class="rich-separator"></span>
+
+                          <button type="button" class="rich-btn" data-command="insertUnorderedList" title="Liste à puces">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                          </button>
+                          <button type="button" class="rich-btn" data-command="insertOrderedList" title="Liste numérotée">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="10" y1="6" x2="21" y2="6"></line><line x1="10" y1="12" x2="21" y2="12"></line><line x1="10" y1="18" x2="21" y2="18"></line><path d="M4 6h1v4"></path><path d="M4 10h2"></path><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"></path></svg>
+                          </button>
+
+                          <span class="rich-separator"></span>
+
+                          <button type="button" class="rich-btn" data-command="justifyLeft" title="Aligner à gauche">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="17" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg>
+                          </button>
+                          <button type="button" class="rich-btn" data-command="justifyCenter" title="Centrer">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="10" x2="6" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="18" y1="18" x2="6" y2="18"></line></svg>
+                          </button>
+                          <button type="button" class="rich-btn" data-command="justifyRight" title="Aligner à droite">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="21" y1="10" x2="7" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg>
+                          </button>
+
+                          <span class="rich-separator"></span>
+
+                          <button type="button" class="rich-btn" id="btn-cgu-link" title="Insérer un lien">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                          </button>
+                          <button type="button" class="rich-btn" data-command="insertHorizontalRule" title="Ligne horizontale">―</button>
+                          <button type="button" class="rich-btn" data-command="removeFormat" title="Effacer le formatage">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                          </button>
+                        </div>
+                        <div id="setting-cgu-cgv-editor" class="rich-editor-content" contenteditable="true" spellcheck="true" placeholder="Rédigez ici vos Conditions Générales d'Utilisation et de Vente..."></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Footer Save Action -->
                 <div class="settings-actions-footer">
                   <button type="button" id="btn-save-all-settings" class="btn-save-settings">
@@ -630,7 +745,11 @@
 
               </form>
             </div>
+            <!-- End Tab 2: Paramètres Container -->
           </div>
+          <!-- End Tab Pane Settings -->
+        </div>
+        <!-- End View: Administration Panel -->
 
           <!-- VIEW B: COMPANY DETAILS & COLLABORATORS -->
           <div id="view-company-detail" class="app-view hidden">
@@ -1655,6 +1774,38 @@
           </button>
           <button type="button" id="btn-unsaved-yes" style="flex: 1; background: #ef4444; border: none; color: #ffffff; padding: 0.75rem 1rem; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 0.95rem;">
             Oui
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CGU - CGV MODAL (Fenêtre déroulante avec flèche Retour en haut à gauche) -->
+    <div id="cgu-cgv-modal" class="modal-overlay hidden" style="z-index: 9999;">
+      <div class="modal-card glass-panel cgu-modal-card">
+        <!-- Top Bar with Back Arrow on the left -->
+        <div class="cgu-modal-header">
+          <button type="button" id="btn-back-cgu-modal" class="btn-back" title="Retour aux mentions légales">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <span>Retour</span>
+          </button>
+
+          <h2 class="cgu-modal-title">
+            Conditions Générales d'Utilisation & de Vente
+          </h2>
+
+          <button type="button" class="btn-close-modal" id="btn-close-cgu-modal" aria-label="Fermer" title="Fermer">&times;</button>
+        </div>
+
+        <!-- Scrollable content area ("fenêtre déroulante si besoin") -->
+        <div id="cgu-cgv-modal-body" class="cgu-modal-body">
+          <!-- Chargé dynamiquement -->
+        </div>
+
+        <!-- Bottom bar with Retour button -->
+        <div class="cgu-modal-footer">
+          <button type="button" id="btn-close-cgu-bottom" class="btn-back">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <span>Retour</span>
           </button>
         </div>
       </div>

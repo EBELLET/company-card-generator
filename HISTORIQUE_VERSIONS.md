@@ -5,15 +5,45 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.18.0-restriction-import-export-superadmin`
-* **Date** : 29 septembre 2026
+* **Version / Tag** : `v2.19.0-cgu-cgv-refonte-administration`
+* **Date** : 30 septembre 2026
 * **Statut** : Version stable / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.18.0-restriction-import-export-superadmin` (Dernière version)
+### 🚀 Version `v2.19.0-cgu-cgv-refonte-administration` (Dernière version)
+**Thème : Éditeur riche CGU/CGV, modale Mentions Légales, refonte unifiée de l'Administration par onglets, ergonomie collaborateurs et migration SQL**
+* **Éditeur de texte riche pour les CGU / CGV** :
+  * Ajout d'un encart dédié *"CGU - CGV"* dans l'onglet *"Paramètres Généraux"* de la vue Administration (réservé aux Super Administrateurs).
+  * Barre d'outils WYSIWYG complète :
+    * Titres hiérarchiques : Paragraphe normal, Titre 1 (H1), Titre 2 (H2), Titre 3 (H3), Titre 4 (H4).
+    * Sélecteur de taille de texte en pixels : de 11px à 24px (11, 12, 13, 14, 16, 18, 20, 24px) avec taille par défaut sobre et proportionnée.
+    * Sélecteur de couleur personnalisée via palette HTML5 (`<input type="color">`) permettant d'appliquer n'importe quelle teinte (dont le violet institutionnel `#8C52FF` pour les titres).
+    * Mises en forme typographiques : Gras (**B**), Italique (*I*), Souligné (<u>U</u>), Barré (<s>S</s>), Liste à puces, Liste numérotée, Liens hypertextes.
+  * Sauvegarde persistante en base de données (`app_settings.cgu_cgv`).
+* **Affichage des CGU / CGV dans la page Mentions Légales** :
+  * Ajout d'un encart *"CGU - CGV"* dans [mentions-legales.html](file:///c:/Users/eric/Documents/Mes%20Donn%C3%A9es/Documents/Documents%20Eric/120%20-%20Travaux%20perso/40%20-%20Application%20Tdconnect/company-card-generator/mentions-legales.html) doté du bouton *"Afficher les CGU - CGV"*.
+  * Fenêtre modale déroulante et responsive avec flèche de retour en haut à gauche (bouton *"← Retour"*) conforme à l'ergonomie globale.
+  * Route API publique `/api/settings/cgu-cgv` permettant la consultation des conditions sans authentification préalable.
+* **Refonte de l'Administration pour les Super Administrateurs** :
+  * Création d'un bouton d'accès direct **"Administration"** dans la barre de navigation supérieure (entre *"Mon Compte"* et *"Quitter"*).
+  * Regroupement sous une interface unifiée à deux onglets :
+    * 📑 **Administrateurs** : Gestion des comptes d'accès, filtres de statut de confirmation, réinitialisation de mot de passe, association d'entreprises.
+    * 📑 **Paramètres Généraux** : Délais de session, contact support, réglages de période offerte, rate limit d'autosouscription et encart CGU/CGV.
+  * Nettoyage de l'en-tête de la page *"Vos entreprises"* : suppression des boutons redondants *"Administrateurs"* et *"Paramètres"*.
+* **Améliorations ergonomiques Fiche Entreprise & Collaborateurs** :
+  * Masquage de l'encart *"Partager la carte virtuelle"* sur l'onglet Entreprise (réservé uniquement à l'onglet Collaborateurs lorsqu'un membre est sélectionné).
+  * Barre de défilement (ascenseur) visible et stylisée sur la liste des collaborateurs et des entreprises : largeur de 8px, teinte mauve semi-transparente (`rgba(140, 82, 255, 0.45)`), avec compatibilité Firefox (`scrollbar-width: thin`, `scrollbar-color`) et WebKit.
+* **Base de données & Migration SQL sans perte de données** :
+  * Modification de la colonne `setting_value` de la table `app_settings` en `MEDIUMTEXT` (supportant jusqu'à 16 Mo de texte riche).
+  * Insertion sécurisée de la clé `cgu_cgv` par défaut via `INSERT IGNORE`.
+  * Script SQL dédié `migrations/migration_v2.19.0_cgu_cgv.sql` et auto-migration transparente au démarrage du serveur Node.js via `initDB()`.
+
+---
+
+### 🚀 Version `v2.18.0-restriction-import-export-superadmin`
 **Thème : Réservation de l'import/export Excel au Super Administrateur et ajout de l'URL publique de la carte virtuelle dans l'export**
 * **Restriction stricte des boutons Import Excel et Export Excel** :
   * Dans la fiche d'une entreprise (onglet Collaborateurs), les boutons *"Import Excel"* et *"Export Excel"* ne sont affichés que pour le rôle **Super Admin**.

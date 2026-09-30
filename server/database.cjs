@@ -273,6 +273,29 @@ async function initializeDatabase() {
     await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('trial_message_text', '')`);
     await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('trial_message_url', '')`);
     await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('register_rate_limit_per_day', '5')`);
+    await pool.query(`ALTER TABLE app_settings MODIFY setting_value MEDIUMTEXT NOT NULL`);
+    const defaultCguCgv = `<h2>Conditions Générales d'Utilisation (CGU)</h2>
+<h3>1. Présentation des services</h3>
+<p>L'application TDConnect permet la création, la personnalisation, l'hébergement et la diffusion de cartes de visite virtuelles connectées, intégrant des profils interactifs (vCard, QR Code, technologies sans contact NFC).</p>
+
+<h3>2. Accès et sécurité des comptes</h3>
+<p>L'accès à l'espace d'administration et aux fonctionnalités de gestion est réservé aux clients et utilisateurs autorisés. Chaque utilisateur est responsable de la conservation confidentielle de ses identifiants et mot de passe.</p>
+
+<h3>3. Données personnelles et confidentialité (RGPD)</h3>
+<p>Conformément au Règlement Général sur la Protection des Données (RGPD), TDConnect veille scrupuleusement à la confidentialité et à la sécurité des données transmises. Les informations professionnelles ne sont utilisées que pour la publication et le bon fonctionnement des profils connectés.</p>
+
+<hr>
+
+<h2>Conditions Générales de Vente (CGV)</h2>
+<h3>1. Souscription et commandes</h3>
+<p>Toute commande de cartes physiques (NFC en bois noble, métal ou polymère) ou souscription à un forfait d'utilisation de l'application implique l'adhésion complète et sans réserve aux présentes conditions.</p>
+
+<h3>2. Périodes offertes et tarification</h3>
+<p>Des périodes offertes d'évaluation peuvent être allouées lors de la création d'une nouvelle entreprise. À l'issue de cette période, la continuité des services nécessite la souscription aux formules d'abonnement en vigueur.</p>
+
+<h3>3. Service client & Réclamations</h3>
+<p>Pour toute question, réclamation ou exercice de vos droits d'accès ou de rectification, vous pouvez joindre nos équipes via les coordonnées mentionnées dans la rubrique Mentions Légales.</p>`;
+    await pool.query(`INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('cgu_cgv', ?)`, [defaultCguCgv]);
   } catch (e) {}
 
   console.log("Schéma de la base MySQL initialisé avec succès.");
@@ -996,7 +1019,8 @@ const getAllSettings = async () => {
     trial_period_days: '30',
     trial_message_text: '',
     trial_message_url: '',
-    register_rate_limit_per_day: '5'
+    register_rate_limit_per_day: '5',
+    cgu_cgv: ''
   };
   rows.forEach(r => {
     settings[r.setting_key] = r.setting_value;

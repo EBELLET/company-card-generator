@@ -1630,11 +1630,22 @@ app.get('/api/settings', async (req, res) => {
       trialMessageText: settings.trial_message_text || '',
       trialMessageUrl: settings.trial_message_url || '',
       registerRateLimitPerDay: rateLimitDaily,
-      registerRateLimitPerHour: rateLimitDaily
+      registerRateLimitPerHour: rateLimitDaily,
+      cguCgv: settings.cgu_cgv || ''
     });
   } catch (err) {
     console.error("Erreur GET /api/settings:", err.message);
     res.status(500).json({ error: "Erreur lors de la récupération des paramètres." });
+  }
+});
+
+app.get('/api/cgu-cgv', async (req, res) => {
+  try {
+    const val = await db.getSetting('cgu_cgv', '');
+    res.json({ cguCgv: val || '' });
+  } catch (err) {
+    console.error("Erreur GET /api/cgu-cgv:", err.message);
+    res.status(500).json({ error: "Erreur lors de la récupération des CGU/CGV." });
   }
 });
 
@@ -1652,7 +1663,7 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
   if (req.user.role !== 'superadmin') {
     return res.status(403).json({ error: "Accès réservé au Super Admin." });
   }
-  const { inactivityTimeoutMinutes, vcfAnnotationOrigin, vcfIncludeCardUrl, supportEmail, trialPeriodDays, trialMessageText, trialMessageUrl, registerRateLimitPerDay, registerRateLimitPerHour } = req.body;
+  const { inactivityTimeoutMinutes, vcfAnnotationOrigin, vcfIncludeCardUrl, supportEmail, trialPeriodDays, trialMessageText, trialMessageUrl, registerRateLimitPerDay, registerRateLimitPerHour, cguCgv } = req.body;
   try {
     if (typeof inactivityTimeoutMinutes === 'number' && inactivityTimeoutMinutes >= 0) {
       await db.setSetting('inactivity_timeout_minutes', inactivityTimeoutMinutes);
@@ -1675,6 +1686,9 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
     if (trialMessageUrl !== undefined) {
       await db.setSetting('trial_message_url', String(trialMessageUrl).trim());
     }
+    if (cguCgv !== undefined && typeof cguCgv === 'string') {
+      await db.setSetting('cgu_cgv', cguCgv.trim());
+    }
     const rateLimitVal = registerRateLimitPerDay !== undefined ? registerRateLimitPerDay : registerRateLimitPerHour;
     if (typeof rateLimitVal === 'number' && rateLimitVal >= 0) {
       await db.setSetting('register_rate_limit_per_day', Math.round(rateLimitVal));
@@ -1696,7 +1710,8 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
       trialMessageText: currentSettings.trial_message_text || '',
       trialMessageUrl: currentSettings.trial_message_url || '',
       registerRateLimitPerDay: finalRateLimit,
-      registerRateLimitPerHour: finalRateLimit
+      registerRateLimitPerHour: finalRateLimit,
+      cguCgv: currentSettings.cgu_cgv || ''
     });
   } catch (err) {
     console.error("Erreur PUT /api/settings:", err.message);

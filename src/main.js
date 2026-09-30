@@ -93,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let trialMessageText = '';
   let trialMessageUrl = '';
   let registerRateLimitPerDay = 5;
+  let cguCgvContent = '';
   const rawStoredActivity = sessionStorage.getItem('tdconnect_last_activity') || localStorage.getItem('tdconnect_last_activity') || null;
   let lastActivityTime = rawStoredActivity ? parseInt(rawStoredActivity, 10) : Date.now();
   if (!rawStoredActivity && authToken && currentUser) {
@@ -137,6 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
           registerRateLimitPerDay = data.registerRateLimitPerDay;
         } else if (typeof data.registerRateLimitPerHour === 'number') {
           registerRateLimitPerDay = data.registerRateLimitPerHour;
+        }
+        if (typeof data.cguCgv === 'string') {
+          cguCgvContent = data.cguCgv;
         }
       }
     } catch (e) {
@@ -257,9 +261,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewCompaniesList = document.getElementById('view-companies-list');
   const viewCompanyDetail = document.getElementById('view-company-detail');
   const viewAdminPanel = document.getElementById('view-admin-panel');
-  const viewSettingsPanel = document.getElementById('view-settings-panel');
+  const viewSettingsPanel = document.getElementById('tab-pane-settings');
+  const tabPaneAdmins = document.getElementById('tab-pane-admins');
+  const tabPaneSettings = document.getElementById('tab-pane-settings');
+  const tabBtnAdminUsers = document.getElementById('tab-btn-admin-users');
+  const tabBtnAdminSettings = document.getElementById('tab-btn-admin-settings');
   const viewRegister = document.getElementById('view-register');
   const viewMentionsLegales = document.getElementById('view-mentions-legales');
+  const btnShowCguCgv = document.getElementById('btn-show-cgu-cgv');
+  const modalCguCgv = document.getElementById('cgu-cgv-modal');
+  const cguCgvModalBody = document.getElementById('cgu-cgv-modal-body');
+  const btnBackCguModal = document.getElementById('btn-back-cgu-modal');
+  const btnCloseCguModal = document.getElementById('btn-close-cgu-modal');
+  const btnCloseCguBottom = document.getElementById('btn-close-cgu-bottom');
 
   const mainContent = document.querySelector('.main-content');
   function updateLayoutMode() {
@@ -276,6 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const navLogo = document.getElementById('nav-logo');
   const btnNavHome = document.getElementById('btn-nav-home');
   const btnNavDashboard = document.getElementById('btn-nav-dashboard');
+  const btnNavAdmin = document.getElementById('btn-nav-admin');
   const btnLoginToggle = document.getElementById('btn-login-toggle');
   const btnLoginText = document.getElementById('btn-login-text');
   const iconLogin = btnLoginToggle ? btnLoginToggle.querySelector('.icon-login') : null;
@@ -678,36 +693,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    if (cleanHash === '#admin') {
+    if (cleanHash === '#admin' || cleanHash === '#settings') {
       if (isLoggedIn) {
         if (currentUser && currentUser.role === 'superadmin') {
           toggleAppView(true);
           viewCompaniesList.classList.add('hidden');
           if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
-          if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
           if (viewAdminPanel) viewAdminPanel.classList.remove('hidden');
           updateLayoutMode();
-          closeAdminForm();
-          loadAdminsList();
-          return;
-        } else {
-          alert("Accès réservé aux Super Administrateurs.");
-          navigateTo('#dashboard');
-          return;
-        }
-      }
-    }
-
-    if (cleanHash === '#settings') {
-      if (isLoggedIn) {
-        if (currentUser && currentUser.role === 'superadmin') {
-          toggleAppView(true);
-          viewCompaniesList.classList.add('hidden');
-          if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
-          if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
-          if (viewSettingsPanel) viewSettingsPanel.classList.remove('hidden');
-          updateLayoutMode();
-          loadAllSettingsToUI();
+          if (cleanHash === '#settings') {
+            switchAdminTab('settings');
+          } else {
+            switchAdminTab('users');
+          }
           return;
         } else {
           alert("Accès réservé aux Super Administrateurs.");
@@ -719,6 +717,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (cleanHash === '#mentions-legales') {
       showMentionsLegalesView();
+      if (modalCguCgv) modalCguCgv.classList.add('hidden');
+      return;
+    }
+
+    if (cleanHash === '#cgu-cgv') {
+      showMentionsLegalesView();
+      openCguModal();
       return;
     }
 
@@ -761,9 +766,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isLoggedIn) btnMyAccountShow.classList.remove('hidden');
       else btnMyAccountShow.classList.add('hidden');
     }
-    if (btnAdminPanelShow) {
-      if (isLoggedIn && currentUser && currentUser.role === 'superadmin') btnAdminPanelShow.classList.remove('hidden');
-      else btnAdminPanelShow.classList.add('hidden');
+    if (btnNavAdmin) {
+      if (isLoggedIn && currentUser && currentUser.role === 'superadmin') btnNavAdmin.classList.remove('hidden');
+      else btnNavAdmin.classList.add('hidden');
     }
     if (btnSettingsPanelShow) {
       if (isLoggedIn && currentUser && currentUser.role === 'superadmin') btnSettingsPanelShow.classList.remove('hidden');
@@ -782,6 +787,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (viewMentionsLegales) {
       viewMentionsLegales.classList.add('hidden');
     }
+    if (modalCguCgv) {
+      modalCguCgv.classList.add('hidden');
+    }
 
     if (toDashboard && isLoggedIn) {
       viewLanding.classList.add('hidden');
@@ -789,6 +797,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
       if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
       if (viewSettingsPanel) viewSettingsPanel.classList.add('hidden');
+      if (sharingPanel) sharingPanel.classList.add('hidden');
       viewDashboard.classList.remove('hidden');
       updateLayoutMode();
       
@@ -801,6 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
       viewDashboard.classList.add('hidden');
       if (viewCompanyDetail) viewCompanyDetail.classList.add('hidden');
       if (viewAdminPanel) viewAdminPanel.classList.add('hidden');
+      if (sharingPanel) sharingPanel.classList.add('hidden');
       updateLayoutMode();
       
       if (isLoggedIn) {
@@ -1537,9 +1547,79 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Sidebar Tab Switching ---
-  const tabButtons = document.querySelectorAll('.tab-btn');
-  const tabContents = document.querySelectorAll('.tab-content');
+  async function openCguModal() {
+    try {
+      const res = await fetch(`${API_BASE}/cgu-cgv`);
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof data.cguCgv === 'string') cguCgvContent = data.cguCgv;
+      }
+    } catch (e) {
+      console.warn("Impossible de récupérer les CGU/CGV :", e);
+    }
+    if (cguCgvModalBody) {
+      cguCgvModalBody.innerHTML = cguCgvContent || "<p>Aucune condition générale n'a été configurée pour le moment.</p>";
+      cguCgvModalBody.scrollTop = 0;
+    }
+    if (modalCguCgv) {
+      modalCguCgv.classList.remove('hidden');
+    }
+  }
+
+  function closeCguModal() {
+    if (modalCguCgv) {
+      modalCguCgv.classList.add('hidden');
+    }
+    if (window.location.hash === '#cgu-cgv') {
+      navigateTo('#mentions-legales');
+    }
+  }
+
+  if (btnShowCguCgv) {
+    btnShowCguCgv.addEventListener('click', (e) => {
+      e.preventDefault();
+      openCguModal();
+    });
+  }
+
+  if (btnBackCguModal) {
+    btnBackCguModal.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeCguModal();
+    });
+  }
+
+  if (btnCloseCguModal) {
+    btnCloseCguModal.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeCguModal();
+    });
+  }
+
+  if (btnCloseCguBottom) {
+    btnCloseCguBottom.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeCguModal();
+    });
+  }
+
+  if (modalCguCgv) {
+    modalCguCgv.addEventListener('click', (e) => {
+      if (e.target === modalCguCgv) {
+        closeCguModal();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalCguCgv && !modalCguCgv.classList.contains('hidden')) {
+      closeCguModal();
+    }
+  });
+
+  // --- Sidebar Tab Switching (Company Details) ---
+  const tabButtons = document.querySelectorAll('#view-company-detail .tabs-header .tab-btn');
+  const tabContents = document.querySelectorAll('#view-company-detail .tab-content');
 
   tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1558,32 +1638,50 @@ document.addEventListener('DOMContentLoaded', () => {
         if (targetTab === 'tab-collaborators') {
           closeCollabForm();
         }
+        updateMockupPreview();
       });
     });
   });
 
-  // --- Admin Panel & Settings Navigation & Management Logic ---
-  if (btnAdminPanelShow) {
-    btnAdminPanelShow.addEventListener('click', () => {
+  // --- Administration Tabs & Navigation Logic ---
+  function switchAdminTab(targetTab) {
+    if (!tabPaneAdmins || !tabPaneSettings) return;
+    if (targetTab === 'settings') {
+      if (tabBtnAdminUsers) tabBtnAdminUsers.classList.remove('active');
+      if (tabBtnAdminSettings) tabBtnAdminSettings.classList.add('active');
+      tabPaneAdmins.classList.add('hidden');
+      tabPaneSettings.classList.remove('hidden');
+      loadAllSettingsToUI();
+    } else {
+      if (tabBtnAdminSettings) tabBtnAdminSettings.classList.remove('active');
+      if (tabBtnAdminUsers) tabBtnAdminUsers.classList.add('active');
+      tabPaneSettings.classList.add('hidden');
+      tabPaneAdmins.classList.remove('hidden');
+      closeAdminForm();
+      loadAdminsList();
+    }
+  }
+
+  if (tabBtnAdminUsers) {
+    tabBtnAdminUsers.addEventListener('click', () => {
       navigateTo('#admin');
     });
   }
 
-  if (btnSettingsPanelShow) {
-    btnSettingsPanelShow.addEventListener('click', () => {
+  if (tabBtnAdminSettings) {
+    tabBtnAdminSettings.addEventListener('click', () => {
       navigateTo('#settings');
+    });
+  }
+
+  if (btnNavAdmin) {
+    btnNavAdmin.addEventListener('click', () => {
+      navigateTo('#admin');
     });
   }
 
   if (btnBackToCompanies) {
     btnBackToCompanies.addEventListener('click', () => {
-      navigateTo('#dashboard');
-    });
-  }
-
-  const btnBackFromSettings = document.getElementById('btn-back-from-settings');
-  if (btnBackFromSettings) {
-    btnBackFromSettings.addEventListener('click', () => {
       navigateTo('#dashboard');
     });
   }
@@ -1594,8 +1692,144 @@ document.addEventListener('DOMContentLoaded', () => {
   const settingTrialPeriodDaysInput = document.getElementById('setting-trial-period-days');
   const settingTrialMessageTextInput = document.getElementById('setting-trial-message-text');
   const settingTrialMessageUrlInput = document.getElementById('setting-trial-message-url');
+  const settingCguCgvEditor = document.getElementById('setting-cgu-cgv-editor');
+  const toolbarCguCgv = document.getElementById('toolbar-cgu-cgv');
+  const cguHeadingSelect = document.getElementById('cgu-heading-select');
+  const btnCguLink = document.getElementById('btn-cgu-link');
   const btnSaveAllSettings = document.getElementById('btn-save-all-settings');
   const settingsMsg = document.getElementById('settings-msg');
+
+  function initRichTextEditor() {
+    if (!toolbarCguCgv || !settingCguCgvEditor) return;
+
+    const buttons = toolbarCguCgv.querySelectorAll('.rich-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+      });
+
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const cmd = btn.getAttribute('data-command');
+        if (cmd) {
+          document.execCommand(cmd, false, null);
+          settingCguCgvEditor.focus();
+          updateToolbarState();
+        }
+      });
+    });
+
+    if (cguHeadingSelect) {
+      cguHeadingSelect.addEventListener('change', () => {
+        const val = cguHeadingSelect.value;
+        if (val === 'p') {
+          document.execCommand('formatBlock', false, '<p>');
+        } else if (val === 'blockquote') {
+          document.execCommand('formatBlock', false, '<blockquote>');
+        } else {
+          document.execCommand('formatBlock', false, `<${val}>`);
+        }
+        settingCguCgvEditor.focus();
+      });
+    }
+
+    if (btnCguLink) {
+      btnCguLink.addEventListener('mousedown', (e) => e.preventDefault());
+      btnCguLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        const currentUrl = prompt("Entrez l'URL du lien (ex: https://example.com) :", "https://");
+        if (currentUrl && currentUrl.trim()) {
+          document.execCommand('createLink', false, currentUrl.trim());
+          settingCguCgvEditor.focus();
+          updateToolbarState();
+        }
+      });
+    }
+
+    const cguFontsizeSelect = document.getElementById('cgu-fontsize-select');
+    const cguCustomColor = document.getElementById('cgu-custom-color');
+    const cguColorBar = document.getElementById('cgu-color-bar');
+    const colorChips = toolbarCguCgv.querySelectorAll('.rich-color-chip');
+
+    function applyTextColor(color) {
+      if (!color || !settingCguCgvEditor) return;
+      settingCguCgvEditor.focus();
+      document.execCommand('styleWithCSS', false, true);
+      document.execCommand('foreColor', false, color);
+      if (cguColorBar) cguColorBar.style.backgroundColor = color;
+      if (cguCustomColor) cguCustomColor.value = color;
+      updateToolbarState();
+    }
+
+    colorChips.forEach(chip => {
+      chip.addEventListener('mousedown', (e) => e.preventDefault());
+      chip.addEventListener('click', (e) => {
+        e.preventDefault();
+        const color = chip.getAttribute('data-color');
+        if (color) applyTextColor(color);
+      });
+    });
+
+    if (cguCustomColor) {
+      cguCustomColor.addEventListener('input', (e) => {
+        applyTextColor(e.target.value);
+      });
+      cguCustomColor.addEventListener('change', (e) => {
+        applyTextColor(e.target.value);
+      });
+    }
+
+    function applyFontSize(sizePx) {
+      if (!sizePx || !settingCguCgvEditor) return;
+      settingCguCgvEditor.focus();
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+
+      document.execCommand('fontSize', false, '7');
+      const fontEls = settingCguCgvEditor.getElementsByTagName('font');
+      for (let i = fontEls.length - 1; i >= 0; i--) {
+        const f = fontEls[i];
+        if (f.getAttribute('size') === '7' || f.size === '7') {
+          const span = document.createElement('span');
+          span.style.fontSize = sizePx;
+          span.innerHTML = f.innerHTML;
+          f.parentNode.replaceChild(span, f);
+        }
+      }
+      updateToolbarState();
+    }
+
+    if (cguFontsizeSelect) {
+      cguFontsizeSelect.addEventListener('change', () => {
+        const size = cguFontsizeSelect.value;
+        if (size) {
+          applyFontSize(size);
+          cguFontsizeSelect.value = '';
+        }
+      });
+    }
+
+    function updateToolbarState() {
+      buttons.forEach(btn => {
+        const cmd = btn.getAttribute('data-command');
+        if (cmd && ['bold', 'italic', 'underline', 'strikeThrough', 'insertUnorderedList', 'insertOrderedList', 'justifyLeft', 'justifyCenter', 'justifyRight'].includes(cmd)) {
+          try {
+            if (document.queryCommandState(cmd)) {
+              btn.classList.add('active');
+            } else {
+              btn.classList.remove('active');
+            }
+          } catch (e) {}
+        }
+      });
+    }
+
+    settingCguCgvEditor.addEventListener('keyup', updateToolbarState);
+    settingCguCgvEditor.addEventListener('mouseup', updateToolbarState);
+    settingCguCgvEditor.addEventListener('focus', updateToolbarState);
+  }
+
+  initRichTextEditor();
 
   async function loadAllSettingsToUI() {
     await fetchAllSettings();
@@ -1617,6 +1851,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (settingTrialMessageUrlInput) {
       settingTrialMessageUrlInput.value = trialMessageUrl;
     }
+    if (settingCguCgvEditor) {
+      settingCguCgvEditor.innerHTML = cguCgvContent || '';
+    }
   }
 
   if (btnSaveAllSettings) {
@@ -1628,6 +1865,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const trialDaysVal = settingTrialPeriodDaysInput ? parseInt(settingTrialPeriodDaysInput.value, 10) : trialPeriodDays;
       const trialMsgTextVal = settingTrialMessageTextInput ? settingTrialMessageTextInput.value.trim() : trialMessageText;
       const trialMsgUrlVal = settingTrialMessageUrlInput ? settingTrialMessageUrlInput.value.trim() : trialMessageUrl;
+      const cguCgvVal = settingCguCgvEditor ? settingCguCgvEditor.innerHTML : cguCgvContent;
 
       try {
         const res = await apiFetch(`${API_BASE}/settings`, {
@@ -1639,7 +1877,8 @@ document.addEventListener('DOMContentLoaded', () => {
             supportEmail: supportEmailVal,
             trialPeriodDays: isNaN(trialDaysVal) ? 30 : Math.max(0, trialDaysVal),
             trialMessageText: trialMsgTextVal,
-            trialMessageUrl: trialMsgUrlVal
+            trialMessageUrl: trialMsgUrlVal,
+            cguCgv: cguCgvVal
           })
         });
         const data = await res.json();
@@ -1664,6 +1903,14 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           if (typeof data.trialMessageUrl === 'string') {
             trialMessageUrl = data.trialMessageUrl;
+          }
+          if (data.cguCgv !== undefined) {
+            cguCgvContent = data.cguCgv;
+          } else {
+            cguCgvContent = cguCgvVal;
+          }
+          if (settingCguCgvEditor) {
+            settingCguCgvEditor.innerHTML = cguCgvContent;
           }
           updateCompanyPreview();
           if (settingsMsg) {
@@ -2794,8 +3041,19 @@ document.addEventListener('DOMContentLoaded', () => {
     previewPlaceholderMsg.classList.add('hidden');
     previewCollabContent.classList.remove('hidden');
 
+    // The sharing panel must only appear when on the collaborator page/tab (never on company page)
+    const activeCompanyTab = document.querySelector('#view-company-detail .tabs-header .tab-btn.active');
+    const isCompanyTab = !activeCompanyTab || activeCompanyTab.dataset.tab === 'tab-company';
+
+    if (sharingPanel) {
+      if (collab && !isCompanyTab) {
+        sharingPanel.classList.remove('hidden');
+      } else {
+        sharingPanel.classList.add('hidden');
+      }
+    }
+
     if (collab) {
-      sharingPanel.classList.remove('hidden');
 
       // Connection counter & ZIP Export display for Super Admin only
       const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
@@ -4121,9 +4379,9 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Restore tab and collaborator form state
       const savedTab = sessionStorage.getItem(`active_company_tab_${companyId}`) || 'tab-company';
-      const tabButtons = document.querySelectorAll('.tab-btn');
-      const tabContents = document.querySelectorAll('.tab-content');
-      const tabBtnToClick = document.querySelector(`.tab-btn[data-tab="${savedTab}"]`) || document.querySelector('.tab-btn[data-tab="tab-company"]');
+      const tabButtons = document.querySelectorAll('#view-company-detail .tabs-header .tab-btn');
+      const tabContents = document.querySelectorAll('#view-company-detail .tab-content');
+      const tabBtnToClick = document.querySelector(`#view-company-detail .tab-btn[data-tab="${savedTab}"]`) || document.querySelector('#view-company-detail .tab-btn[data-tab="tab-company"]');
       if (tabBtnToClick) {
         tabButtons.forEach(b => b.classList.remove('active'));
         tabContents.forEach(c => c.classList.add('hidden'));
