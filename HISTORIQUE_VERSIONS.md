@@ -5,15 +5,31 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.19.0-cgu-cgv-refonte-administration`
-* **Date** : 30 septembre 2026
+* **Version / Tag** : `v2.20.0-export-total-unicite-slug`
+* **Date** : 3 octobre 2026
 * **Statut** : Version stable / MySQL / Docker
 
 ---
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.19.0-cgu-cgv-refonte-administration` (Dernière version)
+### 🚀 Version `v2.20.0-export-total-unicite-slug` (Dernière version)
+**Thème : Export total de la base en Excel (sauvegarde complète), unicité stricte des URL publiques/slugs, contrôle anti-collision et fidélité d'import/restauration**
+* **Unicité stricte des URL publiques & Slugs personnalisés** :
+  * Contrôle bloquant en saisie manuelle (Super Admin) empêchant l'enregistrement si le slug est déjà attribué.
+  * Verrouillage API backend (`POST` et `PUT`) renvoyant une erreur HTTP 409 Conflict si un doublon de slug est détecté.
+  * Création de l'index MySQL `idx_collab_custom_slug` pour accélérer les requêtes d'unicité et de consultation.
+  * Algorithme anti-collision avec vérification physique en base lors de la génération automatique d'identifiants (garantie mathématique 0 doublon).
+* **Fidélité de la sauvegarde et restauration Excel** :
+  * Ajout de la colonne `ID Unique` dans les exports Excel (contenant l'identifiant technique système d'origine `c.id`).
+  * Préservation intégrale de l'ID technique d'origine lors d'un import dans une base vierge : les URL des cartes `/card/collab_...` ne sont plus modifiées.
+  * Prise en compte et respect fidèle des URL fixées dans la colonne `URL Publique Carte Virtuelle` ou `Lien Web Personnalisé`.
+  * Détection et refus automatique des doublons d'URL internes au fichier Excel ou en conflit avec la base, avec rapport d'erreurs détaillé par ligne.
+* **Export total de la base de données (Super Admin)** :
+  * Ajout d'une nouvelle carte dédiée dans la page *Paramètres Généraux* de l'administration (`#settings`).
+  * Téléchargement en un clic de l'ensemble des données de toutes les entreprises et de tous les collaborateurs au format Excel (`Collaborateurs` + `Entreprises`).
+
+### 🚀 Version `v2.19.0-cgu-cgv-refonte-administration`
 **Thème : Éditeur riche CGU/CGV, modale Mentions Légales, refonte unifiée de l'Administration par onglets, ergonomie collaborateurs et migration SQL**
 * **Éditeur de texte riche pour les CGU / CGV** :
   * Ajout d'un encart dédié *"CGU - CGV"* dans l'onglet *"Paramètres Généraux"* de la vue Administration (réservé aux Super Administrateurs).

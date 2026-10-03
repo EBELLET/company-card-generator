@@ -1,6 +1,6 @@
 # Documentation Générale - TDConnect
 **Générateur et Gestionnaire de Cartes de Visite Virtuelles**  
-*Version de l'application : v2.19.0*
+*Version de l'application : v2.20.0*
 
 ---
 

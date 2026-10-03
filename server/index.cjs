@@ -1203,6 +1203,16 @@ app.get('/api/companies/:companyId/collaborators', authenticateToken, async (req
   }
 });
 
+app.get('/api/collaborators/generate-id', authenticateToken, async (req, res) => {
+  try {
+    const id = await db.generateUniqueCollaboratorId();
+    res.json({ id });
+  } catch (err) {
+    console.error('Erreur GET /api/collaborators/generate-id:', err.message);
+    res.status(500).json({ error: err.message || "Erreur lors de la génération de l'identifiant." });
+  }
+});
+
 app.post('/api/companies/:companyId/collaborators', authenticateToken, async (req, res) => {
   const companyId = parseInt(req.params.companyId);
   if (req.user.role !== 'superadmin') {
@@ -1214,12 +1224,32 @@ app.post('/api/companies/:companyId/collaborators', authenticateToken, async (re
     }
   }
   try {
-    const data = { ...req.body, companyId };
+    let id = req.body.id ? String(req.body.id).trim() : '';
+    if (!id) {
+      id = await db.generateUniqueCollaboratorId();
+    } else {
+      const existing = await db.getCollaboratorById(id);
+      if (existing) {
+        id = await db.generateUniqueCollaboratorId();
+      }
+    }
+
+    const customSlug = (req.body.customSlug || req.body.custom_slug || '').trim().toLowerCase();
+    if (customSlug) {
+      const check = await db.isCollaboratorSlugOrIdTaken(customSlug, id);
+      if (check.taken) {
+        return res.status(409).json({ 
+          error: `Le lien public personnalisé "${customSlug}" est déjà attribué à ${check.owner}.` 
+        });
+      }
+    }
+
+    const data = { ...req.body, id, companyId, customSlug };
     const newCollab = await db.addCollaborator(data);
     res.status(201).json(newCollab);
   } catch (err) {
     console.error(`Erreur POST collaborateurs pour company ${req.params.companyId}:`, err.message);
-    res.status(500).json({ error: 'Erreur lors de la création du collaborateur.' });
+    res.status(500).json({ error: err.message || 'Erreur lors de la création du collaborateur.' });
   }
 });
 
@@ -1239,12 +1269,23 @@ app.put('/api/collaborators/:id', authenticateToken, async (req, res) => {
       req.body.connectionCount = collab.connectionCount;
       req.body.connection_count = collab.connectionCount;
     }
-    const collabData = { ...req.body, id: req.params.id };
+
+    const customSlug = (req.body.customSlug || req.body.custom_slug || '').trim().toLowerCase();
+    if (customSlug) {
+      const check = await db.isCollaboratorSlugOrIdTaken(customSlug, req.params.id);
+      if (check.taken) {
+        return res.status(409).json({ 
+          error: `Le lien public personnalisé "${customSlug}" est déjà attribué à ${check.owner}.` 
+        });
+      }
+    }
+
+    const collabData = { ...req.body, id: req.params.id, customSlug };
     const updated = await db.updateCollaborator(collabData);
     res.json(updated);
   } catch (err) {
     console.error(`Erreur PUT /api/collaborators/${req.params.id}:`, err.message);
-    res.status(500).json({ error: 'Erreur lors de la mise à jour du collaborateur.' });
+    res.status(500).json({ error: err.message || 'Erreur lors de la mise à jour du collaborateur.' });
   }
 });
 
@@ -1278,14 +1319,11 @@ app.get('/api/collaborators/check-slug/:slug', async (req, res) => {
       return res.json({ available: true });
     }
 
-    const collab = await db.getCollaboratorBySlug(slug);
-    if (collab) {
-      if (excludeId && collab.id === excludeId) {
-        return res.json({ available: true });
-      }
+    const check = await db.isCollaboratorSlugOrIdTaken(slug, excludeId);
+    if (check.taken) {
       return res.json({ 
         available: false, 
-        owner: `${collab.firstName} ${collab.lastName}` 
+        owner: check.owner 
       });
     }
     return res.json({ available: true });
@@ -1716,6 +1754,40 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error("Erreur PUT /api/settings:", err.message);
     res.status(500).json({ error: "Erreur lors de la mise à jour des paramètres." });
+  }
+});
+
+// Total Database Export Route (Super Admin only)
+app.get('/api/admin/export-database', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'superadmin') {
+    return res.status(403).json({ error: "Accès réservé au Super Administrateur." });
+  }
+  try {
+    const companies = await db.getCompanies();
+    const exportData = [];
+    for (const comp of companies) {
+      const collabs = await db.getCollaboratorsForCompany(comp.id);
+      for (let i = 0; i < collabs.length; i++) {
+        const c = collabs[i];
+        exportData.push({
+          ...c,
+          companyId: comp.id,
+          companyName: comp.name,
+          indexInCompany: i + 1
+        });
+      }
+    }
+    res.json({
+      success: true,
+      exportedAt: new Date().toISOString(),
+      companiesCount: companies.length,
+      collaboratorsCount: exportData.length,
+      companies,
+      collaborators: exportData
+    });
+  } catch (err) {
+    console.error("Erreur GET /api/admin/export-database:", err.message);
+    res.status(500).json({ error: "Erreur lors de l'export de la base de données." });
   }
 });
 

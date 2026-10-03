@@ -1698,6 +1698,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCguLink = document.getElementById('btn-cgu-link');
   const btnSaveAllSettings = document.getElementById('btn-save-all-settings');
   const settingsMsg = document.getElementById('settings-msg');
+  const btnExportAllDatabase = document.getElementById('btn-export-all-database');
+  const cardExportAllDatabase = document.getElementById('card-export-all-database');
 
   function initRichTextEditor() {
     if (!toolbarCguCgv || !settingCguCgvEditor) return;
@@ -1854,6 +1856,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (settingCguCgvEditor) {
       settingCguCgvEditor.innerHTML = cguCgvContent || '';
     }
+    const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
+    if (cardExportAllDatabase) {
+      cardExportAllDatabase.classList.toggle('hidden', !isSuperAdmin);
+    }
   }
 
   if (btnSaveAllSettings) {
@@ -1926,6 +1932,102 @@ document.addEventListener('DOMContentLoaded', () => {
           settingsMsg.style.color = '#f43f5e';
           settingsMsg.classList.remove('hidden');
         }
+      }
+    });
+  }
+
+  // --- Total Database Excel Export (Super Admin only) ---
+  if (btnExportAllDatabase) {
+    btnExportAllDatabase.addEventListener('click', async () => {
+      const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
+      if (!isSuperAdmin) {
+        alert("L'exportation totale de la base de données est réservée au Super Administrateur.");
+        return;
+      }
+
+      const originalHtml = btnExportAllDatabase.innerHTML;
+      try {
+        btnExportAllDatabase.disabled = true;
+        btnExportAllDatabase.style.opacity = '0.75';
+        btnExportAllDatabase.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
+          <span>Génération de la sauvegarde...</span>
+        `;
+
+        const res = await apiFetch(`${API_BASE}/admin/export-database`);
+        const data = await res.json();
+
+        if (!data || !data.success) {
+          throw new Error("Impossible de récupérer les données complètes de la base.");
+        }
+
+        if (typeof utils === 'undefined' || typeof writeFile === 'undefined') {
+          throw new Error("La bibliothèque Excel (SheetJS) n'est pas chargée.");
+        }
+
+        // 1. Feuille principale : Collaborateurs de toutes les entreprises (sur le modèle connu)
+        const collabsToExport = (data.collaborators || []).map((c) => ({
+          'Nom de l\'entreprise': c.companyName || '',
+          'N° Index': c.indexInCompany || 1,
+          'ID Unique': c.id || '',
+          'Civilité': c.civility || '',
+          'Prénom': c.firstName || '',
+          'Nom': c.lastName || '',
+          'Poste / Fonction': c.role || '',
+          'Email': c.email || '',
+          'Téléphone Mobile': c.phoneMobile || '',
+          'Téléphone Fixe': c.phoneWork || '',
+          'Fax': c.phoneFax || '',
+          'Téléphone par Défaut': c.phoneDefault || 'mobile',
+          'Adresse': c.address || '',
+          'URL Publique Carte Virtuelle': getCollabPublicUrl(c),
+          'Lien Clic Photo': c.photoClickUrl || '',
+          'Lien Web Personnalisé': c.customSlug || '',
+          'Photo URL': (c.photoUrl && c.photoUrl.startsWith('data:')) ? '[Photo Base64]' : (c.photoUrl || ''),
+          'Zoom Photo': c.photoZoom != null ? c.photoZoom : 1.0,
+          'Position X': c.photoX != null ? c.photoX : 50,
+          'Position Y': c.photoY != null ? c.photoY : 50,
+          'Taille Cercle Photo': c.avatarSize != null ? c.avatarSize : 100,
+          'Actif': c.isActive !== 0 ? 'Oui' : 'Non'
+        }));
+
+        // 2. Feuille secondaire : Entreprises de la base
+        const companiesToExport = (data.companies || []).map((comp) => ({
+          'ID Entreprise': comp.id,
+          'Nom de l\'entreprise': comp.name,
+          'Domaine / Site Web': comp.domain || '',
+          'Adresse': comp.address || '',
+          'Code Postal': comp.zip || '',
+          'Ville': comp.city || '',
+          'Pays': comp.country || '',
+          'Formule': comp.subscriptionType || comp.subscription_type || 'Offerte',
+          'Statut': (comp.isSuspended || comp.is_suspended) ? 'Suspendue' : 'Active'
+        }));
+
+        const workbook = utils.book_new();
+
+        // Ajout de la feuille Collaborateurs (modèle conforme)
+        const wsCollabs = utils.json_to_sheet(collabsToExport);
+        utils.book_append_sheet(workbook, wsCollabs, 'Collaborateurs');
+
+        // Ajout de la feuille Entreprises
+        if (companiesToExport.length > 0) {
+          const wsCompanies = utils.json_to_sheet(companiesToExport);
+          utils.book_append_sheet(workbook, wsCompanies, 'Entreprises');
+        }
+
+        const dateStr = new Date().toISOString().slice(0, 10);
+        const fileName = `sauvegarde_globale_tdconnect_${dateStr}.xlsx`;
+        writeFile(workbook, fileName);
+
+        alert(`✓ Sauvegarde totale générée avec succès !\n\n• ${data.companiesCount || 0} entreprise(s)\n• ${data.collaboratorsCount || 0} collaborateur(s)\n\nFichier téléchargé : "${fileName}"`);
+      } catch (err) {
+        console.error("Erreur export total base:", err);
+        alert("Erreur lors de l'export total de la base : " + (err.message || err));
+      } finally {
+        btnExportAllDatabase.disabled = false;
+        btnExportAllDatabase.style.opacity = '1';
+        btnExportAllDatabase.innerHTML = originalHtml;
       }
     });
   }
@@ -3684,8 +3786,16 @@ document.addEventListener('DOMContentLoaded', () => {
       collabFormTitle.textContent = `Nouveau collaborateur N° ${nextIndex}`;
       collabForm.reset();
       if (collabConnectionCountInput) collabConnectionCountInput.value = 0;
-      const newId = 'collab_' + Date.now();
+      const newId = 'collab_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
       collabIdInput.value = newId;
+      apiFetch(`${API_BASE}/collaborators/generate-id`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.id && collabIdInput && collabIdInput.value.startsWith('collab_')) {
+            collabIdInput.value = data.id;
+          }
+        })
+        .catch(() => {});
       if (collabDisplayIdInput) collabDisplayIdInput.value = nextIndex;
       collabPhoneMobileInput.value = '';
       collabPhoneWorkInput.value = '';
@@ -3772,6 +3882,24 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    if (customSlug) {
+      try {
+        const checkRes = await apiFetch(`${API_BASE}/collaborators/check-slug/${encodeURIComponent(customSlug)}?excludeId=${encodeURIComponent(id)}`);
+        const checkData = await checkRes.json();
+        if (checkData.available === false) {
+          if (collabSlugWarning) {
+            collabSlugWarning.textContent = `Attention : Ce lien public est déjà attribué à ${checkData.owner} !`;
+            collabSlugWarning.style.display = 'block';
+          }
+          alert(`Impossible d'enregistrer : Le lien public personnalisé "${customSlug}" est déjà attribué à ${checkData.owner}.\nVeuillez choisir un autre lien.`);
+          if (collabCustomSlugInput) collabCustomSlugInput.focus();
+          return;
+        }
+      } catch (err) {
+        console.error("Erreur vérification slug:", err);
+      }
+    }
+
     const connectionCount = (collabConnectionCountInput && currentUser && currentUser.role === 'superadmin')
       ? parseInt(collabConnectionCountInput.value || '0', 10)
       : (collabIndex > -1 ? (collaborators[collabIndex].connectionCount || 0) : 0);
@@ -3811,19 +3939,23 @@ document.addEventListener('DOMContentLoaded', () => {
         collaborators[collabIndex] = collabData;
       } else {
         // Create via POST API
-        await apiFetch(`${API_BASE}/companies/${currentCompanyId}/collaborators`, {
+        const createRes = await apiFetch(`${API_BASE}/companies/${currentCompanyId}/collaborators`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(collabData)
         });
+        const createdCollab = await createRes.json();
+        if (createdCollab && createdCollab.id) {
+          collabData.id = createdCollab.id;
+        }
         collaborators.push(collabData);
       }
       isCollabFormDirty = false;
       closeCollabForm();
-      selectCollaborator(id);
+      selectCollaborator(collabData.id || id);
     } catch (err) {
       console.error("Erreur de persistance du collaborateur:", err);
-      alert("Impossible de sauvegarder le collaborateur dans la base de données.");
+      alert(err.message || "Impossible de sauvegarder le collaborateur dans la base de données.");
     }
   });
 
@@ -4468,6 +4600,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dataToExport = collaborators.map((c, index) => ({
           'Nom de l\'entreprise': companyNameVal,
           'N° Index': index + 1,
+          'ID Unique': c.id,
           'Civilité': c.civility || '',
           'Prénom': c.firstName || '',
           'Nom': c.lastName || '',
@@ -4555,7 +4688,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           const headerMapping = {
-            'n° index (id)': 'importedIndex', 'n° index': 'importedIndex', 'id / index': 'importedIndex', 'index': 'importedIndex', 'n°d\'index': 'importedIndex', 'numéro index': 'importedIndex', 'n° id': 'importedIndex', 'id': 'importedIndex', 'id unique': 'importedIndex',
+            'n° index (id)': 'importedIndex', 'n° index': 'importedIndex', 'id / index': 'importedIndex', 'index': 'importedIndex', 'n°d\'index': 'importedIndex', 'numéro index': 'importedIndex',
+            'id unique': 'explicitId', 'id unique (système)': 'explicitId', 'id unique (id)': 'explicitId', 'id système': 'explicitId', 'id technique': 'explicitId', 'id': 'explicitId', 'n° id': 'explicitId',
             'prénom': 'firstName', 'prenom': 'firstName', 'firstname': 'firstName', 'first_name': 'firstName', 'first name': 'firstName',
             'nom': 'lastName', 'lastname': 'lastName', 'last_name': 'lastName', 'last name': 'lastName', 'nom de famille': 'lastName',
             'civilité': 'civility', 'civilite': 'civility', 'civility': 'civility', 'titre': 'civility', 'title': 'civility',
@@ -4566,28 +4700,42 @@ document.addEventListener('DOMContentLoaded', () => {
             'fixe': 'phoneWork', 'téléphone fixe': 'phoneWork', 'telephone fixe': 'phoneWork', 'phone_work': 'phoneWork', 'phonework': 'phoneWork', 'tel fixe': 'phoneWork', 'tél fixe': 'phoneWork', 'tel_fixe': 'phoneWork', 'bureau': 'phoneWork',
             'fax': 'phoneFax', 'téléphone fax': 'phoneFax', 'telephone fax': 'phoneFax', 'phone_fax': 'phoneFax', 'phonefax': 'phoneFax',
             'téléphone par défaut': 'phoneDefault', 'telephone par defaut': 'phoneDefault', 'phone_default': 'phoneDefault', 'phonedefault': 'phoneDefault', 'tel par defaut': 'phoneDefault',
+            'url publique carte virtuelle': 'publicCardUrl', 'url publique': 'publicCardUrl', 'url carte': 'publicCardUrl', 'carte virtuelle': 'publicCardUrl', 'public_url': 'publicCardUrl', 'url': 'publicCardUrl',
             'lien clic photo': 'photoClickUrl', 'photo_click_url': 'photoClickUrl', 'photoclickurl': 'photoClickUrl',
             'photo url': 'photoUrl', 'photo_url': 'photoUrl', 'photourl': 'photoUrl', 'photo': 'photoUrl',
             'zoom photo': 'photoZoom', 'photo_zoom': 'photoZoom', 'photozoom': 'photoZoom',
             'position x': 'photoX', 'photo_x': 'photoX', 'photox': 'photoX',
             'position y': 'photoY', 'photo_y': 'photoY', 'photoy': 'photoY',
-            'lien web personnalisé': 'customSlug', 'custom_slug': 'customSlug', 'customslug': 'customSlug', 'lien_web_personnalisé': 'customSlug', 'slug': 'customSlug', 'url': 'customSlug',
+            'lien web personnalisé': 'customSlug', 'custom_slug': 'customSlug', 'customslug': 'customSlug', 'lien_web_personnalisé': 'customSlug', 'slug': 'customSlug',
             'taille cercle photo': 'avatarSize', 'avatar_size': 'avatarSize', 'avatarsize': 'avatarSize', 'taille_cercle_photo': 'avatarSize',
             'actif': 'isActive', 'is_active': 'isActive', 'isactive': 'isActive', 'statut': 'isActive'
           };
 
           const validCollabs = [];
+          const rejectedCollabs = [];
+          const seenSlugsInFile = new Map(); // slug -> line number
           let rowIndex = 0;
+
+          // Disable button during loading
+          btnExcelImport.disabled = true;
+          const btnSpan = btnExcelImport.querySelector('span');
+          if (btnSpan) btnSpan.textContent = 'Validation...';
+
           for (const row of rows) {
             rowIndex++;
+            const excelLineNum = rowIndex + 1; // Row 1 is header, data rows start at row 2
+
             const collab = {
-              id: 'collab_' + Date.now() + '_' + rowIndex + '_' + Math.random().toString(36).substring(2, 9),
+              id: '',
+              explicitId: '',
+              publicCardUrl: '',
               companyId: currentCompanyId,
               importedIndex: '',
               firstName: '', lastName: '', civility: '', role: '', phone: '', email: '',
               address: '', photoUrl: '', photoZoom: 1.0, photoX: 50, photoY: 50,
               phoneMobile: '', phoneWork: '', phoneFax: '', phoneDefault: 'mobile',
-              photoClickUrl: '', isActive: 1, customSlug: '', avatarSize: 100
+              photoClickUrl: '', isActive: 1, customSlug: '', avatarSize: 100,
+              _excelLine: excelLineNum
             };
 
             for (const key of Object.keys(row)) {
@@ -4609,59 +4757,151 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Validation logic: require at least Prénom and Nom
-            if (collab.firstName && collab.lastName) {
-              if (!collab.role) collab.role = 'Collaborateur';
+            if (!collab.firstName || !collab.lastName) {
+              continue;
+            }
 
-              // ONLY N° Index is used to identify an existing collaborator for UPDATE
-              const rawIndexVal = (collab.importedIndex || '').trim();
-              if (rawIndexVal) {
-                const parsedIndex = parseInt(rawIndexVal, 10);
-                let existing = null;
-                if (!isNaN(parsedIndex) && parsedIndex > 0) {
-                  // Match by 1-based sequential index in this company
-                  existing = collaborators[parsedIndex - 1] || null;
-                }
-                if (!existing) {
-                  // Fallback match by internal string ID (collab_...)
-                  existing = collaborators.find(c => c.id === rawIndexVal) || null;
-                }
+            if (!collab.role) collab.role = 'Collaborateur';
 
-                if (existing) {
-                  collab.id = existing.id;
-                  // Preserve photo if imported is empty or placeholder
-                  if (!collab.photoUrl || collab.photoUrl === '[Photo Base64]' || collab.photoUrl.startsWith('[')) {
-                    collab.photoUrl = existing.photoUrl || '';
+            // 1. Détecter si ce collaborateur existe déjà dans l'entreprise pour une MISE À JOUR
+            let existing = null;
+            const rawExplicitId = (collab.explicitId || '').trim();
+            if (rawExplicitId) {
+              existing = collaborators.find(c => c.id === rawExplicitId) || null;
+            }
+
+            const rawIndexVal = (collab.importedIndex || '').trim();
+            if (!existing && rawIndexVal) {
+              const parsedIndex = parseInt(rawIndexVal, 10);
+              if (!isNaN(parsedIndex) && parsedIndex > 0) {
+                existing = collaborators[parsedIndex - 1] || null;
+              }
+              if (!existing) {
+                existing = collaborators.find(c => c.id === rawIndexVal) || null;
+              }
+            }
+
+            // 2. Attribution de l'ID technique final
+            if (existing) {
+              collab.id = existing.id;
+              if (!collab.photoUrl || collab.photoUrl === '[Photo Base64]' || collab.photoUrl.startsWith('[')) {
+                collab.photoUrl = existing.photoUrl || '';
+              }
+            } else if (rawExplicitId) {
+              // Import dans une base vierge ou sauvegarde : préserver fidèlement l'ID d'origine !
+              collab.id = rawExplicitId;
+            }
+
+            // 3. Traitement fidèle des URL (URL Publique Carte Virtuelle & Lien Web Personnalisé)
+            let finalSlug = collab.customSlug ? extractSlug(collab.customSlug) : '';
+
+            // Si le slug n'est pas dans la colonne dédiée mais qu'une URL est indiquée dans 'URL Publique Carte Virtuelle'
+            if (!finalSlug && collab.publicCardUrl) {
+              const extractedFromUrl = extractSlug(collab.publicCardUrl);
+              if (extractedFromUrl) {
+                if (extractedFromUrl.startsWith('collab_')) {
+                  // C'est l'URL technique d'origine : elle donne l'ID technique
+                  if (!collab.id) {
+                    collab.id = extractedFromUrl;
                   }
+                  finalSlug = '';
+                } else {
+                  // C'est une vraie URL publique personnalisée fixée par l'utilisateur
+                  finalSlug = extractedFromUrl;
                 }
               }
-
-              // Set default legacy phone field
-              collab.phone = collab.phoneMobile || collab.phoneWork || collab.phoneFax || '';
-              validCollabs.push(collab);
             }
+
+            // Si l'utilisateur a mis un id technique 'collab_...' dans la colonne slug
+            if (finalSlug && finalSlug.startsWith('collab_')) {
+              if (!collab.id) {
+                collab.id = finalSlug;
+              }
+              finalSlug = '';
+            }
+
+            collab.customSlug = finalSlug;
+
+            // 4. Si après tout cela aucun ID n'est fixé (nouvelle ligne créée sans ID ni URL technique)
+            if (!collab.id) {
+              try {
+                const genRes = await apiFetch(`${API_BASE}/collaborators/generate-id`);
+                const genData = await genRes.json();
+                if (genData && genData.id) {
+                  collab.id = genData.id;
+                }
+              } catch (genErr) {
+                collab.id = 'collab_' + Date.now() + '_' + rowIndex + '_' + Math.random().toString(36).substring(2, 9);
+              }
+            }
+
+            // 5. Contrôle strict de l'unicité du slug personnalisé si présent
+            if (collab.customSlug) {
+              // A. Doublon interne au fichier Excel
+              if (seenSlugsInFile.has(collab.customSlug)) {
+                const firstSeenLine = seenSlugsInFile.get(collab.customSlug);
+                rejectedCollabs.push({
+                  line: excelLineNum,
+                  name: `${collab.firstName} ${collab.lastName}`.trim(),
+                  reason: `L'URL personnalisée "${collab.customSlug}" apparaît en double dans le fichier (déjà présente ligne ${firstSeenLine}).`
+                });
+                continue; // Refuser ce collaborateur
+              }
+
+              // B. Conflit en base de données avec un autre collaborateur
+              try {
+                const checkRes = await apiFetch(`${API_BASE}/collaborators/check-slug/${encodeURIComponent(collab.customSlug)}?excludeId=${encodeURIComponent(collab.id)}`);
+                const checkData = await checkRes.json();
+                if (checkData.available === false) {
+                  rejectedCollabs.push({
+                    line: excelLineNum,
+                    name: `${collab.firstName} ${collab.lastName}`.trim(),
+                    reason: `L'URL personnalisée "${collab.customSlug}" est déjà attribuée à ${checkData.owner}.`
+                  });
+                  continue; // Refuser ce collaborateur
+                }
+              } catch (checkErr) {
+                console.error("Erreur vérification slug:", checkErr);
+              }
+
+              // Marquer comme vu dans le fichier
+              seenSlugsInFile.set(collab.customSlug, excelLineNum);
+            }
+
+            // Champ de téléphone par défaut legacy
+            collab.phone = collab.phoneMobile || collab.phoneWork || collab.phoneFax || '';
+            validCollabs.push(collab);
           }
 
-          if (validCollabs.length === 0) {
+          if (validCollabs.length === 0 && rejectedCollabs.length === 0) {
             alert("Aucun collaborateur valide trouvé dans le fichier Excel (Champs requis au minimum : Prénom et Nom).");
             return;
           }
 
-          // Disable button during loading
-          btnExcelImport.disabled = true;
-          const btnSpan = btnExcelImport.querySelector('span');
-          if (btnSpan) btnSpan.textContent = 'Importation...';
+          if (btnSpan) btnSpan.textContent = 'Enregistrement...';
 
+          let savedSuccessCount = 0;
           // Sequential save to avoid race conditions or ID collisions
           for (const c of validCollabs) {
             const isEdit = collaborators.some(ex => ex.id === c.id);
             const url = isEdit ? `${API_BASE}/collaborators/${c.id}` : `${API_BASE}/companies/${currentCompanyId}/collaborators`;
             const method = isEdit ? 'PUT' : 'POST';
             
-            await apiFetch(url, {
-              method,
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(c)
-            });
+            try {
+              await apiFetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(c)
+              });
+              savedSuccessCount++;
+            } catch (saveErr) {
+              console.error("Erreur enregistrement collaborateur importé:", c, saveErr);
+              rejectedCollabs.push({
+                line: c._excelLine || '?',
+                name: `${c.firstName} ${c.lastName}`.trim(),
+                reason: saveErr.message || "Erreur lors de l'enregistrement en base."
+              });
+            }
           }
 
           // Refresh list from DB
@@ -4677,7 +4917,25 @@ document.addEventListener('DOMContentLoaded', () => {
             updateMockupPreview();
           }
 
-          alert(`${validCollabs.length} collaborateur(s) importé(s) / mis à jour avec succès !`);
+          // Clear file input
+          excelImportFile.value = '';
+
+          // Display detailed summary to user
+          if (rejectedCollabs.length === 0) {
+            alert(`✓ ${savedSuccessCount} collaborateur(s) importé(s) / mis à jour avec succès !`);
+          } else {
+            let report = `Résultat de l'import Excel :\n\n`;
+            if (savedSuccessCount > 0) {
+              report += `✓ ${savedSuccessCount} collaborateur(s) importé(s) ou mis à jour avec succès.\n\n`;
+            } else {
+              report += `⚠ Aucun collaborateur n'a pu être importé.\n\n`;
+            }
+            report += `❌ ${rejectedCollabs.length} collaborateur(s) REFUSÉ(S) :\n`;
+            rejectedCollabs.forEach(r => {
+              report += `• Ligne ${r.line} (${r.name}) : ${r.reason}\n`;
+            });
+            alert(report);
+          }
         } catch (err) {
           console.error("Erreur lors de la lecture du fichier Excel:", err);
           alert("Erreur lors de la lecture ou du traitement du fichier Excel.");

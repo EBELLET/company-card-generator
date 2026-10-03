@@ -212,6 +212,10 @@ async function initializeDatabase() {
     await pool.query(`ALTER TABLE collaborators ADD COLUMN connection_count INT DEFAULT 0`);
   } catch (e) {}
 
+  try {
+    await pool.query(`CREATE INDEX idx_collab_custom_slug ON collaborators(custom_slug)`);
+  } catch (e) {}
+
   // 3. Create users table
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -673,6 +677,60 @@ const getCollaboratorBySlug = async (slug) => {
   return mapCollaboratorRow(rows[0]) || null;
 };
 
+const isCollaboratorSlugOrIdTaken = async (value, excludeId = null) => {
+  const cleanVal = (value || '').trim().toLowerCase();
+  if (!cleanVal) return { taken: false };
+
+  // 1. Check custom_slug (case-insensitive)
+  let slugSql = 'SELECT id, first_name, last_name FROM collaborators WHERE LOWER(custom_slug) = ? AND custom_slug != "" AND custom_slug IS NOT NULL';
+  const slugParams = [cleanVal];
+  if (excludeId) {
+    slugSql += ' AND id != ?';
+    slugParams.push(excludeId);
+  }
+  const [slugRows] = await pool.query(slugSql, slugParams);
+  if (slugRows.length > 0) {
+    return {
+      taken: true,
+      reason: 'slug',
+      owner: `${slugRows[0].first_name} ${slugRows[0].last_name}`.trim(),
+      collabId: slugRows[0].id
+    };
+  }
+
+  // 2. Check technical id
+  let idSql = 'SELECT id, first_name, last_name FROM collaborators WHERE id = ?';
+  const idParams = [cleanVal];
+  if (excludeId) {
+    idSql += ' AND id != ?';
+    idParams.push(excludeId);
+  }
+  const [idRows] = await pool.query(idSql, idParams);
+  if (idRows.length > 0) {
+    return {
+      taken: true,
+      reason: 'id',
+      owner: `${idRows[0].first_name} ${idRows[0].last_name}`.trim(),
+      collabId: idRows[0].id
+    };
+  }
+
+  return { taken: false };
+};
+
+const generateUniqueCollaboratorId = async () => {
+  let attempts = 0;
+  while (attempts < 100) {
+    const candidate = 'collab_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+    const check = await isCollaboratorSlugOrIdTaken(candidate);
+    if (!check.taken) {
+      return candidate;
+    }
+    attempts++;
+  }
+  throw new Error("Impossible de générer un identifiant collaborateur unique.");
+};
+
 const addCollaborator = async (c) => {
   const connectionCountVal = c.connectionCount != null ? parseInt(c.connectionCount, 10) : (c.connection_count != null ? parseInt(c.connection_count, 10) : 0);
   await pool.query(`
@@ -1038,6 +1096,8 @@ module.exports = {
   getCollaboratorsForCompany,
   getCollaboratorById,
   getCollaboratorBySlug,
+  isCollaboratorSlugOrIdTaken,
+  generateUniqueCollaboratorId,
   addCollaborator,
   updateCollaborator,
   incrementCollaboratorConnectionCount,
