@@ -185,7 +185,10 @@ function checkCardStatus(collab, company) {
     isInactive = true;
     if (!isExpired) {
       messageTitle = 'Collaborateur inactif';
-      messageSubtitle = 'Cette carte de visite est actuellement désactivée.';
+      const redirectUrl = (collab.inactiveRedirectUrl || collab.inactive_redirect_url || '').trim();
+      messageSubtitle = redirectUrl 
+        ? `Cette carte est désactivée. Redirection configurée vers : ${redirectUrl}`
+        : 'Cette carte de visite est actuellement désactivée.';
     }
   }
 
@@ -1963,6 +1966,19 @@ app.get('/card/:id', async (req, res) => {
     if (!company) {
       return res.status(404).send(generateUnknownCardHTML());
     }
+
+    // Redirection automatique si le collaborateur est inactif et qu'une URL est configurée
+    const cardStatus = checkCardStatus(collab, company);
+    if (cardStatus.isInactive && collab.inactiveRedirectUrl && collab.inactiveRedirectUrl.trim()) {
+      if (req.query.preview !== '1' && req.query.ssr !== '1') {
+        let redirectTarget = collab.inactiveRedirectUrl.trim();
+        if (!/^https?:\/\//i.test(redirectTarget)) {
+          redirectTarget = 'https://' + redirectTarget;
+        }
+        return res.redirect(302, redirectTarget);
+      }
+    }
+
     const settings = await db.getAllSettings();
     const htmlContent = generateVirtualCardHTML(collab, company, false, settings);
     res.send(htmlContent);

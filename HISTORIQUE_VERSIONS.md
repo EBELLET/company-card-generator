@@ -5,7 +5,7 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 ---
 
 ## 📌 Synthèse de la Version Actuelle
-* **Version / Tag** : `v2.20.0-export-total-unicite-slug`
+* **Version / Tag** : `v2.21.0-inactive-redirect-url`
 * **Date** : 3 octobre 2026
 * **Statut** : Version stable / MySQL / Docker
 
@@ -13,7 +13,21 @@ Ce document retrace l'historique complet des versions et des évolutions de l'ap
 
 ## 📜 Historique Chronologique des Versions
 
-### 🚀 Version `v2.20.0-export-total-unicite-slug` (Dernière version)
+### 🚀 Version `v2.21.0-inactive-redirect-url` (Dernière version)
+**Thème : Redirection automatique des cartes de collaborateurs inactifs et intégration complète dans les exports/imports Excel**
+* **Redirection automatique pour carte inactive** :
+  * Possibilité pour chaque collaborateur de définir une URL de redirection (`inactive_redirect_url`).
+  * Lorsque la carte est inactive (`isActive = 0`) et qu'une URL est renseignée, l'accès public (`/card/:id` ou `/card/:slug`) redirige immédiatement le visiteur via une redirection HTTP 302 vers l'URL configurée.
+  * Si aucune URL de redirection n'est renseignée, le comportement initial (floutage et message de désactivation) est conservé.
+  * Dans l'interface d'administration ou en mode prévisualisation (`preview=1` / `ssr=1`), la redirection ne bloque pas l'administrateur et affiche un message informatif indiquant l'URL de redirection ciblée.
+* **Mise à jour des Exports et Imports Excel** :
+  * Ajout de la colonne `URL Redirection Inactif` dans l'export Excel par entreprise ainsi que dans l'export total de la base de données.
+  * Prise en charge automatique dans l'import Excel (`URL Redirection Inactif`, `Redirection Inactif`, etc.) permettant des sauvegardes et restaurations 100% fidèles.
+* **Formulaire collaborateur & Base de données** :
+  * Nouveau champ de saisie *"URL de redirection si inactif (facultatif)"* dans le formulaire collaborateur.
+  * Colonne `inactive_redirect_url TEXT NULL` ajoutée à la table `collaborators` avec script de migration `migrations/migration_v2.21.0_inactive_redirect_url.sql` et auto-migration au démarrage du serveur.
+
+### 🚀 Version `v2.20.0-export-total-unicite-slug`
 **Thème : Export total de la base en Excel (sauvegarde complète), unicité stricte des URL publiques/slugs, contrôle anti-collision et fidélité d'import/restauration**
 * **Unicité stricte des URL publiques & Slugs personnalisés** :
   * Contrôle bloquant en saisie manuelle (Super Admin) empêchant l'enregistrement si le slug est déjà attribué.

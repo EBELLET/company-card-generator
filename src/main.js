@@ -396,6 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const collabEmailInput = document.getElementById('collab-email');
   const collabAddressInput = document.getElementById('collab-address');
   const collabPhotoClickUrlInput = document.getElementById('collab-photo-click-url');
+  const collabInactiveRedirectUrlInput = document.getElementById('collab-inactive-redirect-url');
   const collabCustomSlugInput = document.getElementById('collab-custom-slug');
   const collabCustomSlugGroup = document.getElementById('collab-custom-slug-group');
   const collabSlugWarning = document.getElementById('collab-slug-warning');
@@ -1988,7 +1989,8 @@ document.addEventListener('DOMContentLoaded', () => {
           'Position X': c.photoX != null ? c.photoX : 50,
           'Position Y': c.photoY != null ? c.photoY : 50,
           'Taille Cercle Photo': c.avatarSize != null ? c.avatarSize : 100,
-          'Actif': c.isActive !== 0 ? 'Oui' : 'Non'
+          'Actif': c.isActive !== 0 ? 'Oui' : 'Non',
+          'URL Redirection Inactif': c.inactiveRedirectUrl || ''
         }));
 
         // 2. Feuille secondaire : Entreprises de la base
@@ -3757,6 +3759,7 @@ document.addEventListener('DOMContentLoaded', () => {
       collabEmailInput.value = collab.email;
       collabAddressInput.value = collab.address || '';
       collabPhotoClickUrlInput.value = collab.photoClickUrl || '';
+      if (collabInactiveRedirectUrlInput) collabInactiveRedirectUrlInput.value = collab.inactiveRedirectUrl || '';
       
       if (collabActiveToggle) {
         collabActiveToggle.checked = collab.isActive !== 0;
@@ -3802,6 +3805,7 @@ document.addEventListener('DOMContentLoaded', () => {
       collabPhoneFaxInput.value = '';
       collabPhoneDefaultInput.value = 'mobile';
       collabPhotoClickUrlInput.value = '';
+      if (collabInactiveRedirectUrlInput) collabInactiveRedirectUrlInput.value = '';
       
       if (collabActiveToggle) {
         collabActiveToggle.checked = true;
@@ -3824,6 +3828,7 @@ document.addEventListener('DOMContentLoaded', () => {
     collabFormContainer.classList.add('hidden');
     collabForm.reset();
     collabPhotoClickUrlInput.value = '';
+    if (collabInactiveRedirectUrlInput) collabInactiveRedirectUrlInput.value = '';
     if (collabCustomSlugInput) collabCustomSlugInput.value = '';
     if (collabSlugWarning) collabSlugWarning.style.display = 'none';
     currentCollabPhotoUrl = '';
@@ -3844,6 +3849,7 @@ document.addEventListener('DOMContentLoaded', () => {
     collabFirstnameInput, collabLastnameInput, collabTitleInput, collabRoleInput,
     collabPhoneInput, collabPhoneMobileInput, collabPhoneWorkInput, collabPhoneFaxInput,
     collabPhoneDefaultInput, collabEmailInput, collabAddressInput, collabPhotoClickUrlInput,
+    collabInactiveRedirectUrlInput,
     collabPhotoZoomInput, collabPhotoXInput, collabPhotoYInput, collabCustomSlugInput,
     collabConnectionCountInput, collabActiveToggle, collabPhotoFileInput
   ].filter(Boolean);
@@ -3866,6 +3872,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = collabEmailInput.value.trim();
     const address = collabAddressInput.value.trim();
     const photoClickUrl = collabPhotoClickUrlInput.value.trim();
+    const inactiveRedirectUrl = collabInactiveRedirectUrlInput ? collabInactiveRedirectUrlInput.value.trim() : '';
     const isSuperAdmin = currentUser && currentUser.role === 'superadmin';
     const collabIndex = collaborators.findIndex(c => c.id === id);
     const customSlug = (collabCustomSlugInput && isSuperAdmin) 
@@ -3923,6 +3930,7 @@ document.addEventListener('DOMContentLoaded', () => {
       phoneFax,
       phoneDefault,
       photoClickUrl,
+      inactiveRedirectUrl,
       isActive: collabActiveToggle ? (collabActiveToggle.checked ? 1 : 0) : 1,
       customSlug,
       connectionCount
@@ -4619,7 +4627,8 @@ document.addEventListener('DOMContentLoaded', () => {
           'Position X': c.photoX != null ? c.photoX : 50,
           'Position Y': c.photoY != null ? c.photoY : 50,
           'Taille Cercle Photo': c.avatarSize != null ? c.avatarSize : 100,
-          'Actif': c.isActive !== 0 ? 'Oui' : 'Non'
+          'Actif': c.isActive !== 0 ? 'Oui' : 'Non',
+          'URL Redirection Inactif': c.inactiveRedirectUrl || ''
         }));
 
         console.log('Données d\'export préparées', dataToExport);
@@ -4708,7 +4717,8 @@ document.addEventListener('DOMContentLoaded', () => {
             'position y': 'photoY', 'photo_y': 'photoY', 'photoy': 'photoY',
             'lien web personnalisé': 'customSlug', 'custom_slug': 'customSlug', 'customslug': 'customSlug', 'lien_web_personnalisé': 'customSlug', 'slug': 'customSlug',
             'taille cercle photo': 'avatarSize', 'avatar_size': 'avatarSize', 'avatarsize': 'avatarSize', 'taille_cercle_photo': 'avatarSize',
-            'actif': 'isActive', 'is_active': 'isActive', 'isactive': 'isActive', 'statut': 'isActive'
+            'actif': 'isActive', 'is_active': 'isActive', 'isactive': 'isActive', 'statut': 'isActive',
+            'url redirection inactif': 'inactiveRedirectUrl', 'redirection inactif': 'inactiveRedirectUrl', 'url redirection si inactif': 'inactiveRedirectUrl', 'redirection si inactif': 'inactiveRedirectUrl', 'url redirection': 'inactiveRedirectUrl', 'redirection': 'inactiveRedirectUrl', 'inactive_redirect_url': 'inactiveRedirectUrl', 'inactiveredirecturl': 'inactiveRedirectUrl'
           };
 
           const validCollabs = [];
@@ -4734,7 +4744,7 @@ document.addEventListener('DOMContentLoaded', () => {
               firstName: '', lastName: '', civility: '', role: '', phone: '', email: '',
               address: '', photoUrl: '', photoZoom: 1.0, photoX: 50, photoY: 50,
               phoneMobile: '', phoneWork: '', phoneFax: '', phoneDefault: 'mobile',
-              photoClickUrl: '', isActive: 1, customSlug: '', avatarSize: 100,
+              photoClickUrl: '', inactiveRedirectUrl: '', isActive: 1, customSlug: '', avatarSize: 100,
               _excelLine: excelLineNum
             };
 

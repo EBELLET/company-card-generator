@@ -1,6 +1,6 @@
 # Documentation Générale - TDConnect
 **Générateur et Gestionnaire de Cartes de Visite Virtuelles**  
-*Version de l'application : v2.20.0*
+*Version de l'application : v2.21.0*
 
 ---
 
@@ -133,8 +133,9 @@ Dans l'onglet **Collaborateurs**, l'administrateur gère les fiches individuelle
   * Outils de cadrage intuitifs : curseur de **zoom** (1x à 3x), déplacement horizontal (**axe X**) et déplacement vertical (**axe Y**).
 * **Identifiant URL Personnalisé (Slug)** :
   * Définition d'une adresse personnalisée simplifiée (ex. `tdconnect.fr/c/dupont`).
-* **Statut Actif / Inactif** :
+* **Statut Actif / Inactif et Redirection Automatique** :
   * Possibilité de désactiver temporairement la carte d'un collaborateur sans supprimer sa fiche.
+  * **URL de redirection si inactif** : lorsqu'une URL est renseignée (ex: lien du site web ou carte d'un remplaçant) et que le collaborateur est inactif, tout visiteur scannant le QR code ou accédant au lien web est automatiquement redirigé (redirection HTTP 302). En l'absence d'URL, la carte s'affiche floutée avec un message d'inactivité.
 * **Compteur de Visites** : Suivi du nombre de consultations de la carte.
 
 ---

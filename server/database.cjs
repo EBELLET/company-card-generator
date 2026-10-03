@@ -200,6 +200,7 @@ async function initializeDatabase() {
       phone_fax VARCHAR(50),
       phone_default VARCHAR(20) DEFAULT 'mobile',
       photo_click_url TEXT,
+      inactive_redirect_url TEXT,
       is_active INT DEFAULT 1,
       custom_slug VARCHAR(100),
       avatar_size INT DEFAULT 100,
@@ -207,6 +208,10 @@ async function initializeDatabase() {
       FOREIGN KEY (company_id) REFERENCES company_info(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
+
+  try {
+    await pool.query(`ALTER TABLE collaborators ADD COLUMN inactive_redirect_url TEXT`);
+  } catch (e) {}
 
   try {
     await pool.query(`ALTER TABLE collaborators ADD COLUMN connection_count INT DEFAULT 0`);
@@ -374,6 +379,7 @@ function mapCollaboratorRow(row) {
     phoneFax: row.phone_fax,
     phoneDefault: row.phone_default,
     photoClickUrl: row.photo_click_url,
+    inactiveRedirectUrl: row.inactive_redirect_url || '',
     isActive: row.is_active,
     customSlug: row.custom_slug,
     avatarSize: row.avatar_size,
@@ -737,8 +743,8 @@ const addCollaborator = async (c) => {
     INSERT INTO collaborators (
       id, company_id, first_name, last_name, civility, role, phone, email, address,
       photo_url, photo_zoom, photo_x, photo_y, phone_mobile, phone_work, phone_fax,
-      phone_default, photo_click_url, is_active, custom_slug, avatar_size, connection_count
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      phone_default, photo_click_url, inactive_redirect_url, is_active, custom_slug, avatar_size, connection_count
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     c.id,
     c.companyId,
@@ -758,6 +764,7 @@ const addCollaborator = async (c) => {
     c.phoneFax || '',
     c.phoneDefault || 'mobile',
     c.photoClickUrl || '',
+    c.inactiveRedirectUrl || c.inactive_redirect_url || '',
     (c.isActive === 0 || c.isActive === false || c.is_active === 0 || c.is_active === false) ? 0 : 1,
     c.customSlug || '',
     c.avatarSize != null ? c.avatarSize : 100,
@@ -787,6 +794,7 @@ const updateCollaborator = async (c) => {
       phone_fax = ?,
       phone_default = ?,
       photo_click_url = ?,
+      inactive_redirect_url = ?,
       is_active = ?,
       custom_slug = ?,
       avatar_size = ?,
@@ -810,6 +818,7 @@ const updateCollaborator = async (c) => {
     c.phoneFax || '',
     c.phoneDefault || 'mobile',
     c.photoClickUrl || '',
+    c.inactiveRedirectUrl !== undefined ? c.inactiveRedirectUrl : (c.inactive_redirect_url !== undefined ? c.inactive_redirect_url : ''),
     (c.isActive === 0 || c.isActive === false || c.is_active === 0 || c.is_active === false) ? 0 : 1,
     c.customSlug || '',
     c.avatarSize != null ? c.avatarSize : 100,
